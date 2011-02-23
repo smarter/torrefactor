@@ -5,20 +5,22 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
-public class PeerManager implements Runnable {
+public class PeerManager extends Thread {
     public enum TrackerEvent {
         started, stopped, completed
     }
 
     private Torrent torrent;
     private Map<String, Peer> peerMap;
+    private Map<String, Peer> activeMap;
 
-    private String peerId = "11111111111111111111";
+    String peerId = "11111111111111111111";
     int port = 6881;
     int interval;
     String trackerId;
     int seeders;
     int leechers;
+    final int MAX_PEERS = 25;
 
     public PeerManager(Torrent _torrent) {
         this.torrent = _torrent;
@@ -26,9 +28,20 @@ public class PeerManager implements Runnable {
     }
 
     public void run() {
+        for (Map.Entry<String, Peer> peerEntry : activeMap.entrySet()) {
+            peerEntry.getValue().run();
+            if (peerEntry.getValue().wasDisconnected()) {
+                activeMap.remove(peerEntry.getKey());
+            }
+        }
+        for (int i = 0; i < MAX_PEERS - activeMap.size(); i++) {
+            //Entry<String, Peer> peerEntry = selectPeer();
+            //peerEntry.getValue().handshake();
+            //activeMap.add(peerEntry);
+        }
     }
 
-    public void stop() {
+    public void stopDownload() {
     }
 
     public void announceTracker(TrackerEvent event) throws ProtocolException {
@@ -66,8 +79,9 @@ public class PeerManager implements Runnable {
             int port = newMap.get("port").toInt();
             if (oldMap.containsKey(id)) {
                 this.peerMap.put(id, oldMap.get(id));
+            } else {
+                this.peerMap.put(id, new Peer(ip, port, torrent));
             }
-            this.peerMap.put(id, new Peer(ip, port, torrent));
         }
     }
 }

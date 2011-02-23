@@ -53,6 +53,6 @@ public class Torrent {
     void stop() {
         if (this.peerManager == null) return;
 
-        this.peerManager.stop();
+        this.peerManager.stopDownload();
     }
 }
