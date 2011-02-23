@@ -1,0 +1,5 @@
+src/core/Peer.java
+src/core/PeerManager.java
+src/core/Torrent.java
+src/gui/Main.java
+src/gui/MainWindow.java
