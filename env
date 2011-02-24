@@ -1,1 +1,6 @@
-export CLASSPATH=/usr/share/java/\*:.
+pwd="$PWD"
+cd $(dirname "$0")
+
+export CLASSPATH=.:/usr/share/java/\*:$PWD/src/
+
+cd "$pwd"
