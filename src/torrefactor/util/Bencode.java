@@ -45,17 +45,13 @@ public class Bencode {
         return map;
     }
 
-    private static boolean isValid(int c) {
-        return c != -1;
-    }
-
     private static Bencode decode(InputStream stream)
     throws java.io.IOException, InvalidBencodeException {
         PushbackInputStream pbstream = new PushbackInputStream(stream);
         int c = pbstream.read();
         pbstream.unread(c);
 
-        if (!isValid(c)) throw new InvalidBencodeException("Unexpected end of stream");
+        if (c == -1) throw new InvalidBencodeException("Unexpected end of stream");
 
         if (Character.isDigit((char) c)) {
             return new Bencode(decodeString(pbstream));
@@ -80,7 +76,7 @@ public class Bencode {
         int c = stream.read();
         if (c != (int) 'i') throw new InvalidBencodeException("Not an int");
         while ((c = stream.read()) != (int) 'e') {
-            if (!isValid(c)) throw new InvalidBencodeException(
+            if (c == -1) throw new InvalidBencodeException(
                     "Reached end of stream while parsing int.");
             sb.append((char) c);
         }
@@ -102,7 +98,7 @@ public class Bencode {
 
         int c;
         while ((c = stream.read()) != (int) ':') {
-            if (!isValid(c)) throw new InvalidBencodeException(
+            if (c == -1) throw new InvalidBencodeException(
                     "Reached end of stream while parsing string length.");
             sb.append((char) c);
         }
@@ -118,7 +114,7 @@ public class Bencode {
         sb = new StringBuilder();
         while (len != 0) {
             c = stream.read();
-            if (!isValid(c)) throw new InvalidBencodeException(
+            if (c == -1) throw new InvalidBencodeException(
                     "Reached end of stream while parsing string.");
             sb.append((char) c);
             len--;
@@ -132,11 +128,6 @@ public class Bencode {
     throws java.io.IOException, InvalidBencodeException {
         ArrayList<Bencode> list = new ArrayList<Bencode>();
         PushbackInputStream pbstream = new PushbackInputStream(stream);
-        
-        c = pbreader.read();
-        if (c != (int) 'l') {
-            pbreader.unread(c);
-        }
 
         int c = stream.read();
         if (c != (int) 'l') throw new InvalidBencodeException("Not a list");
