@@ -3,6 +3,7 @@ import torrefactor.core.*;
 
 import java.io.*;
 import java.net.*;
+import java.nio.*;
 
 public class Peer {
     public enum MessageType {
@@ -16,6 +17,7 @@ public class Peer {
     private BufferedInputStream socketInput;
     private PrintWriter socketOutput;
 
+    private byte[] bitfield;
     boolean isChoked = true;
     boolean isChokingUs = true;
     boolean isInteresting = false;
@@ -25,6 +27,10 @@ public class Peer {
         this.ip = _ip;
         this.port = _port;
         this.torrent = _torrent;
+        int bits = torrent.pieceList.size() / 8;
+        //round to nearest byte
+        bits += ((torrent.pieceList.size() % 8) != 0) ? 1 : 0;
+        this.bitfield = new byte[bits];
         this.socket = new Socket(this.ip, this.port);
         socketInput = new BufferedInputStream(this.socket.getInputStream());
         socketOutput = new PrintWriter(this.socket.getOutputStream(), false);
@@ -40,19 +46,21 @@ public class Peer {
     private void readMessage() throws IOException {
         byte[] lengthArray = new byte[4];
         socketInput.read(lengthArray, 0, 4);
-        int length = arrayToInt(lengthArray);
+        int length = ByteBuffer.wrap(lengthArray).getInt();
         if (length == 0) {
             //TODO: handle peer keepalive
             return;
         }
-        byte[] messageArray = new byte[length];
-        socketInput.read(messageArray, 0, length);
-        String message = new String(messageArray);
-        MessageType type = MessageType.values()[charToInt(message.charAt(0))];
-        readMessage(type, message.substring(1));
+        byte[] message = new byte[length];
+        socketInput.read(message, 0, length);
+        ByteBuffer messageBuffer = ByteBuffer.wrap(message);
+        MessageType type = MessageType.values()[messageBuffer.getChar()];
+
+        readMessage(type, messageBuffer, length);
     }
 
-    private void readMessage(MessageType type, String payload) {
+    private void readMessage(MessageType type, ByteBuffer payload, int length)
+    throws IOException {
         switch (type) {
         case choke: {
             this.isChokingUs = true;
@@ -70,11 +78,28 @@ public class Peer {
             this.isInterestedInUs = false;
             break;
         }
-        //Not implemented
-        case have:
-        case bitfield:
+        case have: {
+            int index = payload.getInt();
+            int byteIndex = index / 8 - 1;
+            int offsetMask = 1 << (index % 8);
+            this.bitfield[byteIndex] |= offsetMask;
+            break;
+        }
+        case bitfield: {
+            payload.get(this.bitfield);
+            break;
+        }
+        //TODO
         case request:
-        case piece:
+        case piece: {
+            int index = payload.getInt();
+            int offset = payload.getInt();
+            byte[] dataArray = new byte[length - 2*4];
+            payload.get(dataArray);
+            String data = new String(dataArray);
+            this.torrent.writePiece(index, offset, data);
+            break;
+        }
         case cancel:
         default: {
             break;
@@ -113,14 +138,6 @@ public class Peer {
             socketOutput.print(payload);
         }
         socketOutput.flush();
-    }
-
-    private int arrayToInt(byte[] intArray) {
-        return (intArray[0] & 0xFF << 24) | (intArray[1] & 0xFF << 16) | (intArray[2] & 0xFF << 8) | intArray[3] & 0xFF;
-    }
-
-    private int charToInt(char digit) {
-        return digit - '0';
     }
 
     public void setChoked(boolean b) {

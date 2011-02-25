@@ -7,8 +7,8 @@ import java.net.*;
 import java.util.*;
 
 public class Torrent {
-    private int pieceLength;
-    private List<String> pieceList = new ArrayList<String>();
+    int pieceLength;
+    List<String> pieceList = new ArrayList<String>();
     private String name;
     private int length;
     String infoHash;
@@ -45,6 +45,12 @@ public class Torrent {
     throws FileNotFoundException, IOException {
         this.file = new RandomAccessFile(fileName, "rw");
         this.file.setLength(this.length);
+    }
+
+    public void writePiece(int index, int offset, String data)
+    throws IOException {
+        this.file.seek(this.pieceLength * index + offset);
+        this.file.writeBytes(data);
     }
 
     public void start() throws ProtocolException, InvalidBencodeException,
