@@ -17,6 +17,7 @@ public class Peer {
     private BufferedInputStream socketInput;
     private PrintWriter socketOutput;
 
+    private String id;
     private byte[] bitfield;
     boolean isChoked = true;
     boolean isChokingUs = true;
@@ -107,11 +108,29 @@ public class Peer {
         }
     }
 
-    public void handshake() {
-        socketOutput.print("19BitTorrent protocol");
-        socketOutput.print("\0\0\0\0\0\0\0\0");
+    public void handshake() throws IOException {
+        String header = "19Bittorent protocol";
+        String reserved = "\0\0\0\0\0\0\0\0";
+        socketOutput.print(header);
+        socketOutput.print(reserved);
         socketOutput.print(torrent.infoHash);
         socketOutput.print(torrent.peerManager.peerId);
+        byte[] inHeader = new byte[header.length()];
+        socketInput.read(inHeader);
+        if (!header.equals(new String(inHeader))) {
+            return;
+        }
+        byte[] inReserved = new byte[reserved.length()];
+        socketInput.read(inReserved);
+        System.out.println(new String(inReserved));
+        byte[] inInfoHash = new byte[20];
+        socketInput.read(inInfoHash);
+        if (!torrent.infoHash.equals(new String(inInfoHash))) {
+            return;
+        }
+        byte[] inId = new byte[20];
+        socketInput.read(inId);
+        this.id = new String(inId);
     }
 
     public boolean isDownloading() {
