@@ -29,15 +29,6 @@ public class BencodeTest {
         assertTrue(result == expected);
     }
 
-    @Test public void decodeValidInt2()
-    throws java.io.IOException, InvalidBencodeException {
-        Reader reader = new StringReader("i987654321e");
-        int expected = 987654321;
-
-        int result = Bencode.decodeInt(reader);
-        assertTrue(result == expected);
-    }
-
     @Test public void decodeValidString()
     throws java.io.IOException, InvalidBencodeException {
         String string = "6:Foobar";
@@ -58,17 +49,6 @@ public class BencodeTest {
         assertTrue(result.get(1).toInt() ==  42);
     }
 
-    @Test public void decodeValidList2()
-    throws java.io.IOException, InvalidBencodeException {
-        Reader reader = new StringReader("l4:Salt5:Sugare");
-        ArrayList<Object> expected = new ArrayList<Object>();
-        expected.add("Salt");
-        expected.add("Sugar");
-
-        ArrayList result = Bencode.decodeList(reader);
-        assertTrue(result.equals(expected));
-    }
-
     @Test public void decodeValidDictionary()
     throws java.io.IOException, InvalidBencodeException {
         String string = "d3:Foo3:Bar11:coffee cupsi849ee";
@@ -78,16 +58,5 @@ public class BencodeTest {
 
         assertTrue(result.get("Foo").toString().equals("Bar"));
         assertTrue(result.get("coffee cups").toInt() == 849);
-    }
-
-    @Test public void decodeValidDictionary2()
-    throws java.io.IOException, InvalidBencodeException {
-        Reader reader = new StringReader("d3:Foo3:Bar10:coffe cupsi849ee");
-        HashMap<String, Object> expected = new HashMap<String, Object>();
-        expected.put("Foo", "Bar");
-        expected.put("coffe cups", 849);
-
-        HashMap result = Bencode.decodeDictionary(reader);
-        assertTrue(result.equals(expected));
     }
 }
