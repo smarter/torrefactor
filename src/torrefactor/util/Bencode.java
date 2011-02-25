@@ -16,6 +16,7 @@ public class Bencode {
 
         while (true) {
             c = reader.read();
+            if (c == (int) 'i') continue;
             if (c == (int) 'e') break;
             if (c == -1) throw new InvalidBencodeException(
                     "Reached end of string while parsing int.");
@@ -71,6 +72,11 @@ public class Bencode {
         int c;
         ArrayList<Object> list = new ArrayList<Object>();
         PushbackReader pbreader = new PushbackReader(reader);
+        
+        c = pbreader.read();
+        if (c != (int) 'l') {
+            pbreader.unread(c);
+        }
 
         while (true) {
             c = pbreader.read();
@@ -102,6 +108,11 @@ public class Bencode {
         String key;
         HashMap<String, Object> map = new HashMap<String, Object>();
         PushbackReader pbreader = new PushbackReader(reader);
+
+        c = pbreader.read();
+        if (c != (int) 'd') {
+            pbreader.unread(c);
+        }
 
         while (true) {
             c = pbreader.read();
