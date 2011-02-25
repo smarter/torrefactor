@@ -1,8 +1,16 @@
+package torrefactor.gui;
+
+import torrefactor.core.Torrent;
+
 import com.trolltech.qt.QVariant;
 import com.trolltech.qt.core.*;
 import com.trolltech.qt.gui.*;
 
+import java.io.*;
+
 public class MainWindow extends QMainWindow {
+    private Torrent torrent;
+
     private QWidget centralWidget;
     private QListView torrentView;
     private QVBoxLayout layout;
@@ -52,19 +60,18 @@ public class MainWindow extends QMainWindow {
         torrentMenu.addAction(stopAction);
     }
 
-    public void addTorrent() {
+    public void addTorrent() throws Exception {
         String fileName = QFileDialog.getOpenFileName(this,
                tr("Open Torrent"), QDir.currentPath(),
                new QFileDialog.Filter(tr("Torrent file (*.torrent)")));
         addTorrent(fileName);
     }
 
-    public void addTorrent(String fileName) {
-        System.out.println(fileName);
-        //torrent = new Torrent(fileName);
-        //String savePath = QFileDialog.getSaveFileName(this,
-        //       tr("Save File"), QDir.curentPath());
-        //torrent.createFile(savePath);
+    public void addTorrent(String fileName) throws Exception {
+        torrent = new Torrent(fileName);
+        String savePath = QFileDialog.getSaveFileName(this,
+               tr("Save File"), QDir.currentPath());
+        torrent.createFile(savePath);
     }
 
     public void startDownload() {

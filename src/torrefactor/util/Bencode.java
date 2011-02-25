@@ -1,28 +1,91 @@
 package torrefactor.util;
 import torrefactor.util.InvalidBencodeException;
 
-import java.io.Reader;
-import java.io.PushbackReader;
-import java.io.StringReader;
+import java.io.InputStream;
+import java.io.PushbackInputStream;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.HashMap;
 
 public class Bencode {
+    private int number = Integer.MAX_VALUE;
+    private String string = null;
+    private List<Bencode> list = null;
+    private HashMap<String, Bencode> map = null;
 
-    static public int decodeInt(Reader reader)
+    public Bencode(int _number) {
+        this.number = _number;
+    }
+
+    public Bencode(String _string) {
+        this.string = _string;
+    }
+
+    public Bencode(List<Bencode> _list) {
+        this.list = _list;
+    }
+
+    public Bencode(HashMap<String, Bencode> _map) {
+        this.map = _map;
+    }
+
+    public int toInt() {
+        return number;
+    }
+
+    public String toString() {
+        return string;
+    }
+
+    public List<Bencode> toList() {
+        return list;
+    }
+
+    public HashMap<String, Bencode> toMap() {
+        return map;
+    }
+
+    private static boolean isValid(int c) {
+        return c != -1;
+    }
+
+    private static Bencode decode(InputStream stream)
     throws java.io.IOException, InvalidBencodeException {
-        int c, value;
+        PushbackInputStream pbstream = new PushbackInputStream(stream);
+        int c = pbstream.read();
+        pbstream.unread(c);
+
+        if (!isValid(c)) throw new InvalidBencodeException("Unexpected end of stream");
+
+        if (Character.isDigit((char) c)) {
+            return new Bencode(decodeString(pbstream));
+        }
+        switch ((char) c) {
+        case 'i':
+            return new Bencode(decodeInt(pbstream));
+        case 'l':
+            return new Bencode(decodeList(pbstream));
+        case 'd':
+            return new Bencode(decodeDict(pbstream));
+        default:
+            throw new InvalidBencodeException(
+                      "Not a Bencode string (should start with 'i', 'l', 'd' or a digit)");
+        }
+    }
+
+    static public int decodeInt(InputStream stream)
+    throws java.io.IOException, InvalidBencodeException {
         StringBuilder sb = new StringBuilder();
 
-        while (true) {
-            c = reader.read();
-            if (c == (int) 'i') continue;
-            if (c == (int) 'e') break;
-            if (c == -1) throw new InvalidBencodeException(
-                    "Reached end of string while parsing int.");
+        int c = stream.read();
+        if (c != (int) 'i') throw new InvalidBencodeException("Not an int");
+        while ((c = stream.read()) != (int) 'e') {
+            if (!isValid(c)) throw new InvalidBencodeException(
+                    "Reached end of stream while parsing int.");
             sb.append((char) c);
         }
 
+        int value;
         try {
             value = Integer.parseInt(sb.toString());
         } catch (NumberFormatException exception) {
@@ -33,31 +96,29 @@ public class Bencode {
         return value;
     }
 
-    static public String decodeString(Reader reader)
+    static public String decodeString(InputStream stream)
     throws java.io.IOException, InvalidBencodeException {
-        int len, c;
-        String value;
         StringBuilder sb = new StringBuilder();
 
-        while (true) {
-            c = reader.read();
-            if (c == (int) ':') break;
-            if (c == -1) throw new InvalidBencodeException(
-                    "Reached end of string while parsing string length.");
+        int c;
+        while ((c = stream.read()) != (int) ':') {
+            if (!isValid(c)) throw new InvalidBencodeException(
+                    "Reached end of stream while parsing string length.");
             sb.append((char) c);
         }
-        
+
+        int len;
         try {
             len = Integer.parseInt(sb.toString());
         } catch (NumberFormatException exception) {
-            throw new InvalidBencodeException('"' + sb.toString() 
+            throw new InvalidBencodeException('"' + sb.toString()
                     + "\" is not a bencoded string: the length is not valid.");
         }
 
         sb = new StringBuilder();
         while (len != 0) {
-            c = reader.read();
-            if (c == -1) throw new InvalidBencodeException(
+            c = stream.read();
+            if (!isValid(c)) throw new InvalidBencodeException(
                     "Reached end of stream while parsing string.");
             sb.append((char) c);
             len--;
@@ -67,85 +128,45 @@ public class Bencode {
     }
 
 
-    static public ArrayList decodeList(Reader reader)
+    static public ArrayList<Bencode> decodeList(InputStream stream)
     throws java.io.IOException, InvalidBencodeException {
-        int c;
-        ArrayList<Object> list = new ArrayList<Object>();
-        PushbackReader pbreader = new PushbackReader(reader);
+        ArrayList<Bencode> list = new ArrayList<Bencode>();
+        PushbackInputStream pbstream = new PushbackInputStream(stream);
         
         c = pbreader.read();
         if (c != (int) 'l') {
             pbreader.unread(c);
         }
 
-        while (true) {
-            c = pbreader.read();
-            if (c == -1) {
-                throw new InvalidBencodeException(
-                        "Reached end of stream while parsing list.");
-            } else if (Character.isDigit(c)) {
-                pbreader.unread(c);
-                list.add(decodeString(pbreader));
-            } else if (c == (int) 'i') {
-                list.add(decodeInt(pbreader));
-            } else if (c == (int) 'l') {
-                list.add(decodeList(pbreader));
-            } else if (c == (int) 'd') {
-                list.add(decodeDictionary(pbreader));
-            } else if (c == (int) 'e') {
-                break;
-            } else {
-                throw new InvalidBencodeException("Didn't got list element"
-                                        + "(digit, i, l, d) or end of list.");
-            }
+        int c = stream.read();
+        if (c != (int) 'l') throw new InvalidBencodeException("Not a list");
+
+        while ((c = stream.read()) != (int) 'e') {
+            pbstream.unread(c);
+            list.add(decode(pbstream));
         }
         return list;
     }
 
 
-    static public HashMap decodeDictionary(Reader reader) throws java.io.IOException, InvalidBencodeException {
-        int c;
+    static public HashMap<String, Bencode> decodeDict(InputStream stream)
+    throws java.io.IOException, InvalidBencodeException {
         String key;
-        HashMap<String, Object> map = new HashMap<String, Object>();
-        PushbackReader pbreader = new PushbackReader(reader);
+        HashMap<String, Bencode> map = new HashMap<String, Bencode>();
+        PushbackInputStream pbstream = new PushbackInputStream(stream);
 
-        c = pbreader.read();
-        if (c != (int) 'd') {
-            pbreader.unread(c);
-        }
+        int c = stream.read();
+        if (c != (int) 'd') throw new InvalidBencodeException("Not a dictionary");
 
-        while (true) {
-            c = pbreader.read();
-            if (c == -1) {
-                throw new InvalidBencodeException("Reached end of stream " 
-                                        + "while parsing key in dictionary.");
-            } else if (Character.isDigit(c)) {
-                pbreader.unread(c);
-                key = decodeString(pbreader);
-            } else if (c == (int) 'e') {
-                break;
-            } else {
-                throw new InvalidBencodeException("Didn't got end of " 
+        while ((c = stream.read()) != (int) 'e') {
+            if (!Character.isDigit((char) c)) {
+                throw new InvalidBencodeException("Didn't got end of "
                         + "dictionary or bencoded string as dictionary key.");
             }
+            pbstream.unread(c);
+            key = decodeString(pbstream);
 
-            c = pbreader.read();
-            if (c == -1) {
-                throw new InvalidBencodeException("Reached end of stream " 
-                                        + "while parsing value in dictionary.");
-            } else if (Character.isDigit(c)) {
-                pbreader.unread(c);
-                map.put(key, decodeString(pbreader));
-            } else if (c == (int) 'i') {
-                map.put(key, decodeInt(pbreader));
-            } else if (c == (int) 'l') {
-                map.put(key, decodeList(pbreader));
-            } else if (c == (int) 'd') {
-                map.put(key, decodeDictionary(pbreader));
-            } else {
-                throw new InvalidBencodeException(
-                        "Didn't get a valid bencoded value.");
-            }
+            map.put(key, decode(pbstream));
         }
 
         return map;

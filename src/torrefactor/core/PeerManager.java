@@ -1,5 +1,6 @@
 package torrefactor.core;
 import torrefactor.core.*;
+import torrefactor.util.*;
 
 import java.io.*;
 import java.net.*;
@@ -22,14 +23,20 @@ public class PeerManager extends Thread {
     int leechers;
     final int MAX_PEERS = 25;
 
-    public PeerManager(Torrent _torrent) {
+    public PeerManager(Torrent _torrent) throws ProtocolException, InvalidBencodeException,
+                                                IOException {
         this.torrent = _torrent;
         announceTracker(TrackerEvent.started);
     }
 
     public void run() {
         for (Map.Entry<String, Peer> peerEntry : activeMap.entrySet()) {
-            peerEntry.getValue().run();
+            try {
+                peerEntry.getValue().run();
+            } catch(IOException e) {
+                activeMap.remove(peerEntry.getKey());
+                continue;
+            }
             if (peerEntry.getValue().wasDisconnected()) {
                 activeMap.remove(peerEntry.getKey());
             }
@@ -44,7 +51,8 @@ public class PeerManager extends Thread {
     public void stopDownload() {
     }
 
-    public void announceTracker(TrackerEvent event) throws ProtocolException {
+    public void announceTracker(TrackerEvent event) throws ProtocolException, InvalidBencodeException,
+                                                           IOException {
         String info_hash = URLEncoder.encode(torrent.infoHash, "UTF-8");
         String peer_id = URLEncoder.encode(peerId, "UTF-8");
         Object[] format = { info_hash, peer_id, Integer.toString(torrent.uploaded), Integer.toString(torrent.downloaded),
@@ -54,8 +62,8 @@ public class PeerManager extends Thread {
                                    + "&uploaded=%s&downloaded=%s&left=%s&event=%s",
                                    format);
         URLConnection connection = new URL(url).openConnection();
-        BufferedReader stream = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-        Map<String, Bencode> answerMap = Bencode.decode(stream);
+        BufferedInputStream stream = new BufferedInputStream(connection.getInputStream());
+        Map<String, Bencode> answerMap = Bencode.decodeDict(stream);
         stream.close();
         if (answerMap.containsKey("failure reason")) {
             throw new ProtocolException(answerMap.get("failure reason").toString());
@@ -72,8 +80,8 @@ public class PeerManager extends Thread {
         List<Bencode> peers = answerMap.get("peers").toList();
         Map<String, Peer> oldMap = new HashMap<String, Peer>(peerMap);
         this.peerMap = new HashMap<String, Peer>();
-        for (int i = 0; i < peers.length(); i++) {
-            Map<String, Bencode> newMap = peers.at(i).toMap();
+        for (int i = 0; i < peers.size(); i++) {
+            Map<String, Bencode> newMap = peers.get(i).toMap();
             String id = newMap.get("peer id").toString();
             String ip = newMap.get("ip").toString();
             int port = newMap.get("port").toInt();

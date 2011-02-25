@@ -1,7 +1,9 @@
 package torrefactor.core;
 import torrefactor.core.*;
+import torrefactor.util.*;
 
 import java.io.*;
+import java.net.*;
 import java.util.*;
 
 public class Torrent {
@@ -17,9 +19,10 @@ public class Torrent {
     int left;
     String trackerURL;
 
-    Torrent(String fileName) throws UnsupportedOperationException {
-        BufferedReader stream = new BufferedReader(new FileReader(fileName));
-        Map<String, Bencode> fileMap = Bencode.decode(stream);
+    public Torrent(String fileName) throws UnsupportedOperationException, IOException,
+    FileNotFoundException, InvalidBencodeException {
+        BufferedInputStream stream = new BufferedInputStream(new FileInputStream(fileName));
+        Map<String, Bencode> fileMap = Bencode.decodeDict(stream);
 
         Map<String, Bencode> infoMap = fileMap.get("info").toMap();
         if (infoMap.containsKey("files")) {
@@ -28,7 +31,7 @@ public class Torrent {
 
         this.pieceLength = infoMap.get("piece length").toInt();
         String pieces = infoMap.get("pieces").toString();
-        for (int i = 0; i < pieceLength; i += 20) {
+        for (int i = 0; i < pieces.length(); i += 20) {
             this.pieceList.add(pieces.substring(i, i+20));
         }
         this.name = infoMap.get("name").toString();
@@ -38,19 +41,21 @@ public class Torrent {
         this.trackerURL = fileMap.get("announce").toString();
     }
 
-    void createFile(String fileName) {
+    public void createFile(String fileName)
+    throws FileNotFoundException, IOException {
         this.file = new RandomAccessFile(fileName, "rw");
         this.file.setLength(this.length);
     }
 
-    void start() {
+    public void start() throws ProtocolException, InvalidBencodeException,
+                        IOException {
         if (this.peerManager != null) return;
 
         this.peerManager = new PeerManager(this);
         this.peerManager.run();
     }
 
-    void stop() {
+    public void stop() {
         if (this.peerManager == null) return;
 
         this.peerManager.stopDownload();

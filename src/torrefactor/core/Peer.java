@@ -13,8 +13,8 @@ public class Peer {
     private int port;
     private Torrent torrent;
     private Socket socket;
-    private BufferedReader socketReader;
-    private PrintWriter socketWriter;
+    private BufferedInputStream socketInput;
+    private PrintWriter socketOutput;
 
     boolean isChoked = true;
     boolean isChokingUs = true;
@@ -26,28 +26,27 @@ public class Peer {
         this.port = _port;
         this.torrent = _torrent;
         this.socket = new Socket(this.ip, this.port);
-        socketReader = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
-        socketWriter = new PrintWriter(this.socket.getOutputStream(), false);
+        socketInput = new BufferedInputStream(this.socket.getInputStream());
+        socketOutput = new PrintWriter(this.socket.getOutputStream(), false);
     }
 
     public void run() throws IOException {
         keepAlive();
-        //TODO: find out how ready() behaves
-        while (socketReader.ready()) {
+        while (socketInput.available() != 0) {
             readMessage();
         }
     }
 
     private void readMessage() throws IOException {
-        char[] lengthArray = new char[4];
-        socketReader.read(lengthArray, 0, 4);
+        byte[] lengthArray = new byte[4];
+        socketInput.read(lengthArray, 0, 4);
         int length = arrayToInt(lengthArray);
         if (length == 0) {
-            keepAlive();
+            //TODO: handle peer keepalive
             return;
         }
-        char[] messageArray = new char[length];
-        socketReader.read(messageArray, 0, length);
+        byte[] messageArray = new byte[length];
+        socketInput.read(messageArray, 0, length);
         String message = new String(messageArray);
         MessageType type = MessageType.values()[charToInt(message.charAt(0))];
         readMessage(type, message.substring(1));
@@ -84,10 +83,10 @@ public class Peer {
     }
 
     public void handshake() {
-        socketWriter.print("19BitTorrent protocol");
-        socketWriter.print("\0\0\0\0\0\0\0\0");
-        socketWriter.print(torrent.infoHash);
-        socketWriter.print(torrent.peerManager.peerId);
+        socketOutput.print("19BitTorrent protocol");
+        socketOutput.print("\0\0\0\0\0\0\0\0");
+        socketOutput.print(torrent.infoHash);
+        socketOutput.print(torrent.peerManager.peerId);
     }
 
     public boolean isDownloading() {
@@ -99,8 +98,8 @@ public class Peer {
     }
 
     private void keepAlive() {
-        socketWriter.print("0");
-        socketWriter.flush();
+        socketOutput.print("0");
+        socketOutput.flush();
     }
 
     private void sendMessage(MessageType type, String payload) {
@@ -108,16 +107,16 @@ public class Peer {
         if (payload != null) {
             length += payload.length();
         }
-        socketWriter.print(length);
-        socketWriter.print(type.ordinal());
+        socketOutput.print(length);
+        socketOutput.print(type.ordinal());
         if (payload != null && !payload.isEmpty()) {
-            socketWriter.print(payload);
+            socketOutput.print(payload);
         }
-        socketWriter.flush();
+        socketOutput.flush();
     }
 
-    private int arrayToInt(char[] intArray) {
-        return (intArray[0] << 24) | (intArray[1] << 16) | (intArray[2] << 8) | intArray[3];
+    private int arrayToInt(byte[] intArray) {
+        return (intArray[0] & 0xFF << 24) | (intArray[1] & 0xFF << 16) | (intArray[2] & 0xFF << 8) | intArray[3] & 0xFF;
     }
 
     private int charToInt(char digit) {
