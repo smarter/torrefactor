@@ -22,6 +22,9 @@ clean:
 	$(RM) src/*/*/*.class
 	$(RM) test/*/*.class
 
-test:
+test: default
 	$(JC) @list_test_javac
 
+runtest: test
+	java test.util.BencodeTest
+	java test.util.RsaTest
