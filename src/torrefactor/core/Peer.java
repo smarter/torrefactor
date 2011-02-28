@@ -4,7 +4,7 @@ import torrefactor.core.*;
 import java.io.*;
 import java.net.*;
 
-public class Peer {
+public class Peer extends Thread {
     public enum MessageType {
         choke, unchoke, interested, not_interested, have, bitfield,
         request, piece, cancel
@@ -15,6 +15,8 @@ public class Peer {
     private Socket socket;
     private DataInputStream socketInput;
     private PrintWriter socketOutput;
+    private int downloaded = 0;
+    private int uploaded = 0;
 
     private String id;
     private byte[] bitfield;
@@ -22,6 +24,9 @@ public class Peer {
     boolean isChokingUs = true;
     boolean isInteresting = false;
     boolean isInterestedInUs = false;
+
+    final static int delay = 100; // in milliseconds
+    final static int maxTries = 20;
 
     public Peer(String _ip, int _port, Torrent _torrent) throws UnknownHostException, IOException {
         this.ip = _ip;
@@ -36,17 +41,37 @@ public class Peer {
         socketOutput = new PrintWriter(this.socket.getOutputStream(), false);
     }
 
-    public void run() throws IOException {
-        keepAlive();
-        while (socketInput.available() != 0) {
-            readMessage();
+    public void run() {
+        try {
+            handshake();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        int tries = maxTries;
+        while (true) {
+            keepAlive();
+            try {
+                if (socketInput.available() != 0) {
+                    tries = maxTries;
+                    readMessage();
+                } else if (tries > 0) {
+                    tries--;
+                    sleep(delay);
+                } else {
+                    tries = maxTries;
+                    return;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 
     private void readMessage() throws IOException {
         int length = socketInput.readInt();
-        if (length == 0) {
-            //TODO: handle peer keepalive
+        if (length == 0) { // keepalive
             return;
         }
         MessageType type = MessageType.values()[socketInput.readChar()];
@@ -94,10 +119,10 @@ public class Peer {
             this.torrent.writePiece(index, offset, data);
             break;
         }
+        //TODO
         case cancel:
-        default: {
+        default:
             break;
-        }
         }
     }
 
@@ -124,6 +149,18 @@ public class Peer {
         byte[] inId = new byte[20];
         socketInput.read(inId);
         this.id = new String(inId);
+    }
+
+    public int popDownloaded() {
+        int poped = this.downloaded;
+        this.downloaded = 0;
+        return poped;
+    }
+
+    public int popUploaded() {
+        int poped = this.uploaded;
+        this.uploaded = 0;
+        return poped;
     }
 
     public boolean isDownloading() {

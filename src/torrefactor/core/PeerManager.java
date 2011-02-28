@@ -6,7 +6,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
-public class PeerManager extends Thread {
+public class PeerManager implements Runnable {
     public enum TrackerEvent {
         started, stopped, completed
     }
@@ -31,19 +31,15 @@ public class PeerManager extends Thread {
 
     public void run() {
         for (Map.Entry<String, Peer> peerEntry : activeMap.entrySet()) {
-            try {
-                peerEntry.getValue().run();
-            } catch(IOException e) {
-                activeMap.remove(peerEntry.getKey());
-                continue;
-            }
+            this.torrent.downloaded += peerEntry.getValue().popDownloaded();
+            this.torrent.uploaded += peerEntry.getValue().popUploaded();
             if (peerEntry.getValue().wasDisconnected()) {
                 activeMap.remove(peerEntry.getKey());
             }
         }
         for (int i = 0; i < MAX_PEERS - activeMap.size(); i++) {
             //Entry<String, Peer> peerEntry = selectPeer();
-            //peerEntry.getValue().handshake();
+            //peerEntry.getValue().start();
             //activeMap.add(peerEntry);
         }
     }
