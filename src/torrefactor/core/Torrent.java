@@ -14,8 +14,8 @@ public class Torrent {
     String infoHash;
     RandomAccessFile file;
     PeerManager peerManager;
-    int uploaded;
-    int downloaded;
+    int uploaded = 0;
+    int downloaded = 0;
     int left;
     String trackerURL;
 
@@ -46,6 +46,29 @@ public class Torrent {
         this.file = new RandomAccessFile(fileName, "rw");
         this.file.setLength(this.length);
     }
+
+
+    public String name() {
+        return this.name;
+    }
+
+    public int length() {
+        return this.length;
+    }
+
+    public int progress() {
+        if (this.length == 0) return 0;
+        return this.downloaded / this.length * 100;
+    }
+
+    public int downloaded() {
+        return this.downloaded;
+    }
+
+    public int uploaded() {
+        return this.uploaded;
+    }
+
 
     public void writePiece(int index, int offset, String data)
     throws IOException {

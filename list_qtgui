@@ -1,2 +1,4 @@
 src/torrefactor/gui/Main.java
 src/torrefactor/gui/MainWindow.java
+src/torrefactor/gui/TorrentModel.java
+src/torrefactor/gui/TorrentDelegate.java

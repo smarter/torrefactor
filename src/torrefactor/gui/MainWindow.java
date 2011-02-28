@@ -1,6 +1,7 @@
 package torrefactor.gui;
 
 import torrefactor.core.Torrent;
+import torrefactor.gui.*;
 
 import com.trolltech.qt.QVariant;
 import com.trolltech.qt.core.*;
@@ -12,7 +13,8 @@ public class MainWindow extends QMainWindow {
     private Torrent torrent;
 
     private QWidget centralWidget;
-    private QListView torrentView;
+    private QTableView torrentView;
+    private TorrentModel torrentModel;
     private QVBoxLayout layout;
 
     private QAction openAction;
@@ -23,13 +25,17 @@ public class MainWindow extends QMainWindow {
 
     private QMenu torrentMenu;
 
-    //private List<Torrent> torrentList = new List<Torrent>;
-
     public MainWindow() {
         centralWidget = new QWidget(this);
         layout = new QVBoxLayout(centralWidget);
         setCentralWidget(centralWidget);
-        torrentView = new QListView(centralWidget);
+        torrentModel = new TorrentModel();
+        torrentView = new QTableView(centralWidget);
+        torrentView.setModel(torrentModel);
+        torrentView.setItemDelegate(new TorrentDelegate());
+        torrentView.setShowGrid(false);
+        torrentView.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows);
+        torrentView.verticalHeader().setVisible(false);
         layout.addWidget(torrentView);
 
         setupActions();
@@ -69,9 +75,10 @@ public class MainWindow extends QMainWindow {
 
     public void addTorrent(String fileName) throws Exception {
         torrent = new Torrent(fileName);
-        String savePath = QFileDialog.getSaveFileName(this,
-               tr("Save File"), QDir.currentPath());
-        torrent.createFile(savePath);
+        //String savePath = QFileDialog.getSaveFileName(this,
+        //       tr("Save File"), QDir.currentPath());
+        //torrent.createFile(savePath);
+        torrentModel.addTorrent(torrent);
     }
 
     public void startDownload() {
