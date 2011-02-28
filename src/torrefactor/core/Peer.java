@@ -3,7 +3,6 @@ import torrefactor.core.*;
 
 import java.io.*;
 import java.net.*;
-import java.nio.*;
 
 public class Peer {
     public enum MessageType {
@@ -14,7 +13,7 @@ public class Peer {
     private int port;
     private Torrent torrent;
     private Socket socket;
-    private BufferedInputStream socketInput;
+    private DataInputStream socketInput;
     private PrintWriter socketOutput;
 
     private String id;
@@ -33,7 +32,7 @@ public class Peer {
         bits += ((torrent.pieceList.size() % 8) != 0) ? 1 : 0;
         this.bitfield = new byte[bits];
         this.socket = new Socket(this.ip, this.port);
-        socketInput = new BufferedInputStream(this.socket.getInputStream());
+        socketInput = new DataInputStream(new BufferedInputStream(this.socket.getInputStream()));
         socketOutput = new PrintWriter(this.socket.getOutputStream(), false);
     }
 
@@ -45,22 +44,16 @@ public class Peer {
     }
 
     private void readMessage() throws IOException {
-        byte[] lengthArray = new byte[4];
-        socketInput.read(lengthArray, 0, 4);
-        int length = ByteBuffer.wrap(lengthArray).getInt();
+        int length = socketInput.readInt();
         if (length == 0) {
             //TODO: handle peer keepalive
             return;
         }
-        byte[] message = new byte[length];
-        socketInput.read(message, 0, length);
-        ByteBuffer messageBuffer = ByteBuffer.wrap(message);
-        MessageType type = MessageType.values()[messageBuffer.getChar()];
-
-        readMessage(type, messageBuffer, length);
+        MessageType type = MessageType.values()[socketInput.readChar()];
+        readMessage(type, length);
     }
 
-    private void readMessage(MessageType type, ByteBuffer payload, int length)
+    private void readMessage(MessageType type, int length)
     throws IOException {
         switch (type) {
         case choke: {
@@ -80,23 +73,23 @@ public class Peer {
             break;
         }
         case have: {
-            int index = payload.getInt();
+            int index = socketInput.readInt();
             int byteIndex = index / 8 - 1;
             int offsetMask = 1 << (index % 8);
             this.bitfield[byteIndex] |= offsetMask;
             break;
         }
         case bitfield: {
-            payload.get(this.bitfield);
+            socketInput.read(this.bitfield);
             break;
         }
         //TODO
         case request:
         case piece: {
-            int index = payload.getInt();
-            int offset = payload.getInt();
+            int index = socketInput.readInt();
+            int offset = socketInput.readInt();
             byte[] dataArray = new byte[length - 2*4];
-            payload.get(dataArray);
+            socketInput.read(dataArray);
             String data = new String(dataArray);
             this.torrent.writePiece(index, offset, data);
             break;
