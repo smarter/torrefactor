@@ -21,19 +21,8 @@ public class Torrent {
 
     public Torrent(String fileName) throws UnsupportedOperationException, IOException,
     FileNotFoundException, InvalidBencodeException {
-        File metainfo = new File(fileName);
-        long length =  metainfo.length();
-        if (length > Integer.MAX_VALUE) {
-            throw new FileNotFoundException("File too large (can't be indexed by int)");
-        }
-        InputStream stream = new FileInputStream(metainfo);
-        byte[] array = new byte[(int) length];
-        stream.read(array);
-        stream.close();
-        PositionByteArrayInputStream pbastream = new PositionByteArrayInputStream(array);
-        int[] marks = new int[2];
-        Map<String, Bencode> fileMap = Bencode.decodeDict(pbastream, "info", marks);
-        System.out.println("##" + marks[0] + ' ' + marks[1]);
+        BufferedInputStream stream = new BufferedInputStream(new FileInputStream(fileName));
+        Map<String, Bencode> fileMap = Bencode.decodeDict(stream);
 
         Map<String, Bencode> infoMap = fileMap.get("info").toMap();
         if (infoMap.containsKey("files")) {

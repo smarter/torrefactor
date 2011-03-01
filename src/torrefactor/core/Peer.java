@@ -28,15 +28,6 @@ public class Peer extends Thread {
     final static int delay = 100; // in milliseconds
     final static int maxTries = 20;
 
-    public static void main(String[] args) throws Exception {
-        Torrent t = new Torrent("deb.torrent");
-        t.createFile("bla");
-        //t.start();
-        Peer p = new Peer("localhost", 3000, t);
-        p.handshake();
-        return;
-    }
-
     public Peer(String _ip, int _port, Torrent _torrent) throws UnknownHostException, IOException {
         this.ip = _ip;
         this.port = _port;
@@ -141,8 +132,7 @@ public class Peer extends Thread {
         socketOutput.print(header);
         socketOutput.print(reserved);
         socketOutput.print(torrent.infoHash);
-        //socketOutput.print(torrent.peerManager.peerId);
-        socketOutput.flush();
+        socketOutput.print(torrent.peerManager.peerId);
         byte[] inHeader = new byte[header.length()];
         socketInput.read(inHeader);
         if (!header.equals(new String(inHeader))) {

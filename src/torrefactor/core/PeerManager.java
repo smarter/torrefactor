@@ -51,7 +51,7 @@ public class PeerManager implements Runnable {
                                                            IOException {
         String info_hash = URLEncoder.encode(torrent.infoHash, "UTF-8");
         String peer_id = URLEncoder.encode(peerId, "UTF-8");
-        Object[] format = { info_hash, peer_id, this.port, Integer.toString(torrent.uploaded), Integer.toString(torrent.downloaded),
+        Object[] format = { info_hash, peer_id, Integer.toString(torrent.uploaded), Integer.toString(torrent.downloaded),
                             Integer.toString(torrent.left), event.toString() };
         String url = String.format(torrent.trackerURL
                                    + "/?info_hash=%s&peer_id=%s&port=%s"

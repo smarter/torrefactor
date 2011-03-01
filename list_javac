@@ -4,4 +4,3 @@ src/torrefactor/core/Torrent.java
 src/torrefactor/util/Bencode.java
 src/torrefactor/util/InvalidBencodeException.java
 src/torrefactor/util/Rsa.java
-src/torrefactor/util/PositionByteArrayInputStream.java
