@@ -139,9 +139,27 @@ public class Bencode {
         return list;
     }
 
-
     static public HashMap<String, Bencode> decodeDict(InputStream stream)
     throws java.io.IOException, InvalidBencodeException {
+        return decodeDict(stream, null, null);
+    }
+
+    /*
+     * if tag is not null:
+     * - stream should be a PositionByteArrayInputStream
+     * - marks should have at least length 2 (this functions writes to position 0 and 1)
+     */
+    static public HashMap<String, Bencode> decodeDict(InputStream stream, String tag, int[] marks)
+    throws java.io.IOException, InvalidBencodeException {
+        PositionByteArrayInputStream pbastream = null;
+        if (tag != null) {
+            try {
+                pbastream = (PositionByteArrayInputStream) stream;
+            } catch (ClassCastException e) {
+                e.printStackTrace();
+            }
+        }
+
         String key;
         HashMap<String, Bencode> map = new HashMap<String, Bencode>();
         PushbackInputStream pbstream = new PushbackInputStream(stream);
@@ -156,10 +174,19 @@ public class Bencode {
             }
             pbstream.unread(c);
             key = decodeString(pbstream);
+            if (pbastream != null && tag.equals(key)) {
+                marks[0] = pbastream.position() - tag.length();
+            }
+
 
             map.put(key, decode(pbstream));
+            if (pbastream != null && tag.equals(key)) {
+                marks[1] = pbastream.position() - 1;
+            }
         }
 
         return map;
     }
+
+
 }
