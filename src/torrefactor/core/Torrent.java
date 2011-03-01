@@ -12,7 +12,7 @@ public class Torrent {
     List<String> pieceList = new ArrayList<String>();
     private String name;
     private int length;
-    String infoHash;
+    byte[] infoHash;
     RandomAccessFile file;
     PeerManager peerManager;
     int uploaded = 0;
@@ -24,9 +24,8 @@ public class Torrent {
     FileNotFoundException, InvalidBencodeException, NoSuchAlgorithmException {
         DigestInputStream stream = new DigestInputStream(new BufferedInputStream(new FileInputStream(fileName)), MessageDigest.getInstance("SHA1"));
 
-        byte hashArray[] = new byte[20];
-        Map<String, Bencode> fileMap = Bencode.decodeDict(stream, "info", hashArray);
-        this.infoHash = new String(hashArray);
+        infoHash = new byte[20];
+        Map<String, Bencode> fileMap = Bencode.decodeDict(stream, "info", infoHash);
 
         Map<String, Bencode> infoMap = fileMap.get("info").toMap();
         if (infoMap.containsKey("files")) {

@@ -15,7 +15,7 @@ public class PeerManager implements Runnable {
     private Map<String, Peer> peerMap;
     private Map<String, Peer> activeMap;
 
-    String peerId = "11111111111111111111";
+    byte[] peerId = { (byte) 0xCA, (byte) 0xFE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     int port = 6881;
     int interval;
     String trackerId;
@@ -28,7 +28,7 @@ public class PeerManager implements Runnable {
         this.torrent = _torrent;
         this.peerMap = new HashMap<String, Peer>();
         this.activeMap = new HashMap<String, Peer>();
-        //announceTracker(TrackerEvent.started);
+        announceTracker(TrackerEvent.started);
     }
 
     public void run() {
@@ -51,14 +51,16 @@ public class PeerManager implements Runnable {
 
     public void announceTracker(TrackerEvent event) throws ProtocolException, InvalidBencodeException,
                                                            IOException {
-        String info_hash = URLEncoder.encode(torrent.infoHash, "UTF-8");
-        String peer_id = URLEncoder.encode(peerId, "UTF-8");
-        Object[] format = { info_hash, peer_id, Integer.toString(torrent.uploaded), Integer.toString(torrent.downloaded),
+        String info_hash = urlEncode(torrent.infoHash);
+        System.out.println(info_hash);
+        String peer_id = urlEncode(peerId);
+        Object[] format = { info_hash, peer_id, port, Integer.toString(torrent.uploaded), Integer.toString(torrent.downloaded),
                             Integer.toString(torrent.left), event.toString() };
         String url = String.format(torrent.trackerURL
-                                   + "/?info_hash=%s&peer_id=%s&port=%s"
+                                   + "?info_hash=%s&peer_id=%s&port=%s"
                                    + "&uploaded=%s&downloaded=%s&left=%s&event=%s",
                                    format);
+        System.out.println(url);
         URLConnection connection = new URL(url).openConnection();
         BufferedInputStream stream = new BufferedInputStream(connection.getInputStream());
         Map<String, Bencode> answerMap = Bencode.decodeDict(stream);
@@ -89,5 +91,14 @@ public class PeerManager implements Runnable {
                 this.peerMap.put(id, new Peer(ip, port, torrent));
             }
         }
+    }
+
+    private String urlEncode(byte[] array) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < array.length; i++) {
+            sb.append("%");
+            sb.append(Integer.toHexString(array[i] & 0xFF).toUpperCase());
+        }
+        return sb.toString();
     }
 }

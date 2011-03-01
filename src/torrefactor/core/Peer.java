@@ -9,16 +9,16 @@ public class Peer extends Thread {
         choke, unchoke, interested, not_interested, have, bitfield,
         request, piece, cancel
     }
+    private byte[] id;
     private String ip;
     private int port;
     private Torrent torrent;
     private Socket socket;
     private DataInputStream socketInput;
-    private PrintWriter socketOutput;
+    private DataOutputStream socketOutput;
     private int downloaded = 0;
     private int uploaded = 0;
 
-    private String id;
     private byte[] bitfield;
     boolean isChoked = true;
     boolean isChokingUs = true;
@@ -29,7 +29,7 @@ public class Peer extends Thread {
     final static int maxTries = 20;
 
     public static void main(String[] args) throws Exception {
-        Torrent t = new Torrent("foo.torrent");
+        Torrent t = new Torrent("deb.torrent");
         t.createFile("bla");
         t.start();
         Peer p = new Peer("localhost", 3000, t);
@@ -38,6 +38,7 @@ public class Peer extends Thread {
     }
 
     public Peer(String _ip, int _port, Torrent _torrent) throws UnknownHostException, IOException {
+        this.id = null;
         this.ip = _ip;
         this.port = _port;
         this.torrent = _torrent;
@@ -47,7 +48,7 @@ public class Peer extends Thread {
         this.bitfield = new byte[bits];
         this.socket = new Socket(this.ip, this.port);
         socketInput = new DataInputStream(new BufferedInputStream(this.socket.getInputStream()));
-        socketOutput = new PrintWriter(this.socket.getOutputStream(), false);
+        socketOutput = new DataOutputStream(new BufferedOutputStream(this.socket.getOutputStream()));
     }
 
     public void run() {
@@ -58,8 +59,8 @@ public class Peer extends Thread {
         }
         int tries = maxTries;
         while (true) {
-            keepAlive();
             try {
+                keepAlive();
                 if (socketInput.available() != 0) {
                     tries = maxTries;
                     readMessage();
@@ -80,7 +81,8 @@ public class Peer extends Thread {
 
     private void readMessage() throws IOException {
         int length = socketInput.readInt();
-        if (length == 0) { // keepalive
+        if (length == 0) {
+            //keepalive, do nothing
             return;
         }
         MessageType type = MessageType.values()[socketInput.readChar()];
@@ -136,29 +138,40 @@ public class Peer extends Thread {
     }
 
     public void handshake() throws IOException {
-        String header = "19Bittorent protocol";
-        String reserved = "\0\0\0\0\0\0\0\0";
-        socketOutput.print(header);
-        socketOutput.print(reserved);
-        socketOutput.print(torrent.infoHash);
-        //socketOutput.print(torrent.peerManager.peerId);
+        socketOutput.writeByte(19);
+        byte header[] = (new String("Bittorent protocol")).getBytes();
+        socketOutput.write(header);
+        byte reserved[] = { 0, 0, 0, 0, 0, 0, 0, 0};
+        socketOutput.write(reserved);
+        socketOutput.write(torrent.infoHash);
+        socketOutput.write(torrent.peerManager.peerId);
         socketOutput.flush();
-        byte[] inHeader = new byte[header.length()];
+        int inLength = socketInput.readByte() & 0xFF;
+        byte[] inHeader = new byte[inLength];
         socketInput.read(inHeader);
-        if (!header.equals(new String(inHeader))) {
+        if (inLength != 19) {
+            System.out.println("Unsupported protocol header: " + new String(inHeader));
             return;
         }
-        byte[] inReserved = new byte[reserved.length()];
+        for (int i = 0; i < inHeader.length; i++) {
+            if (inHeader[i] != header[i]) {
+                System.out.println("Unsupported protocol header: " + new String(inHeader));
+                return;
+            }
+        }
+        byte[] inReserved = new byte[reserved.length];
         socketInput.read(inReserved);
         System.out.println(new String(inReserved));
         byte[] inInfoHash = new byte[20];
         socketInput.read(inInfoHash);
-        if (!torrent.infoHash.equals(new String(inInfoHash))) {
-            return;
+        for (int i = 0; i < inInfoHash.length; i++) {
+            if (inInfoHash[i] != torrent.infoHash[i]) {
+                System.out.println("Wrong info_hash");
+                return;
+            }
         }
-        byte[] inId = new byte[20];
-        socketInput.read(inId);
-        this.id = new String(inId);
+        id = new byte[20];
+        socketInput.read(this.id);
     }
 
     public int popDownloaded() {
@@ -181,30 +194,30 @@ public class Peer extends Thread {
         return false;
     }
 
-    private void keepAlive() {
-        socketOutput.print("0");
+    private void keepAlive() throws IOException {
+        socketOutput.writeInt(0);
         socketOutput.flush();
     }
 
-    private void sendMessage(MessageType type, String payload) {
+    private void sendMessage(MessageType type, byte[] payload) throws IOException {
         int length = 1;
         if (payload != null) {
-            length += payload.length();
+            length += payload.length;
         }
-        socketOutput.print(length);
-        socketOutput.print(type.ordinal());
-        if (payload != null && !payload.isEmpty()) {
-            socketOutput.print(payload);
+        socketOutput.writeInt(length);
+        socketOutput.writeInt(type.ordinal());
+        if (payload != null) {
+            socketOutput.write(payload);
         }
         socketOutput.flush();
     }
 
-    public void setChoked(boolean b) {
+    public void setChoked(boolean b) throws IOException {
         MessageType type = b ? MessageType.choke : MessageType.unchoke;
         sendMessage(type, null);
     }
 
-    public void setInteresting(boolean b) {
+    public void setInteresting(boolean b) throws IOException {
         MessageType type = b ? MessageType.interested : MessageType.not_interested;
         sendMessage(type, null);
     }
