@@ -6,7 +6,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
-public class PeerManager implements Runnable {
+public class PeerManager extends Thread {
     public enum TrackerEvent {
         started, stopped, completed
     }
@@ -15,23 +15,28 @@ public class PeerManager implements Runnable {
     private Map<InetAddress, Peer> peerMap;
     private Map<InetAddress, Peer> activeMap;
 
-    byte[] peerId = { (byte) 0xCA, (byte) 0xFE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    byte[] peerId = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
     int port = 6881;
     int interval;
     String trackerId;
     int seeders;
     int leechers;
     final int MAX_PEERS = 25;
+    int delay = 300000; //  milliseconds
 
-    public PeerManager(Torrent _torrent) throws ProtocolException, InvalidBencodeException,
-                                                IOException {
+    public PeerManager(Torrent _torrent) {
         this.torrent = _torrent;
         this.peerMap = new HashMap<InetAddress, Peer>();
         this.activeMap = new HashMap<InetAddress, Peer>();
-        announceTracker(TrackerEvent.started);
     }
 
     public void run() {
+        try {
+            announceTracker(TrackerEvent.started);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
         for (Map.Entry<InetAddress, Peer> peerEntry : activeMap.entrySet()) {
             this.torrent.downloaded += peerEntry.getValue().popDownloaded();
             this.torrent.uploaded += peerEntry.getValue().popUploaded();
@@ -39,10 +44,18 @@ public class PeerManager implements Runnable {
                 activeMap.remove(peerEntry.getKey());
             }
         }
-        for (int i = 0; i < MAX_PEERS - activeMap.size(); i++) {
-            //Entry<InetAddress, Peer> peerEntry = selectPeer();
-            //peerEntry.getValue().start();
-            //activeMap.add(peerEntry);
+        int i = MAX_PEERS - activeMap.size();
+        for (Map.Entry<InetAddress, Peer> peerEntry : peerMap.entrySet()) {
+            peerEntry.getValue().start();
+            activeMap.put(peerEntry.getKey(), peerEntry.getValue());
+            i--;
+            if (i == 0) break;
+        }
+        try {
+            sleep(delay);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            return;
         }
     }
 

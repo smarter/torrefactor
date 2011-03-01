@@ -33,7 +33,7 @@ public class Peer extends Thread {
         t.createFile("bla");
         t.start();
         Peer p = new Peer(InetAddress.getByName("localhost"), 3000, t);
-        p.handshake();
+        p.start();
         return;
     }
 
@@ -50,7 +50,6 @@ public class Peer extends Thread {
         this.socket = new Socket(this.ip, this.port);
         socketInput = new DataInputStream(new BufferedInputStream(this.socket.getInputStream()));
         socketOutput = new DataOutputStream(new BufferedOutputStream(this.socket.getOutputStream()));
-        handshake();
     }
 
     public void run() {
@@ -141,13 +140,12 @@ public class Peer extends Thread {
 
     public void handshake() throws IOException {
         socketOutput.writeByte(19);
-        byte header[] = (new String("Bittorent protocol")).getBytes();
+        byte header[] = (new String("BitTorrent protocol")).getBytes();
         socketOutput.write(header);
         byte reserved[] = { 0, 0, 0, 0, 0, 0, 0, 0};
         socketOutput.write(reserved);
         socketOutput.write(torrent.infoHash);
-        //socketOutput.write(torrent.peerManager.peerId);
-        socketOutput.write((new String("00000000000000000000")).getBytes());
+        socketOutput.write(torrent.peerManager.peerId);
         socketOutput.flush();
         int inLength = socketInput.readByte() & 0xFF;
         byte[] inHeader = new byte[inLength];

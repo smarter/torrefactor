@@ -89,7 +89,7 @@ public class Torrent {
         if (this.peerManager != null) return;
 
         this.peerManager = new PeerManager(this);
-        this.peerManager.run();
+        this.peerManager.start();
     }
 
     public void stop() {
