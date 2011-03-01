@@ -10,41 +10,42 @@ import java.util.List;
 import java.util.HashMap;
 
 public class Bencode {
-    private int number = Integer.MAX_VALUE;
-    private String string = null;
-    private List<Bencode> list = null;
-    private HashMap<String, Bencode> map = null;
+    private Object value = null;
 
-    public Bencode(int _number) {
-        this.number = _number;
+    public Bencode(int number) {
+        this.value = new Integer(number);
     }
 
-    public Bencode(String _string) {
-        this.string = _string;
+    public Bencode(byte[] byteArray) {
+        this.value = byteArray;
     }
 
-    public Bencode(List<Bencode> _list) {
-        this.list = _list;
+    public Bencode(List<Bencode> list) {
+        this.value = list;
     }
 
-    public Bencode(HashMap<String, Bencode> _map) {
-        this.map = _map;
+    public Bencode(HashMap<String, Bencode> map) {
+        this.value = map;
+    }
+
+    public Object toObject() {
+        return this.value;
     }
 
     public int toInt() {
-        return number;
+        return ((Integer) this.value).intValue();
     }
 
-    public String toString() {
-        return string;
+    public byte[] toByteArray() {
+        return (byte[]) this.value;
     }
 
     public List<Bencode> toList() {
-        return list;
+        return (List<Bencode>) this.value;
     }
 
     public HashMap<String, Bencode> toMap() {
-        return map;
+        return (HashMap<String, Bencode>) this.value;
     }
 
     private static Bencode decode(InputStream stream)
@@ -56,7 +57,7 @@ public class Bencode {
         if (c == -1) throw new InvalidBencodeException("Unexpected end of stream");
 
         if (Character.isDigit((char) c)) {
-            return new Bencode(decodeString(pbstream));
+            return new Bencode(decodeByteArray(pbstream));
         }
         switch ((char) c) {
         case 'i':
@@ -94,7 +95,7 @@ public class Bencode {
         return value;
     }
 
-    static public String decodeString(InputStream stream)
+    static public byte[] decodeByteArray(InputStream stream)
     throws java.io.IOException, InvalidBencodeException {
         StringBuilder sb = new StringBuilder();
 
@@ -105,24 +106,24 @@ public class Bencode {
             sb.append((char) c);
         }
 
-        int len;
+        int length;
         try {
-            len = Integer.parseInt(sb.toString());
+            length = Integer.parseInt(sb.toString());
         } catch (NumberFormatException exception) {
             throw new InvalidBencodeException('"' + sb.toString()
                     + "\" is not a bencoded string: the length is not valid.");
         }
 
-        sb = new StringBuilder();
-        while (len != 0) {
+        byte[] byteArray = new byte[length];
+        for (int i = 0; i < length; i++) {
             c = stream.read();
             if (c == -1) throw new InvalidBencodeException(
                     "Reached end of stream while parsing string.");
-            sb.append((char) c);
-            len--;
+            if (c >= 256) throw new InvalidBencodeException("!");
+            byteArray[i] = (byte) c;
         }
 
-        return sb.toString();
+        return byteArray;
     }
 
 
@@ -177,7 +178,7 @@ public class Bencode {
             }
             pbstream.unread(c);
             String key;
-            key = decodeString(pbstream);
+            key = new String(decodeByteArray(pbstream));
             if (key.equals(hashTag)) {
                 foundTag = true;
                 dstream.on(true);

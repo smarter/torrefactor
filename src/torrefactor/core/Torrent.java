@@ -9,7 +9,7 @@ import java.util.*;
 
 public class Torrent {
     int pieceLength;
-    List<String> pieceList = new ArrayList<String>();
+    List<byte[]> pieceList = new ArrayList<byte[]>();
     private String name;
     private int length;
     byte[] infoHash;
@@ -33,15 +33,20 @@ public class Torrent {
         }
 
         this.pieceLength = infoMap.get("piece length").toInt();
-        String pieces = infoMap.get("pieces").toString();
-        for (int i = 0; i < pieces.length(); i += 20) {
-            this.pieceList.add(pieces.substring(i, i+20));
+        byte[] piecesArray = infoMap.get("pieces").toByteArray();
+        int i = 0;
+        while (i < piecesArray.length) {
+            byte[] piece = new byte[20];
+            for (int j = 0; j < piece.length; j++, i++) {
+                piece[j] = piecesArray[i];
+            }
+            this.pieceList.add(piece);
         }
-        this.name = infoMap.get("name").toString();
+        this.name = new String(infoMap.get("name").toByteArray());
         this.length = infoMap.get("length").toInt();
         this.left = this.length;
 
-        this.trackerURL = fileMap.get("announce").toString();
+        this.trackerURL = new String(fileMap.get("announce").toByteArray());
     }
 
     public void createFile(String fileName)

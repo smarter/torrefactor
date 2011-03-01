@@ -10,7 +10,7 @@ public class Peer extends Thread {
         request, piece, cancel
     }
     private byte[] id;
-    private String ip;
+    private InetAddress ip;
     private int port;
     private Torrent torrent;
     private Socket socket;
@@ -25,19 +25,20 @@ public class Peer extends Thread {
     boolean isInteresting = false;
     boolean isInterestedInUs = false;
 
-    final static int delay = 100; // in milliseconds
+    final static int delay = 100; // milliseconds
     final static int maxTries = 20;
 
     public static void main(String[] args) throws Exception {
         Torrent t = new Torrent("deb.torrent");
         t.createFile("bla");
         t.start();
-        Peer p = new Peer("localhost", 3000, t);
+        Peer p = new Peer(InetAddress.getByName("localhost"), 3000, t);
         p.handshake();
         return;
     }
 
-    public Peer(String _ip, int _port, Torrent _torrent) throws UnknownHostException, IOException {
+    public Peer(InetAddress _ip, int _port, Torrent _torrent) throws UnknownHostException, IOException {
+        System.out.println("New peer: " + _ip.toString() + ':' + _port);
         this.id = null;
         this.ip = _ip;
         this.port = _port;
@@ -49,6 +50,7 @@ public class Peer extends Thread {
         this.socket = new Socket(this.ip, this.port);
         socketInput = new DataInputStream(new BufferedInputStream(this.socket.getInputStream()));
         socketOutput = new DataOutputStream(new BufferedOutputStream(this.socket.getOutputStream()));
+        handshake();
     }
 
     public void run() {
@@ -144,7 +146,8 @@ public class Peer extends Thread {
         byte reserved[] = { 0, 0, 0, 0, 0, 0, 0, 0};
         socketOutput.write(reserved);
         socketOutput.write(torrent.infoHash);
-        socketOutput.write(torrent.peerManager.peerId);
+        //socketOutput.write(torrent.peerManager.peerId);
+        socketOutput.write((new String("00000000000000000000")).getBytes());
         socketOutput.flush();
         int inLength = socketInput.readByte() & 0xFF;
         byte[] inHeader = new byte[inLength];
