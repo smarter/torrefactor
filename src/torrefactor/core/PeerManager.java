@@ -26,7 +26,9 @@ public class PeerManager implements Runnable {
     public PeerManager(Torrent _torrent) throws ProtocolException, InvalidBencodeException,
                                                 IOException {
         this.torrent = _torrent;
-        announceTracker(TrackerEvent.started);
+        this.peerMap = new HashMap<String, Peer>();
+        this.activeMap = new HashMap<String, Peer>();
+        //announceTracker(TrackerEvent.started);
     }
 
     public void run() {

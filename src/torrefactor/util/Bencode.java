@@ -3,6 +3,8 @@ import torrefactor.util.InvalidBencodeException;
 
 import java.io.InputStream;
 import java.io.PushbackInputStream;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
@@ -139,25 +141,56 @@ public class Bencode {
         return list;
     }
 
-
     static public HashMap<String, Bencode> decodeDict(InputStream stream)
     throws java.io.IOException, InvalidBencodeException {
-        String key;
-        HashMap<String, Bencode> map = new HashMap<String, Bencode>();
-        PushbackInputStream pbstream = new PushbackInputStream(stream);
+        try {
+            return decodeDict(stream, null, null);
+        } catch (java.security.NoSuchAlgorithmException e) {
+            //can't happen, DigestInputStream constructor is never called
+            return null;
+        }
+    }
 
-        int c = stream.read();
+    static public HashMap<String, Bencode> decodeDict(InputStream stream, String hashTag, byte[] hashArray)
+    throws java.io.IOException, java.security.NoSuchAlgorithmException, InvalidBencodeException {
+        DigestInputStream dstream = null;
+
+        PushbackInputStream pbstream;
+        if (hashTag != null) {
+            dstream = (DigestInputStream) stream;
+            dstream.on(false);
+            pbstream = new PushbackInputStream(dstream);
+        } else {
+            pbstream = new PushbackInputStream(stream);
+        }
+
+        HashMap<String, Bencode> map = new HashMap<String, Bencode>();
+
+        int c = pbstream.read();
         if (c != (int) 'd') throw new InvalidBencodeException("Not a dictionary");
 
-        while ((c = stream.read()) != (int) 'e') {
+        boolean foundTag = false;
+        while ((c = pbstream.read()) != (int) 'e') {
             if (!Character.isDigit((char) c)) {
                 throw new InvalidBencodeException("Didn't got end of "
                         + "dictionary or bencoded string as dictionary key.");
             }
             pbstream.unread(c);
+            String key;
             key = decodeString(pbstream);
-
+            if (key.equals(hashTag)) {
+                foundTag = true;
+                dstream.on(true);
+            }
             map.put(key, decode(pbstream));
+            if (dstream != null && foundTag) {
+                dstream.on(false);
+                byte[] sha1Hash = dstream.getMessageDigest().digest();
+                for (int i = 0; i < hashArray.length; i++) {
+                    hashArray[i] = sha1Hash[i];
+                }
+                dstream = null;
+            }
         }
 
         return map;

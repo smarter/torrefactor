@@ -4,6 +4,7 @@ import torrefactor.util.*;
 
 import java.io.*;
 import java.net.*;
+import java.security.*;
 import java.util.*;
 
 public class Torrent {
@@ -20,9 +21,12 @@ public class Torrent {
     String trackerURL;
 
     public Torrent(String fileName) throws UnsupportedOperationException, IOException,
-    FileNotFoundException, InvalidBencodeException {
-        BufferedInputStream stream = new BufferedInputStream(new FileInputStream(fileName));
-        Map<String, Bencode> fileMap = Bencode.decodeDict(stream);
+    FileNotFoundException, InvalidBencodeException, NoSuchAlgorithmException {
+        DigestInputStream stream = new DigestInputStream(new BufferedInputStream(new FileInputStream(fileName)), MessageDigest.getInstance("SHA1"));
+
+        byte hashArray[] = new byte[20];
+        Map<String, Bencode> fileMap = Bencode.decodeDict(stream, "info", hashArray);
+        this.infoHash = new String(hashArray);
 
         Map<String, Bencode> infoMap = fileMap.get("info").toMap();
         if (infoMap.containsKey("files")) {
