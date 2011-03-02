@@ -19,6 +19,10 @@ public class Torrent {
     int downloaded = 0;
     int left;
     String trackerURL;
+    int creationDate = 0;
+    String comment = "";
+    String createdBy = "";
+    String encoding = "";
 
     public Torrent(String fileName) throws UnsupportedOperationException, IOException,
     FileNotFoundException, InvalidBencodeException, NoSuchAlgorithmException {
@@ -47,6 +51,21 @@ public class Torrent {
         this.left = this.length;
 
         this.trackerURL = new String(fileMap.get("announce").toByteArray());
+        if (fileMap.containsKey("comment")) {
+            this.comment = fileMap.get("comment").toString();
+        }
+        if (fileMap.containsKey("creation date")) {
+            //TODO: there should be a way to parse bencoded int as double
+            //      in util.Bencode since the date is coded on a long.
+            //this.creationDate = fileMap.get("creation date").toDouble();
+            System.err.println("Ignoring 'creation date' in torrent file.");
+        }
+        if (fileMap.containsKey("created by")) {
+            this.createdBy = fileMap.get("created by").toString();
+        }
+        if (fileMap.containsKey("encoding")) {
+            this.encoding = fileMap.get("encoding").toString();
+        }
     }
 
     public void createFile(String fileName)

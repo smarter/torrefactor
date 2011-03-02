@@ -72,6 +72,8 @@ public class Bencode {
         }
     }
 
+    //FIXME: We should handle handle gracefully the fact that bencode's int
+    //       may actually be long (for creationDate for instance).
     static public int decodeInt(InputStream stream)
     throws java.io.IOException, InvalidBencodeException {
         StringBuilder sb = new StringBuilder();
