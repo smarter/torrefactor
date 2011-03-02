@@ -121,8 +121,7 @@ public class Peer extends Thread {
         case have: {
             int index = socketInput.readInt();
             int byteIndex = index / 8;
-            int offsetMask = 1 << (index % 8);
-            this.bitfield[byteIndex] |= offsetMask;
+            this.bitfield[byteIndex] |= 1 << 7 - (index % 8);
             break;
         }
         case bitfield: {
