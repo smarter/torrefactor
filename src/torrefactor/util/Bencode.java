@@ -13,7 +13,7 @@ public class Bencode {
     private Object value = null;
 
     public Bencode(int number) {
-        this.value = new Integer(number);
+        this.value = Integer.valueOf(number);
     }
 
     public Bencode(byte[] byteArray) {

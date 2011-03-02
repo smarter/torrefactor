@@ -39,13 +39,13 @@ public class TorrentModel extends QAbstractTableModel {
         case Name:
             return torrent.name();
         case Progress:
-            return new Integer(torrent.progress());
+            return Integer.valueOf(torrent.progress());
         case Length:
-            return new Integer(torrent.length());
+            return Integer.valueOf(torrent.length());
         case Downloaded:
-            return new Integer(torrent.downloaded());
+            return Integer.valueOf(torrent.downloaded());
         case Uploaded:
-            return new Integer(torrent.uploaded());
+            return Integer.valueOf(torrent.uploaded());
         default:
             return new Object();
         }
