@@ -1,3 +1,4 @@
+
 package torrefactor.core;
 import torrefactor.core.*;
 import torrefactor.util.*;
@@ -46,6 +47,7 @@ public class PeerManager extends Thread {
         }
         int i = MAX_PEERS - activeMap.size();
         for (Map.Entry<InetAddress, Peer> peerEntry : peerMap.entrySet()) {
+            System.out.println(i + " Activating: " + peerEntry.getKey().toString());
             peerEntry.getValue().start();
             activeMap.put(peerEntry.getKey(), peerEntry.getValue());
             i--;
@@ -107,14 +109,12 @@ public class PeerManager extends Thread {
             i = 0;
             while (i != peersArray.length) {
                 byte[] ipArray = new byte[4];
-                for (int j = 0; j < 4; j++, i++) {
-                    ipArray[j] = peersArray[i];
-                }
+                System.arraycopy(peersArray, i, ipArray, 0, 4);
+                i += 4;
                 InetAddress ip = InetAddress.getByAddress(ipArray);
                 byte[] portArray = new byte[2];
-                for (int j = 0; j < 2; j++, i++) {
-                    portArray[j] = peersArray[i];
-                }
+                System.arraycopy(peersArray, i, portArray, 0, 2);
+                i += 2;
                 int port = (portArray[0] & 0xFF) << 8 | portArray[1] & 0xFF;
                 updateMap(ip, port, oldMap);
             }
