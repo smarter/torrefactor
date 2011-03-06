@@ -70,15 +70,31 @@ public class PeerManager extends Thread {
         String peer_id = urlEncode(peerId);
         Object[] format = { info_hash, peer_id, port, Integer.toString(torrent.uploaded), Integer.toString(torrent.downloaded),
                             Integer.toString(torrent.left), event.toString() };
-        String url = String.format(torrent.trackerURL
-                                   + "?info_hash=%s&peer_id=%s&port=%s"
-                                   + "&uploaded=%s&downloaded=%s&left=%s&event=%s&compact=1",
-                                   format);
-        System.out.println("Tracker GET: " + url);
-        URLConnection connection = new URL(url).openConnection();
-        BufferedInputStream stream = new BufferedInputStream(connection.getInputStream());
-        Map<String, Bencode> answerMap = Bencode.decodeDict(stream);
-        stream.close();
+        String params = String.format("?info_hash=%s&peer_id=%s&port=%s"
+                                      + "&uploaded=%s&downloaded=%s&left=%s&event=%s&compact=1",
+                                      format);
+        System.out.println("Request params: " + params);
+        Map<String, Bencode> answerMap = null;
+        for (List<String> tierList : this.torrent.announceList) {
+            if (answerMap != null) break;
+            for (int i = 0; i < tierList.size(); i++) {
+                if (answerMap != null) break;
+                try {
+                    answerMap = httpAnnounce(tierList.get(i), params);
+                    if (i != 0) {
+                        String tracker = tierList.remove(i);
+                        tierList.add(0, tracker);
+                    }
+                } catch (IOException e) {
+                    answerMap = null;
+                    e.printStackTrace();
+                }
+            }
+        }
+        if (answerMap == null) {
+            throw new IOException("Couldn't connect to any tracker.");
+        }
+
         if (answerMap.containsKey("failure reason")) {
             throw new ProtocolException(new String(answerMap.get("failure reason").toByteArray()));
         }
@@ -121,6 +137,32 @@ public class PeerManager extends Thread {
         } else {
             throw new ProtocolException("unrecognized peers format");
         }
+    }
+
+    private Map<String, Bencode> httpAnnounce(String urlString, String params)
+    throws IOException, InvalidBencodeException {
+        //PROJECT: we really should use URLConnection here, but for the project
+        // we're required to use Socket
+        URL url = new URL(urlString);
+        System.out.println("Tracker " + url.getHost() + ':' + url.getPort() + '/' + url.getPath());
+        Socket socket = new Socket(url.getHost(), url.getPort());
+        BufferedInputStream input = new BufferedInputStream(socket.getInputStream());
+        BufferedOutputStream output = new BufferedOutputStream(socket.getOutputStream());
+        String getRequest = "GET " + url.getPath() + params + "HTTP/1.0\n\r\n\r\n";
+        System.out.println(getRequest);
+        output.write(getRequest.getBytes());
+        output.flush();
+        //Skip headers
+        while (true) {
+            int c = input.read();
+            if (c == -1) throw new IOException("Unexpected end of stream");
+            if (c == (int) '\r' && input.read() == (int) '\n') break;
+        }
+        Map<String, Bencode> answerMap = Bencode.decodeDict(input);
+        input.close();
+        output.close();
+        socket.close();
+        return answerMap;
     }
 
     private void updateMap(InetAddress ip, int port, Map<InetAddress, Peer> oldMap)

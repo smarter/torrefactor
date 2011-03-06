@@ -18,7 +18,7 @@ public class Torrent {
     int uploaded = 0;
     int downloaded = 0;
     int left;
-    String trackerURL;
+    List<List<String>> announceList;
     int creationDate = 0;
     String comment = "";
     String createdBy = "";
@@ -38,6 +38,7 @@ public class Torrent {
 
         this.pieceLength = infoMap.get("piece length").toInt();
         byte[] piecesArray = infoMap.get("pieces").toByteArray();
+        {
         int i = 0;
         while (i < piecesArray.length) {
             byte[] piece = new byte[20];
@@ -46,11 +47,29 @@ public class Torrent {
             }
             this.pieceList.add(piece);
         }
+        }
         this.name = new String(infoMap.get("name").toByteArray());
         this.length = infoMap.get("length").toInt();
         this.left = this.length;
 
-        this.trackerURL = new String(fileMap.get("announce").toByteArray());
+        announceList = new ArrayList<List<String>>();
+        if (fileMap.containsKey("announce-list")) {
+            List<Bencode> announces = fileMap.get("announce-list").toList();
+            for (Bencode tierList : announces) {
+                List<Bencode> trackers = tierList.toList();
+                Collections.shuffle(trackers);
+                List<String> trackerList = new LinkedList<String>();
+                for (int i = 0; i < trackers.size(); i++) {
+                    trackerList.add(new String(trackers.get(i).toByteArray()));
+                }
+                announceList.add(trackerList);
+            }
+        } else {
+            List<String> trackerList = new LinkedList<String>();
+            trackerList.add(new String(fileMap.get("announce").toByteArray()));
+            announceList.add(trackerList);
+        }
+
         if (fileMap.containsKey("comment")) {
             this.comment = fileMap.get("comment").toString();
         }
