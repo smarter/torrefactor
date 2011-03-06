@@ -35,7 +35,7 @@ public class BencodeTest {
         InputStream stream = new ByteArrayInputStream(string.getBytes());
         String expected = "Foobar";
 
-        String result = Bencode.decodeString(stream);
+        String result = new String(Bencode.decodeByteArray(stream));
         assertTrue(result.equals(expected));
     }
 
@@ -45,7 +45,7 @@ public class BencodeTest {
         InputStream stream = new ByteArrayInputStream(string.getBytes());
         ArrayList<Bencode> result = Bencode.decodeList(stream);
 
-        assertTrue((new String(result.get(0).toByteArray()).equals("coffee"));
+        assertTrue((new String(result.get(0).toByteArray())).equals("coffee"));
         assertTrue(result.get(1).toInt() ==  42);
     }
 

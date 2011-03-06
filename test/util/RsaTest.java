@@ -14,7 +14,7 @@ import torrefactor.util.Rsa;
 public class RsaTest {
 
     public static void main (String[] strings) {
-        org.junit.runner.JUnitCore.main("test.util.RSAEncodeDecodeTest");
+        org.junit.runner.JUnitCore.main("test.util.RsaTest");
     }
 
     /**
