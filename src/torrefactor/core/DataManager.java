@@ -41,7 +41,7 @@ public class DataManager {
             System.out.println("Got channel for " + this.filePaths[i]); //DELETEME
         }
 
-        this.pieceNumber = ( (this.totalSize - 1) / this.pieceLength) + 1;
+        this.pieceNumber = (int) ( (this.totalSize - 1) / this.pieceLength) + 1;
     }
 
     public int pieceNumber () {
@@ -114,7 +114,7 @@ public class DataManager {
     public DataBlock getPiece(int number)
     throws java.io.IOException {
         // Does the piece exist?
-        int start = number * this.pieceLength;
+        long start = number * this.pieceLength;
         if (start > this.totalSize) {
             throw new IllegalArgumentException(
                     "Piece number " + number + " starts past torrent's data.");
@@ -123,7 +123,7 @@ public class DataManager {
         // Get the length
         int length = this.pieceLength;
         if (start + length > this.totalSize) {
-            length = totalSize - start;
+            length = (int) (totalSize - start);
         }
 
         return getBlock(number, 0, length);
