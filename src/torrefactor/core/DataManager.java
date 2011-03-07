@@ -41,7 +41,7 @@ public class DataManager {
             System.out.println("Got channel for " + this.filePaths[i]); //DELETEME
         }
 
-        this.pieceNumber = (int) ( (this.totalSize - 1) / (long) this.pieceLength) + 1;
+        this.pieceNumber = (int) ( (this.totalSize - 1) / this.pieceLength) + 1;
     }
 
     public int pieceNumber () {
