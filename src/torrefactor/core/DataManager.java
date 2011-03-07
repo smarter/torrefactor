@@ -8,9 +8,10 @@ import java.nio.channels.*;
 
 // TODO
 //  - set buffers limit so we cannot write past the block end.
+//  - Are we allowed to use package access for attributes ?
 
 public class DataManager {
-    private int pieceLength;
+    int pieceLength;
     private String[] filePaths;
     private long[] fileSizes;
     private RandomAccessFile[] raFiles;
