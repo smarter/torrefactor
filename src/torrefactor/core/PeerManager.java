@@ -44,6 +44,17 @@ public class PeerManager extends Thread {
             if (peerEntry.getValue().wasDisconnected()) {
                 activeMap.remove(peerEntry.getKey());
             }
+            // HACK: for testing only, real algorithm will not call addBlock until we actually get data
+            int freeOffset = this.torrent.pieceManager.getFreeBlock();
+            int freePieceIndex = freeOffset / this.torrent.dataManager.pieceLength;
+            int freePieceOffset = freeOffset % this.torrent.dataManager.pieceLength;
+            try {
+                peerEntry.getValue().sendRequest(freePieceIndex, freePieceOffset, (1 << 14)); // should be made asynchronous
+            } catch (IOException e) {
+                e.printStackTrace();
+                return;
+            }
+            this.torrent.pieceManager.addBlock(freePieceIndex, freePieceOffset, (1 << 14));
         }
         int i = MAX_PEERS - activeMap.size();
         for (Map.Entry<InetAddress, Peer> peerEntry : peerMap.entrySet()) {

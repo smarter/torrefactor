@@ -231,7 +231,7 @@ public class Peer extends Thread {
         socketOutput.flush();
     }
 
-    private void sendRequest(int index, int offset, int length)
+    void sendRequest(int index, int offset, int length)
     throws IOException {
         int[] params = { index, offset };
         sendMessage(MessageType.request, params, null);

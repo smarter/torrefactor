@@ -76,6 +76,16 @@ public class PieceManager {
         block.put(blockArray);
     }
 
+    // TODO: return a DataBlock ?
+    public int getFreeBlock() {
+        Map.Entry<Integer, Integer> firstEntry = this.blockMap.firstEntry();
+        if (firstEntry == null) {
+            return 0;
+        } else {
+            return firstEntry.getValue() + 1;
+        }
+    }
+
 
     // If the piece is valid, add it to the bitfield and return true
     // Otherwise, discard the blocks it's made of and return false
