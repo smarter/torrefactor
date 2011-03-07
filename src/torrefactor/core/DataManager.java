@@ -10,7 +10,7 @@ import java.nio.channels.*;
 //  - set buffers limit so we cannot write past the block end.
 
 public class DataManager {
-    private int pieceSize;
+    private int pieceLength;
     private String[] filePaths;
     private long[] fileSizes;
     private RandomAccessFile[] raFiles;
@@ -18,11 +18,11 @@ public class DataManager {
     private int totalSize;
 
     public DataManager (String[] _filePaths, long[] _fileSizes,
-                               int _pieceSize)
+                               int _pieceLength)
     throws java.io.FileNotFoundException, java.io.IOException {
         this.filePaths = _filePaths;
         this.fileSizes = _fileSizes;
-        this.pieceSize = _pieceSize;
+        this.pieceLength = _pieceLength;
         this.raFiles = new RandomAccessFile[this.filePaths.length];
         this.fileChannels = new FileChannel[this.filePaths.length];
         
@@ -43,7 +43,7 @@ public class DataManager {
 
     public DataBlock getBlock(int pieceNumber, int offset, int length)
     throws java.io.IOException {
-        long startOffset = (long) pieceNumber * (long) this.pieceSize + offset;
+        long startOffset = (long) pieceNumber * (long) this.pieceLength + offset;
         if (startOffset + length > this.totalSize) {
             throw new IllegalArgumentException ("Block at offset " + offset
                     + " with length " + length + "is outside of torrent's"
@@ -107,14 +107,14 @@ public class DataManager {
     public DataBlock getPiece(int number)
     throws java.io.IOException {
         // Does the piece exist?
-        int start = number * this.pieceSize;
+        int start = number * this.pieceLength;
         if (start > this.totalSize) {
             throw new IllegalArgumentException(
                     "Piece number " + number + " starts past torrent's data.");
         }
         
         // Get the length
-        int length = this.pieceSize;
+        int length = this.pieceLength;
         if (start + length > this.totalSize) {
             length = totalSize - start;
         }
@@ -123,7 +123,7 @@ public class DataManager {
     }
 
 //    public byte[] get (int number, int offset, int length) {
-//        long startOffset = number * this.pieceSize + offset;
+//        long startOffset = number * this.pieceLength + offset;
 //        int remainingLength = length;
 //        byte[] block = byte[length];
 //
