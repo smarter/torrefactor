@@ -1,6 +1,8 @@
 src/torrefactor/core/Peer.java
 src/torrefactor/core/PeerManager.java
 src/torrefactor/core/Torrent.java
+src/torrefactor/core/DataManager.java
+src/torrefactor/core/DataBlock.java
 src/torrefactor/util/Bencode.java
 src/torrefactor/util/InvalidBencodeException.java
 src/torrefactor/util/Rsa.java
