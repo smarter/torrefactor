@@ -9,12 +9,13 @@ import java.util.*;
 
 public class Torrent {
     int pieceLength;
-    List<byte[]> pieceList = new ArrayList<byte[]>();
     private String name;
     private int length;
     byte[] infoHash;
     RandomAccessFile file;
     PeerManager peerManager;
+    PieceManager pieceManager;
+    DataManager dataManager;
     int uploaded = 0;
     int downloaded = 0;
     int left;
@@ -38,16 +39,9 @@ public class Torrent {
 
         this.pieceLength = infoMap.get("piece length").toInt();
         byte[] piecesArray = infoMap.get("pieces").toByteArray();
-        {
-        int i = 0;
-        while (i < piecesArray.length) {
-            byte[] piece = new byte[20];
-            for (int j = 0; j < piece.length; j++, i++) {
-                piece[j] = piecesArray[i];
-            }
-            this.pieceList.add(piece);
-        }
-        }
+        int pieces = (this.length - 1)/this.pieceLength + 1;
+        pieceManager = new PieceManager(pieces, this.pieceLength, piecesArray);
+
         this.name = new String(infoMap.get("name").toByteArray());
         this.length = infoMap.get("length").toInt();
         this.left = this.length;

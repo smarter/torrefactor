@@ -43,10 +43,7 @@ public class Peer extends Thread {
         this.ip = _ip;
         this.port = _port;
         this.torrent = _torrent;
-        int bits = torrent.pieceList.size() / 8;
-        //round to nearest byte
-        bits += ((torrent.pieceList.size() % 8) != 0) ? 1 : 0;
-        this.bitfield = new byte[bits];
+        this.bitfield = new byte[this.torrent.pieceManager.bitfield.length];
     }
 
     public void run() {

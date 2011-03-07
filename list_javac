@@ -1,5 +1,6 @@
 src/torrefactor/core/Peer.java
 src/torrefactor/core/PeerManager.java
+src/torrefactor/core/PieceManager.java
 src/torrefactor/core/Torrent.java
 src/torrefactor/core/DataManager.java
 src/torrefactor/core/DataBlock.java

@@ -22,7 +22,7 @@ public class PeerManager extends Thread {
     String trackerId;
     int seeders;
     int leechers;
-    final int MAX_PEERS = 25;
+    static final int MAX_PEERS = 25;
     int delay = 300000; //  milliseconds
 
     public PeerManager(Torrent _torrent) {
@@ -47,7 +47,6 @@ public class PeerManager extends Thread {
         }
         int i = MAX_PEERS - activeMap.size();
         for (Map.Entry<InetAddress, Peer> peerEntry : peerMap.entrySet()) {
-            System.out.println(i + " Activating: " + peerEntry.getKey().toString());
             peerEntry.getValue().start();
             activeMap.put(peerEntry.getKey(), peerEntry.getValue());
             i--;

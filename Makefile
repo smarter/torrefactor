@@ -26,5 +26,6 @@ test: default
 	$(JC) @list_test_javac
 
 runtest: test
+	java test.core.PieceManagerTest
 	java test.util.BencodeTest
 	java test.util.RsaTest
