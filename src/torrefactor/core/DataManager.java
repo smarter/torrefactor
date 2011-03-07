@@ -7,7 +7,7 @@ import java.nio.*;
 import java.nio.channels.*;
 
 // TODO
-//  - set buffers limit so we cannot write past the chunk end.
+//  - set buffers limit so we cannot write past the block end.
 
 public class DataManager {
     private int pieceSize;
@@ -50,11 +50,11 @@ public class DataManager {
                     + " data.");
         }
         
-        // Calculate the number of buffers necessary to map this chunk.
+        // Calculate the number of buffers necessary to map this block.
         int numBuffers = 0;
         int remainingLength = length;
         long localOffset = startOffset;
-        System.out.println("Length of chunk: " + remainingLength); //DELETEME
+        System.out.println("Length of block: " + remainingLength); //DELETEME
         for (int i=0; i < this.fileChannels.length; i++) {
             if (localOffset < this.fileSizes[i]) {
                 numBuffers +=1;
@@ -72,7 +72,7 @@ public class DataManager {
             }
         }
 
-        // Map the chunk
+        // Map the block
         System.out.println("NumBuffers: " + numBuffers);    //DELETEME
         MappedByteBuffer[] buffers = new MappedByteBuffer[numBuffers];
         remainingLength = length;
@@ -81,14 +81,14 @@ public class DataManager {
             if (localOffset < fileSizes[i]) {
                 long remaining =  this.fileChannels[i].size() - localOffset;
                 if (remaining >= remainingLength) {
-                    // End of chunk is in this channel.
+                    // End of block is in this channel.
                     buffers[i] = fileChannels[i].map(
                                                 FileChannel.MapMode.READ_WRITE,
                                                 localOffset,
                                                 remainingLength);
                     break;
                 }
-                // End of chunk is past this channel's end.
+                // End of block is past this channel's end.
                 buffers[i] = fileChannels[i].map(FileChannel.MapMode.READ_WRITE,
                                                  localOffset,
                                                  remaining);
@@ -100,7 +100,7 @@ public class DataManager {
             }
         }
 
-        // return the chunk.
+        // return the block.
         return new DataBlock(buffers, length);
     }
 
@@ -125,7 +125,7 @@ public class DataManager {
 //    public byte[] get (int number, int offset, int length) {
 //        long startOffset = number * this.pieceSize + offset;
 //        int remainingLength = length;
-//        byte[] chunk = byte[length];
+//        byte[] block = byte[length];
 //
 //        for (int i=0; i<this.fileChannels; i++) {
 //            if (startOffset < this.fileChannels[i].size()) {

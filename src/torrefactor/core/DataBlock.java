@@ -20,11 +20,15 @@ public class DataBlock {
             offset -= this.buffers[i].limit();
         }
         throw new IllegalArgumentException(
-                "Offset " + offset + " is past chunk's end.");
+                "Offset " + offset + " is past block's end.");
+    }
+
+    public byte[] get () {
+        return get(0, this.length);
     }
 
     public byte[] get (int offset, int length) {
-        byte[] chunk = new byte[length];
+        byte[] block = new byte[length];
         int arrayOffset = 0;
         int localOffset = offset;
         for (int i=0; i<this.buffers.length; i++) {
@@ -33,11 +37,11 @@ public class DataBlock {
                 int remaining = buffers[i].remaining();
                 if (length <= remaining) {
                     System.out.println("arrayOffset: " + arrayOffset);  //DELETEME
-                    buffers[i].get(chunk, arrayOffset, length);
+                    buffers[i].get(block, arrayOffset, length);
                     break;
                 }
-                System.out.println("GetChunk " + arrayOffset + " " + remaining);
-                buffers[i].get(chunk, arrayOffset, remaining);
+                System.out.println("GetBlock " + arrayOffset + " " + remaining);
+                buffers[i].get(block, arrayOffset, remaining);
                 length -= remaining;
                 arrayOffset += remaining;
             }
@@ -48,25 +52,29 @@ public class DataBlock {
             }
         }
 
-        return chunk;
+        return block;
     }
 
-    public void put (int offset, byte chunk) {
+    public void put (int offset, byte block) {
         for (int i=0; i < this.buffers.length; i++) {
             if (offset < this.buffers[i].limit()) {
-                this.buffers[i].put(chunk);
+                this.buffers[i].put(block);
             }
             offset -= this.buffers[i].limit();
         }
         throw new IllegalArgumentException(
-                "Offset " + offset + "is past chunk's end.");
+                "Offset " + offset + "is past block's end.");
     }
 
-    public void put (int offset, byte[] chunk) {
-        put(chunk, offset, chunk.length);
+    public void put (int offset, byte[] block) {
+        put(block, offset, block.length);
     }
 
-    public void put (byte[] chunk, int offset, int length) {
+    public void put (byte[] block) {
+        put(block, 0, block.length);
+    }
+
+    public void put (byte[] block, int offset, int length) {
         int arrayOffset = 0;
         int localOffset = offset;
         for (int i=0; i<buffers.length; i++) {
@@ -76,7 +84,7 @@ public class DataBlock {
                     if (arrayOffset >= length) {
                         break;
                     }
-                    buffers[i].put(chunk[arrayOffset]);
+                    buffers[i].put(block[arrayOffset]);
                     arrayOffset ++;
                 } while (buffers[i].remaining()>0);
             }
