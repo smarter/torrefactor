@@ -125,15 +125,22 @@ public class Peer extends Thread {
             socketInput.read(this.bitfield);
             break;
         }
-        //TODO
-        case request:
+        case request: {
+            int index = socketInput.readInt();
+            int offset = socketInput.readInt();
+            int blockLength = socketInput.readInt();
+            System.out.println("Request, index: " + index + " offset: " + offset + " blockLength : " + blockLength);
+            DataBlock block = this.torrent.pieceManager.getBlock(index, offset, blockLength);
+            if (block == null) return;
+            sendBlock(index, offset, block.get());
+            break;
+        }
         case piece: {
             int index = socketInput.readInt();
             int offset = socketInput.readInt();
-            byte[] dataArray = new byte[length - 2*4];
-            socketInput.read(dataArray);
-            String data = new String(dataArray);
-            this.torrent.writePiece(index, offset, data);
+            byte[] block = new byte[length - 2*4];
+            socketInput.read(block);
+            this.torrent.pieceManager.putBlock(index, offset, block);
             break;
         }
         //TODO
@@ -203,26 +210,46 @@ public class Peer extends Thread {
         socketOutput.flush();
     }
 
-    private void sendMessage(MessageType type, byte[] payload) throws IOException {
+    private void sendMessage(MessageType type, int[] params, byte[] data) throws IOException {
         int length = 1;
-        if (payload != null) {
-            length += payload.length;
+        if (params != null) {
+            length += 4 * params.length;
+        }
+        if (data != null) {
+            length += data.length;
         }
         socketOutput.writeInt(length);
-        socketOutput.writeInt(type.ordinal());
-        if (payload != null) {
-            socketOutput.write(payload);
+        socketOutput.writeByte((byte) type.ordinal());
+        if (params != null) {
+            for (int param : params) {
+                socketOutput.writeInt(param);
+            }
+        }
+        if (data != null) {
+            socketOutput.write(data);
         }
         socketOutput.flush();
     }
 
+    private void sendRequest(int index, int offset, int length)
+    throws IOException {
+        int[] params = { index, offset };
+        sendMessage(MessageType.request, params, null);
+    }
+
+    private void sendBlock(int index, int offset, byte[] block)
+    throws IOException {
+        int[] params = { index, offset };
+        sendMessage(MessageType.piece, params, block);
+    }
+
     public void setChoked(boolean b) throws IOException {
         MessageType type = b ? MessageType.choke : MessageType.unchoke;
-        sendMessage(type, null);
+        sendMessage(type, null, null);
     }
 
     public void setInteresting(boolean b) throws IOException {
         MessageType type = b ? MessageType.interested : MessageType.not_interested;
-        sendMessage(type, null);
+        sendMessage(type, null, null);
     }
 }

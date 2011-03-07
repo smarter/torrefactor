@@ -56,6 +56,27 @@ public class PieceManager {
         return true;
     }
 
+    // Return the requested block if it's available, null otherwise
+    public DataBlock getBlock(int piece, int offset, int length)
+    throws IOException {
+        int begin = piece*this.dataManager.pieceLength + offset;
+        int end = begin + length - 1;
+        int beginKey = this.blockMap.floorKey(begin);
+        int endKey = this.blockMap.floorKey(end);
+        if (beginKey != endKey) {
+            return null;
+        } else {
+            return this.dataManager.getBlock(piece, offset, length);
+        }
+    }
+
+    public void putBlock(int piece, int offset, byte[] blockArray)
+    throws IOException {
+        DataBlock block = this.dataManager.getBlock(piece, offset, blockArray.length);
+        block.put(blockArray);
+    }
+
+
     // If the piece is valid, add it to the bitfield and return true
     // Otherwise, discard the blocks it's made of and return false
     public boolean checkPiece(int piece) throws IOException {
