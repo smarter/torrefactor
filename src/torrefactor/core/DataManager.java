@@ -15,7 +15,8 @@ public class DataManager {
     private long[] fileSizes;
     private RandomAccessFile[] raFiles;
     private FileChannel[] fileChannels;
-    private int totalSize;
+    private long totalSize;
+    private int pieceNumber;
 
     public DataManager (String[] _filePaths, long[] _fileSizes,
                                int _pieceLength)
@@ -39,6 +40,11 @@ public class DataManager {
             System.out.println("Got channel for " + this.filePaths[i]); //DELETEME
         }
 
+        this.pieceNumber = ( (this.totalSize - 1) / this.pieceLength) + 1;
+    }
+
+    public int pieceNumber () {
+        return this.pieceNumber;
     }
 
     public DataBlock getBlock(int pieceNumber, int offset, int length)
