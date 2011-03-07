@@ -41,11 +41,11 @@ public class DataManager {
 
     }
 
-    public DataBlock getChunk(int pieceNumber, int offset, int length)
+    public DataBlock getBlock(int pieceNumber, int offset, int length)
     throws java.io.IOException {
         long startOffset = (long) pieceNumber * (long) this.pieceSize + offset;
         if (startOffset + length > this.totalSize) {
-            throw new IllegalArgumentException ("Chunk at offset " + offset
+            throw new IllegalArgumentException ("Block at offset " + offset
                     + " with length " + length + "is outside of torrent's"
                     + " data.");
         }
@@ -119,7 +119,7 @@ public class DataManager {
             length = totalSize - start;
         }
 
-        return getChunk(number, 0, length);
+        return getBlock(number, 0, length);
     }
 
 //    public byte[] get (int number, int offset, int length) {

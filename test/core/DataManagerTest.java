@@ -32,24 +32,24 @@ public class DataManagerTest {
         String[] filePaths = {"data/test/DataManager/test0123"};
         long[] fileSizes = {77};
         int pieceSize = 16;
-        byte[] chunkData;
-        byte[] chunkDataExpected = {
+        byte[] blockData;
+        byte[] blockDataExpected = {
             0x30 & 0xFF, 0x30 & 0xFF, 0x30 & 0xFF, 0x30 & 0xFF,
             0x31 & 0xFF, 0x31 & 0xFF, 0x31 & 0xFF, 0x31 & 0xFF,
             0x32 & 0xFF, 0x32 & 0xFF, 0x32 & 0xFF, 0x32 & 0xFF,
             0x33 & 0xFF, 0x33 & 0xFF, 0x33 & 0xFF, 0x33 & 0xFF};
 
-        DataManager torrentMap = new DataManager (
+        DataManager dataManager = new DataManager (
                                              filePaths, fileSizes, pieceSize);
 
 
-        DataBlock chunk = torrentMap.getChunk(0, 0, pieceSize);
-        chunkData = chunk.get(0, pieceSize);
+        DataBlock block = dataManager.getBlock(0, 0, pieceSize);
+        blockData = block.get(0, pieceSize);
         System.out.print("Read: ");
-        printByteArray(chunkData);
+        printByteArray(blockData);
         System.out.print("Expe: ");
-        printByteArray(chunkDataExpected);
-        assertTrue(Arrays.equals(chunkData, chunkDataExpected));
+        printByteArray(blockDataExpected);
+        assertTrue(Arrays.equals(blockData, blockDataExpected));
 
     }
 
@@ -60,21 +60,21 @@ public class DataManagerTest {
         String[] filePaths = {"data/test/DataManager/test0123"};
         long[] fileSizes = {77};
         int pieceSize = 4;
-        byte[] chunkData;
-        byte[] chunkDataExpected = {
+        byte[] blockData;
+        byte[] blockDataExpected = {
             0x33 & 0xFF, 0x33 & 0xFF, 0x0A & 0xFF, 0x0A & 0xFF };
 
-        DataManager torrentMap = new DataManager (
+        DataManager dataManager = new DataManager (
                                              filePaths, fileSizes, pieceSize);
 
 
-        DataBlock chunk = torrentMap.getChunk(3, 2, pieceSize);
-        chunkData = chunk.get(0, pieceSize);
+        DataBlock block = dataManager.getBlock(3, 2, pieceSize);
+        blockData = block.get(0, pieceSize);
         System.out.print("Read: ");
-        printByteArray(chunkData);
+        printByteArray(blockData);
         System.out.print("Expe: ");
-        printByteArray(chunkDataExpected);
-        assertTrue(Arrays.equals(chunkData, chunkDataExpected));
+        printByteArray(blockDataExpected);
+        assertTrue(Arrays.equals(blockData, blockDataExpected));
 
     }
 
@@ -88,11 +88,11 @@ public class DataManagerTest {
         byte[] data;
         byte[] dataExpected;
 
-        DataManager torrentMap = new DataManager (
+        DataManager dataManager = new DataManager (
                                              filePaths, fileSizes, pieceSize);
 
-        DataBlock chunk = torrentMap.getPiece(0);
-        data = chunk.get(0, pieceSize);
+        DataBlock block = dataManager.getPiece(0);
+        data = block.get(0, pieceSize);
 
         dataExpected = new byte[] {
             0x30 & 0xFF, 0x30 & 0xFF, 0x30 & 0xFF, 0x30 & 0xFF };
@@ -105,18 +105,18 @@ public class DataManagerTest {
         System.out.print("Write: ");
         byte[] dataMod = new byte[] {
             0x10 & 0xFF, 0x10 & 0xFF, 0x10 & 0xFF, 0x10 & 0xFF };
-        chunk.put(0, dataMod);
+        block.put(0, dataMod);
         printByteArray(dataMod);
         System.out.print("Read:  ");
-        data = chunk.get(0, pieceSize);
+        data = block.get(0, pieceSize);
         printByteArray(data);
         assertTrue(Arrays.equals(data, dataMod));
 
         System.out.print("Write: ");
-        chunk.put(0, dataExpected);
+        block.put(0, dataExpected);
         printByteArray(dataExpected);
         System.out.print("Read:  ");
-        data = chunk.get(0, pieceSize);
+        data = block.get(0, pieceSize);
         printByteArray(data);
         assertTrue(Arrays.equals(data, dataExpected));
     }
@@ -130,21 +130,21 @@ public class DataManagerTest {
             "data/test/DataManager/test2" };
         long[] fileSizes = {15, 7};
         int pieceSize = 22;
-        byte[] chunkData;
-        byte[] chunkDataExpected = {
+        byte[] blockData;
+        byte[] blockDataExpected = {
             0x33 & 0xFF, 0x33 & 0xFF, 0x0A & 0xFF, 0x0A & 0xFF };
 
-        DataManager torrentMap = new DataManager (
+        DataManager dataManager = new DataManager (
                                              filePaths, fileSizes, pieceSize);
 
 
-        DataBlock chunk = torrentMap.getChunk(0, 0, pieceSize);
-        chunkData = chunk.get(0, pieceSize);
+        DataBlock block = dataManager.getBlock(0, 0, pieceSize);
+        blockData = block.get(0, pieceSize);
         System.out.print("Read: ");
-        printByteArray(chunkData);
+        printByteArray(blockData);
         System.out.print("Expe: ");
-        printByteArray(chunkDataExpected);
-//        assertTrue(Arrays.equals(chunkData, chunkDataExpected));
+        printByteArray(blockDataExpected);
+//        assertTrue(Arrays.equals(blockData, blockDataExpected));
 
     }
 }
