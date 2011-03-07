@@ -12,6 +12,7 @@ public class Torrent {
     private String name;
     private int length;
     byte[] infoHash;
+    private byte[] pieceHash;
     RandomAccessFile file;
     PeerManager peerManager;
     PieceManager pieceManager;
@@ -38,9 +39,8 @@ public class Torrent {
         }
 
         this.pieceLength = infoMap.get("piece length").toInt();
-        byte[] piecesArray = infoMap.get("pieces").toByteArray();
+        this.pieceHash = infoMap.get("pieces").toByteArray();
         int pieces = (this.length - 1)/this.pieceLength + 1;
-        pieceManager = new PieceManager(pieces, this.pieceLength, piecesArray);
 
         this.name = new String(infoMap.get("name").toByteArray());
         this.length = infoMap.get("length").toInt();
@@ -83,8 +83,10 @@ public class Torrent {
 
     public void createFile(String fileName)
     throws FileNotFoundException, IOException {
-        this.file = new RandomAccessFile(fileName, "rw");
-        this.file.setLength(this.length);
+        String[] fileList = { fileName };
+        long[] fileSizes  = { this.length };
+        dataManager = new DataManager(fileList, fileSizes, this.pieceLength);
+        pieceManager = new PieceManager(dataManager, this.pieceHash);
     }
 
 

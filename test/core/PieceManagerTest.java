@@ -1,5 +1,6 @@
 package test.core;
 
+import torrefactor.core.DataManager;
 import torrefactor.core.PieceManager;
 
 import org.junit.Test;
@@ -15,7 +16,19 @@ public class PieceManagerTest {
     //           [----]    [----]
     //         10^  50^ 100^    ^140
     private PieceManager init() {
-        PieceManager p = new PieceManager(10, (1 << 18), null);
+        String[] fileList = { "data/test/dummy" };
+        long[] fileSizes = { (1 << 8) };
+        int pieceLength = (1 << 4);
+        DataManager d = null;
+        try {
+            d = new DataManager(fileList, fileSizes, pieceLength);
+        } catch (Exception e) {
+            e.printStackTrace();
+            assertTrue(false);
+        }
+        byte[] fileHash = new byte[20];
+        java.util.Arrays.fill(fileHash, (byte) 0);
+        PieceManager p = new PieceManager(d, fileHash);
         p.addBlock(0, 10, 41);
         p.addBlock(0, 100, 41);
         return p;

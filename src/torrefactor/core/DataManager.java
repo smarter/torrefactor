@@ -27,7 +27,7 @@ public class DataManager {
         this.pieceLength = _pieceLength;
         this.raFiles = new RandomAccessFile[this.filePaths.length];
         this.fileChannels = new FileChannel[this.filePaths.length];
-        
+
         // Calculate total size, open each file, allocate disk space if
         // necessary and get FileChannel.
         this.totalSize = 0;
@@ -41,7 +41,7 @@ public class DataManager {
             System.out.println("Got channel for " + this.filePaths[i]); //DELETEME
         }
 
-        this.pieceNumber = ( (this.totalSize - 1) / this.pieceLength) + 1;
+        this.pieceNumber = (int) ( (this.totalSize - 1) / (long) this.pieceLength) + 1;
     }
 
     public int pieceNumber () {
@@ -56,7 +56,7 @@ public class DataManager {
                     + " with length " + length + "is outside of torrent's"
                     + " data.");
         }
-        
+
         // Calculate the number of buffers necessary to map this block.
         int numBuffers = 0;
         int remainingLength = length;
@@ -99,7 +99,7 @@ public class DataManager {
                 buffers[i] = fileChannels[i].map(FileChannel.MapMode.READ_WRITE,
                                                  localOffset,
                                                  remaining);
-                remainingLength -= remaining;         
+                remainingLength -= remaining;
             }
             localOffset -= fileChannels[i].size();
             if (localOffset < 0) {
@@ -114,16 +114,16 @@ public class DataManager {
     public DataBlock getPiece(int number)
     throws java.io.IOException {
         // Does the piece exist?
-        int start = number * this.pieceLength;
+        long start = number * this.pieceLength;
         if (start > this.totalSize) {
             throw new IllegalArgumentException(
                     "Piece number " + number + " starts past torrent's data.");
         }
-        
+
         // Get the length
         int length = this.pieceLength;
         if (start + length > this.totalSize) {
-            length = totalSize - start;
+            length = (int) (totalSize - start);
         }
 
         return getBlock(number, 0, length);

@@ -2,6 +2,7 @@ package torrefactor.core;
 
 import torrefactor.core.*;
 
+import java.io.*;
 import java.util.*;
 
 public class PieceManager {
@@ -9,20 +10,20 @@ public class PieceManager {
     //TreeMap provides O(log(n)) lookup, insert, remove, previous and successor
     //HACK: public until we have something to test private methods with junit
     public TreeMap<Integer, Integer> blockMap;
+    DataManager dataManager;
     public byte[] bitfield;
     byte[] digestArray;
-    int pieceLength;
 
-    public PieceManager(int pieces, int _pieceLength, byte[] _digestArray) {
-        this.pieceLength = _pieceLength;
+    public PieceManager(DataManager _dataManager, byte[] _digestArray) {
+        this.dataManager = _dataManager;
         this.blockMap = new TreeMap<Integer, Integer>();
-        this.bitfield = new byte[pieces];
+        this.bitfield = new byte[this.dataManager.pieceNumber()];
         Arrays.fill(this.bitfield, (byte) 0);
         this.digestArray = _digestArray;
     }
 
     public boolean addBlock(int piece, int offset, int length) {
-        int begin = piece*this.pieceLength  + offset;
+        int begin = piece*this.dataManager.pieceLength  + offset;
         int end =  begin + length - 1;
         Map.Entry<Integer, Integer> block = this.blockMap.floorEntry(end);
         if (block == null) {
@@ -57,12 +58,12 @@ public class PieceManager {
 
     // If the piece is valid, add it to the bitfield and return true
     // Otherwise, discard the blocks it's made of and return false
-    public boolean checkPiece(int piece) {
+    public boolean checkPiece(int piece) throws IOException {
         byte[] expectedDigest = new byte[20];
         System.arraycopy(digestArray, 20*piece, expectedDigest, 0, 20);
-        byte[] digest = new byte[20]; //dataManager.getPiece(piece).get();
+        byte[] digest = dataManager.getPiece(piece).get();
         if (!Arrays.equals(digest, expectedDigest)) {
-            removeBlocks(piece*this.pieceLength, this.pieceLength);
+            removeBlocks(piece*this.dataManager.pieceLength, this.dataManager.pieceLength);
             return false;
         }
         int byteIndex = piece / 8;
