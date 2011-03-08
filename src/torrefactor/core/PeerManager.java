@@ -23,7 +23,9 @@ public class PeerManager extends Thread {
     int seeders;
     int leechers;
     static final int MAX_PEERS = 25;
-    int delay = 300000; //  milliseconds
+    static final int delay = 1000; //  milliseconds
+    static final int triesBeforeAnnounce = 30*60;
+    int tries = 0;
 
     public PeerManager(Torrent _torrent) {
         this.torrent = _torrent;
@@ -32,42 +34,62 @@ public class PeerManager extends Thread {
     }
 
     public void run() {
-        try {
-            announceTracker(TrackerEvent.started);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return;
-        }
-        for (Map.Entry<InetAddress, Peer> peerEntry : activeMap.entrySet()) {
-            this.torrent.downloaded += peerEntry.getValue().popDownloaded();
-            this.torrent.uploaded += peerEntry.getValue().popUploaded();
-            if (peerEntry.getValue().wasDisconnected()) {
-                activeMap.remove(peerEntry.getKey());
+        while (true) {
+            if (tries == 0) {
+                try {
+                    announceTracker(TrackerEvent.started);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return;
+                }
+                tries = triesBeforeAnnounce;
             }
-            // HACK: for testing only, real algorithm will not call addBlock until we actually get data
-            int freeOffset = this.torrent.pieceManager.getFreeBlock();
-            int freePieceIndex = freeOffset / this.torrent.dataManager.pieceLength;
-            int freePieceOffset = freeOffset % this.torrent.dataManager.pieceLength;
+            int i = MAX_PEERS - activeMap.size();
+            for (Map.Entry<InetAddress, Peer> peerEntry : peerMap.entrySet()) {
+                if (activeMap.containsKey(peerEntry.getKey())) continue;
+                peerEntry.getValue().start();
+                activeMap.put(peerEntry.getKey(), peerEntry.getValue());
+                i--;
+                if (i == 0) break;
+            }
+            Iterator<Map.Entry<InetAddress, Peer>> it = activeMap.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry<InetAddress, Peer> peerEntry = it.next();
+                if (!peerEntry.getValue().isValid()) {
+                    it.remove();
+                    this.peerMap.remove(peerEntry.getKey());
+                }
+                if (!peerEntry.getValue().isConnected() || peerEntry.getValue().isChokingUs) {
+                    System.out.print(".");
+                    continue;
+                }
+                this.torrent.downloaded += peerEntry.getValue().popDownloaded();
+                this.torrent.uploaded += peerEntry.getValue().popUploaded();
+                // HACK: for testing only, real algorithm will not call addBlock until we actually get data
+                int offset = this.torrent.pieceManager.getFreeBlock();
+                int pieceIndex = offset / this.torrent.dataManager.pieceLength;
+                int pieceOffset = offset % this.torrent.dataManager.pieceLength;
+                if (pieceIndex == -1) continue;
+                if (!peerEntry.getValue().hasPiece(pieceIndex)) continue;
+                if (this.torrent.pieceManager.addBlock(pieceIndex, pieceOffset, (1 << 14)) == false) {
+                    continue;
+                }
+                System.out.println("index :" + pieceIndex + " offset: " + pieceOffset);
+                try {
+                    peerEntry.getValue().sendRequest(pieceIndex, pieceOffset, (1 << 14)); // should be made asynchronous
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    peerEntry.getValue().invalidate();
+                    //removeBlock
+                }
+            }
             try {
-                peerEntry.getValue().sendRequest(freePieceIndex, freePieceOffset, (1 << 14)); // should be made asynchronous
-            } catch (IOException e) {
+                sleep(delay);
+                tries--;
+            } catch (InterruptedException e) {
                 e.printStackTrace();
                 return;
             }
-            this.torrent.pieceManager.addBlock(freePieceIndex, freePieceOffset, (1 << 14));
-        }
-        int i = MAX_PEERS - activeMap.size();
-        for (Map.Entry<InetAddress, Peer> peerEntry : peerMap.entrySet()) {
-            peerEntry.getValue().start();
-            activeMap.put(peerEntry.getKey(), peerEntry.getValue());
-            i--;
-            if (i == 0) break;
-        }
-        try {
-            sleep(delay);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            return;
         }
     }
 

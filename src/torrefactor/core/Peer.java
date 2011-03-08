@@ -6,11 +6,14 @@ import java.net.*;
 import java.util.Arrays;
 
 public class Peer extends Thread {
+    boolean isValid = true;
+    boolean isConnected = false;
+
     public enum MessageType {
         choke, unchoke, interested, not_interested, have, bitfield,
         request, piece, cancel
     }
-    private byte[] id;
+    byte[] id;
     private InetAddress ip;
     private int port;
     private Torrent torrent;
@@ -26,8 +29,9 @@ public class Peer extends Thread {
     boolean isInteresting = false;
     boolean isInterestedInUs = false;
 
-    final static int delay = 100; // milliseconds
-    final static int maxTries = 20;
+    final static int delay = 1000; // milliseconds
+    final static int maxTries = 2*60;
+    boolean mark = false;
 
     public static void main(String[] args) throws Exception {
         Torrent t = new Torrent("deb.torrent");
@@ -44,60 +48,87 @@ public class Peer extends Thread {
         this.port = _port;
         this.torrent = _torrent;
         this.bitfield = new byte[this.torrent.pieceManager.bitfield.length];
+        Arrays.fill(this.bitfield, (byte) 0);
     }
 
     public void run() {
-        if (this.socket == null) {
+        if (!this.isConnected) {
             try {
                 System.out.println("Connecting: " + this.ip.toString() + ':' + this.port);
                 this.socket = new Socket(this.ip, this.port);
                 socketInput = new DataInputStream(new BufferedInputStream(this.socket.getInputStream()));
                 System.out.println("Connected: " + this.ip.toString() + ':' + this.port);
                 socketOutput = new DataOutputStream(new BufferedOutputStream(this.socket.getOutputStream()));
-                if (!handshake()) return;
-            } catch (Exception e) {
-                e.printStackTrace();
-                return;
-            }
-        }
-        int tries = maxTries;
-        while (true) {
-            try {
-                keepAlive();
-                if (socketInput.available() != 0) {
-                    tries = maxTries;
-                    readMessage();
-                } else if (tries > 0) {
-                    tries--;
-                    sleep(delay);
-                } else {
-                    tries = maxTries;
+                if (!handshake()) {
+                    invalidate();
                     return;
                 }
+                //TODO: remove, for testing only
+                setChoked(false);
+                setInteresting(true);
             } catch (Exception e) {
                 e.printStackTrace();
+                invalidate();
                 return;
             }
         }
+        this.isConnected = true;
+        int tries = maxTries;
+        while (this.isValid) {
+            if (mark) System.out.println("Loop: " + arrayToString(this.id) + " " + this.isValid + " " + this.isConnected + " " + !this.isChokingUs);
+            try {
+                if (socketInput.available() != 0) {
+                    //if (mark) System.out.println("REAAD" + arrayToString(this.id));
+                    tries = maxTries;
+                    readMessage();
+                    //if (mark) System.out.println("DEAAR" + arrayToString(this.id));
+                } else if (tries > 0) {
+                    //if (mark) System.out.println("SLEEP" + arrayToString(this.id));
+                    tries--;
+                    sleep(delay);
+                    //if (mark) System.out.println("PEELS" + arrayToString(this.id));
+                } else {
+                    //if (mark) System.out.println("KEEEP" + arrayToString(this.id));
+                    keepAlive();
+                    //if (mark) System.out.println("PEEEK" + arrayToString(this.id));
+                    tries = maxTries;
+                    //invalidate();
+                    //return;
+                }
+            } catch (Exception e) {
+                //if (mark) System.out.println("XXXXX" + arrayToString(this.id));
+                e.printStackTrace();
+                //if (mark) System.out.println("YYYYY" + arrayToString(this.id));
+                invalidate();
+                return;
+            }
+        }
+        //if (mark) System.out.println("EEEEE" + arrayToString(this.id));
     }
 
     private void readMessage() throws IOException {
         int length = socketInput.readInt();
         if (length == 0) {
+            System.out.println("Sent keep alive: " + arrayToString(this.id));
             //keepalive, do nothing
             return;
         }
         int typeByte = socketInput.read();
         if (typeByte < 0 || typeByte > 9) {
-            System.out.println("Unknown message type " + typeByte + ' ' + this.ip.toString() + ':' + this.port);
+            System.out.println("Got unknown message " + typeByte + " " + arrayToString(this.id));
+            while (socketInput.available() != 0) {
+                System.out.print(socketInput.read() + " ");
+            }
+            return;
         }
         MessageType type = MessageType.values()[typeByte];
-        readMessage(type, length);
+        readMessage(type, length - 1);
     }
 
     private void readMessage(MessageType type, int length)
     throws IOException {
-        System.out.println("Message " + type.toString() + ' ' + this.ip.toString() + ':' + this.port);
+        System.out.println("Got message " + type.toString() + " " + arrayToString(this.id) + " " + length);
+        if (type == MessageType.bitfield) mark = true;
         switch (type) {
         case choke: {
             this.isChokingUs = true;
@@ -122,6 +153,9 @@ public class Peer extends Thread {
             break;
         }
         case bitfield: {
+            if (length != this.bitfield.length) {
+                System.out.println("Wrong bitfield length, got: " + length + " expected: " + this.bitfield.length);
+            }
             socketInput.read(this.bitfield);
             break;
         }
@@ -181,7 +215,8 @@ public class Peer extends Thread {
         }
         id = new byte[20];
         socketInput.read(this.id);
-        System.out.println("Handshake done: " + this.ip.toString() + ':' + this.port);
+        System.out.println("Handshake done: " + this.ip.toString() + ':' + this.port + " id: " + arrayToString(this.id));
+        sendMessage(MessageType.bitfield, null, this.torrent.pieceManager.bitfield);
         return true;
     }
 
@@ -197,20 +232,51 @@ public class Peer extends Thread {
         return poped;
     }
 
-    public boolean isDownloading() {
-        return false;
+    public boolean isValid() {
+        return this.isValid;
     }
 
-    public boolean wasDisconnected() {
-        return false;
+    public void invalidate() {
+        if (this.id != null) {
+            System.out.println("## " + arrayToString(this.id) + " invalidated");
+        } else {
+            System.out.println("## " + this.ip.toString() + " invalidated");
+        }
+        this.isValid = false;
+    }
+
+    public boolean isConnected() {
+        return this.isValid && this.isConnected;
+    }
+
+    public int firstPiece() {
+        if (this.bitfield == null) return -1;
+        for (int i = 0; i < this.bitfield.length; i++) {
+            if (this.bitfield[i] == 0) continue;
+            int offset = 7;
+            while (this.bitfield[i] >>> offset == 0) {
+                offset--;
+            }
+            return 8*i + 7 - offset;
+        }
+        System.out.println("No piece: " + arrayToString(this.id));
+        return -1;
+    }
+
+    public boolean hasPiece(int index) {
+        int byteIndex = index / 8;
+        int offset = 7 - index % 8;
+        return (((this.bitfield[byteIndex] >>> offset) & 1) == 1);
     }
 
     private void keepAlive() throws IOException {
+        System.out.println("KeepAlive :" + arrayToString(this.id));
         socketOutput.writeInt(0);
         socketOutput.flush();
     }
 
     private void sendMessage(MessageType type, int[] params, byte[] data) throws IOException {
+        System.out.println("Sending " + type.toString() + " to :" + arrayToString(this.id));
         int length = 1;
         if (params != null) {
             length += 4 * params.length;
@@ -233,7 +299,8 @@ public class Peer extends Thread {
 
     void sendRequest(int index, int offset, int length)
     throws IOException {
-        int[] params = { index, offset };
+        if (!isConnected()) return;
+        int[] params = { index, offset, length };
         sendMessage(MessageType.request, params, null);
     }
 
@@ -251,5 +318,23 @@ public class Peer extends Thread {
     public void setInteresting(boolean b) throws IOException {
         MessageType type = b ? MessageType.interested : MessageType.not_interested;
         sendMessage(type, null, null);
+    }
+
+    // Adapted from http://stackoverflow.com/questions/220547/printable-char-in-java
+    private static boolean isPrintableChar(char c) {
+        Character.UnicodeBlock block = Character.UnicodeBlock.of( c );
+        return (!Character.isISOControl(c)) &&
+                block != null &&
+                block != Character.UnicodeBlock.SPECIALS;
+    }
+
+    private static String arrayToString(byte[] data) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < data.length; i++) {
+            if (isPrintableChar((char) data[i])) {
+                sb.append((char) data[i]);
+            }
+        }
+        return sb.toString();
     }
 }

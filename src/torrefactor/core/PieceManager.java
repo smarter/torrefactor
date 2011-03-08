@@ -17,7 +17,8 @@ public class PieceManager {
     public PieceManager(DataManager _dataManager, byte[] _digestArray) {
         this.dataManager = _dataManager;
         this.blockMap = new TreeMap<Integer, Integer>();
-        this.bitfield = new byte[this.dataManager.pieceNumber()];
+        int fieldLength = (this.dataManager.pieceNumber() - 1)/8 + 1;
+        this.bitfield = new byte[fieldLength];
         Arrays.fill(this.bitfield, (byte) 0);
         this.digestArray = _digestArray;
     }
