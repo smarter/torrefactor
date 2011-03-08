@@ -415,7 +415,7 @@ src.torrefactor.core : $(call PACKAGE_OBJS,src.torrefactor.core)
 src.torrefactor.gui : $(call PACKAGE_OBJS,src.torrefactor.gui)
 
 ## Custom targets
-runtest: src test
+runtest: all
 	java test.core.DataManagerTest
 	java test.core.PieceManagerTest
 	java test.util.BencodeTest
