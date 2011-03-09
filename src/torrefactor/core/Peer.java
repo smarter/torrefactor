@@ -31,7 +31,6 @@ public class Peer extends Thread {
 
     final static int delay = 1000; // milliseconds
     final static int maxTries = 2*60;
-    boolean mark = false;
 
     public static void main(String[] args) throws Exception {
         Torrent t = new Torrent("deb.torrent");
@@ -75,35 +74,24 @@ public class Peer extends Thread {
         this.isConnected = true;
         int tries = maxTries;
         while (this.isValid) {
-            if (mark) System.out.println("Loop: " + arrayToString(this.id) + " " + this.isValid + " " + this.isConnected + " " + !this.isChokingUs);
+            System.out.println("Loop: " + arrayToString(this.id) + " " + this.isValid + " " + this.isConnected + " " + !this.isChokingUs);
             try {
                 if (socketInput.available() != 0) {
-                    //if (mark) System.out.println("REAAD" + arrayToString(this.id));
                     tries = maxTries;
                     readMessage();
-                    //if (mark) System.out.println("DEAAR" + arrayToString(this.id));
                 } else if (tries > 0) {
-                    //if (mark) System.out.println("SLEEP" + arrayToString(this.id));
                     tries--;
                     sleep(delay);
-                    //if (mark) System.out.println("PEELS" + arrayToString(this.id));
                 } else {
-                    //if (mark) System.out.println("KEEEP" + arrayToString(this.id));
                     keepAlive();
-                    //if (mark) System.out.println("PEEEK" + arrayToString(this.id));
                     tries = maxTries;
-                    //invalidate();
-                    //return;
                 }
             } catch (Exception e) {
-                //if (mark) System.out.println("XXXXX" + arrayToString(this.id));
                 e.printStackTrace();
-                //if (mark) System.out.println("YYYYY" + arrayToString(this.id));
                 invalidate();
                 return;
             }
         }
-        //if (mark) System.out.println("EEEEE" + arrayToString(this.id));
     }
 
     private void readMessage() throws IOException {
@@ -128,7 +116,6 @@ public class Peer extends Thread {
     private void readMessage(MessageType type, int length)
     throws IOException {
         System.out.println("Got message " + type.toString() + " " + arrayToString(this.id) + " " + length);
-        if (type == MessageType.bitfield) mark = true;
         switch (type) {
         case choke: {
             this.isChokingUs = true;
