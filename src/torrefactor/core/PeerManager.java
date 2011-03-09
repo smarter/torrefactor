@@ -88,7 +88,7 @@ public class PeerManager implements Runnable {
                 }
             }
             try {
-                Thread.currentThread().sleep(delay);
+                Thread.currentThread().sleep(SLEEP_DELAY);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 return;
