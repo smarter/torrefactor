@@ -123,12 +123,12 @@ public class Torrent {
         if (this.peerManager != null) return;
 
         this.peerManager = new PeerManager(this);
-        this.peerManager.start();
+        new Thread(this.peerManager).start();
     }
 
     public void stop() {
         if (this.peerManager == null) return;
 
-        this.peerManager.stopDownload();
+        this.peerManager.stop();
     }
 }

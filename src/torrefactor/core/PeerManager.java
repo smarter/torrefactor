@@ -7,16 +7,18 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
-public class PeerManager extends Thread {
+public class PeerManager implements Runnable {
     public enum TrackerEvent {
         started, stopped, completed
     }
+
+    private volatile boolean stopped;
 
     private Torrent torrent;
     private Map<InetAddress, Peer> peerMap;
     private Map<InetAddress, Peer> activeMap;
 
-    byte[] peerId = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
+    final byte[] peerId = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
     int port = 6881;
     int interval;
     String trackerId;
@@ -34,7 +36,7 @@ public class PeerManager extends Thread {
     }
 
     public void run() {
-        while (true) {
+        while (!stopped) {
             if (tries == 0) {
                 try {
                     announceTracker(TrackerEvent.started);
@@ -47,7 +49,7 @@ public class PeerManager extends Thread {
             int i = MAX_PEERS - activeMap.size();
             for (Map.Entry<InetAddress, Peer> peerEntry : peerMap.entrySet()) {
                 if (activeMap.containsKey(peerEntry.getKey())) continue;
-                peerEntry.getValue().start();
+                new Thread(peerEntry.getValue()).start();
                 activeMap.put(peerEntry.getKey(), peerEntry.getValue());
                 i--;
                 if (i == 0) break;
@@ -59,7 +61,7 @@ public class PeerManager extends Thread {
                     it.remove();
                     this.peerMap.remove(peerEntry.getKey());
                 }
-                if (!peerEntry.getValue().isConnected() || peerEntry.getValue().isChokingUs) {
+                if (!peerEntry.getValue().isConnected() || peerEntry.getValue().isChokingUs()) {
                     System.out.print(".");
                     continue;
                 }
@@ -84,16 +86,17 @@ public class PeerManager extends Thread {
                 }
             }
             try {
-                sleep(delay);
+                Thread.currentThread().sleep(delay);
                 tries--;
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                Thread.currentThread().interrupt();
                 return;
             }
         }
     }
 
-    public void stopDownload() {
+    public void stop() {
+        this.stopped = true;
     }
 
     public void announceTracker(TrackerEvent event) throws ProtocolException, InvalidBencodeException,

@@ -5,14 +5,15 @@ import java.io.*;
 import java.net.*;
 import java.util.Arrays;
 
-public class Peer extends Thread {
-    boolean isValid = true;
-    boolean isConnected = false;
-
+public class Peer implements Runnable {
     public enum MessageType {
         choke, unchoke, interested, not_interested, have, bitfield,
         request, piece, cancel
     }
+
+    private volatile boolean isValid = true;
+    private boolean isConnected = false;
+
     byte[] id;
     private InetAddress ip;
     private int port;
@@ -24,10 +25,10 @@ public class Peer extends Thread {
     private int uploaded = 0;
 
     private byte[] bitfield;
-    boolean isChoked = true;
-    boolean isChokingUs = true;
-    boolean isInteresting = false;
-    boolean isInterestedInUs = false;
+    private boolean isChoked = true;
+    private boolean isChokingUs = true;
+    private boolean isInteresting = false;
+    private boolean isInterestedInUs = false;
 
     final static int delay = 1000; // milliseconds
     final static int maxTries = 2*60;
@@ -37,7 +38,7 @@ public class Peer extends Thread {
         t.createFile("bla");
         t.start();
         Peer p = new Peer(InetAddress.getByName("localhost"), 3000, t);
-        p.start();
+        new Thread(p).start();
         return;
     }
 
@@ -86,7 +87,11 @@ public class Peer extends Thread {
                     keepAlive();
                     tries = maxTries;
                 }
-            } catch (Exception e) {
+            } catch (InterruptedException e) {
+                invalidate();
+                Thread.currentThread().interrupt();
+                return;
+            } catch (IOException e) {
                 e.printStackTrace();
                 invalidate();
                 return;
@@ -171,7 +176,7 @@ public class Peer extends Thread {
         }
     }
 
-    public boolean handshake() throws IOException {
+    private boolean handshake() throws IOException {
         System.out.println("Handshake start: " + this.ip.toString() + ':' + this.port);
         socketOutput.writeByte(19);
         byte header[] = (new String("BitTorrent protocol")).getBytes();
@@ -205,6 +210,35 @@ public class Peer extends Thread {
         System.out.println("Handshake done: " + this.ip.toString() + ':' + this.port + " id: " + arrayToString(this.id));
         sendMessage(MessageType.bitfield, null, this.torrent.pieceManager.bitfield);
         return true;
+    }
+
+    public synchronized void setChoked(boolean b) throws IOException {
+        if (this.isChoked != b) {
+            this.isChoked = b;
+        }
+        MessageType type = b ? MessageType.choke : MessageType.unchoke;
+        sendMessage(type, null, null);
+    }
+
+    public synchronized void setInteresting(boolean b) throws IOException {
+        MessageType type = b ? MessageType.interested : MessageType.not_interested;
+        sendMessage(type, null, null);
+    }
+
+    public boolean isChoked() {
+        return this.isChoked;
+    }
+
+    public boolean isChokingUs() {
+        return this.isChokingUs;
+    }
+
+    public boolean isInteresting() {
+        return this.isInteresting;
+    }
+
+    public boolean isInterestedInUs() {
+        return this.isInterestedInUs;
     }
 
     public int popDownloaded() {
@@ -284,27 +318,17 @@ public class Peer extends Thread {
         socketOutput.flush();
     }
 
-    void sendRequest(int index, int offset, int length)
+    public void sendRequest(int index, int offset, int length)
     throws IOException {
         if (!isConnected()) return;
         int[] params = { index, offset, length };
         sendMessage(MessageType.request, params, null);
     }
 
-    private void sendBlock(int index, int offset, byte[] block)
+    public void sendBlock(int index, int offset, byte[] block)
     throws IOException {
         int[] params = { index, offset };
         sendMessage(MessageType.piece, params, block);
-    }
-
-    public void setChoked(boolean b) throws IOException {
-        MessageType type = b ? MessageType.choke : MessageType.unchoke;
-        sendMessage(type, null, null);
-    }
-
-    public void setInteresting(boolean b) throws IOException {
-        MessageType type = b ? MessageType.interested : MessageType.not_interested;
-        sendMessage(type, null, null);
     }
 
     // Adapted from http://stackoverflow.com/questions/220547/printable-char-in-java
