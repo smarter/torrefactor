@@ -25,9 +25,9 @@ public class PeerManager implements Runnable {
     int seeders;
     int leechers;
     static final int MAX_PEERS = 25;
-    static final int delay = 1000; //  milliseconds
-    static final int triesBeforeAnnounce = 30*60;
-    int tries = 0;
+    // In milliseconds
+    static final int ANNOUNCE_DELAY = 30*60*1000;
+    static final int SLEEP_DELAY = 1000;
 
     public PeerManager(Torrent _torrent) {
         this.torrent = _torrent;
@@ -36,15 +36,17 @@ public class PeerManager implements Runnable {
     }
 
     public void run() {
+        long time = System.currentTimeMillis();
+        announceTracker(TrackerEvent.started);
         while (!stopped) {
-            if (tries == 0) {
+            if (System.currentTimeMillis() - time > ANNOUNCE_DELAY) {
                 try {
                     announceTracker(TrackerEvent.started);
                 } catch (Exception e) {
                     e.printStackTrace();
                     return;
                 }
-                tries = triesBeforeAnnounce;
+                time = System.currentTimeMillis();
             }
             int i = MAX_PEERS - activeMap.size();
             for (Map.Entry<InetAddress, Peer> peerEntry : peerMap.entrySet()) {
@@ -87,7 +89,6 @@ public class PeerManager implements Runnable {
             }
             try {
                 Thread.currentThread().sleep(delay);
-                tries--;
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 return;

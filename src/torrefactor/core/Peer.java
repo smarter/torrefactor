@@ -30,8 +30,9 @@ public class Peer implements Runnable {
     private boolean isInteresting = false;
     private boolean isInterestedInUs = false;
 
-    final static int delay = 1000; // milliseconds
-    final static int maxTries = 2*60;
+    // In milliseconds
+    final static int PEER_TIMEOUT =  2*60*1000;
+    final static int SLEEP_DELAY = 1000;
 
     public static void main(String[] args) throws Exception {
         Torrent t = new Torrent("deb.torrent");
@@ -56,6 +57,7 @@ public class Peer implements Runnable {
             try {
                 System.out.println("Connecting: " + this.ip.toString() + ':' + this.port);
                 this.socket = new Socket(this.ip, this.port);
+                this.socket.setSoTimeout(PEER_TIMEOUT);
                 socketInput = new DataInputStream(new BufferedInputStream(this.socket.getInputStream()));
                 System.out.println("Connected: " + this.ip.toString() + ':' + this.port);
                 socketOutput = new DataOutputStream(new BufferedOutputStream(this.socket.getOutputStream()));
@@ -73,26 +75,24 @@ public class Peer implements Runnable {
             }
         }
         this.isConnected = true;
-        int tries = maxTries;
+        long time = System.currentTimeMillis();
         while (this.isValid) {
             System.out.println("Loop: " + arrayToString(this.id) + " " + this.isValid + " " + this.isConnected + " " + !this.isChokingUs);
             try {
-                if (socketInput.available() != 0) {
-                    tries = maxTries;
-                    readMessage();
-                } else if (tries > 0) {
-                    tries--;
-                    sleep(delay);
-                } else {
+                readMessage();
+                if (System.currentTimeMillis() - time > PEER_TIMEOUT / 2) {
                     keepAlive();
-                    tries = maxTries;
+                    time = System.currentTimeMillis();
                 }
-            } catch (InterruptedException e) {
-                invalidate();
-                Thread.currentThread().interrupt();
-                return;
             } catch (IOException e) {
                 e.printStackTrace();
+                invalidate();
+                return;
+            }
+            try {
+                Thread.currentThread().sleep(SLEEP_DELAY);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 invalidate();
                 return;
             }
