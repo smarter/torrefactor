@@ -37,7 +37,12 @@ public class PeerManager implements Runnable {
 
     public void run() {
         long time = System.currentTimeMillis();
-        announceTracker(TrackerEvent.started);
+        try {
+            announceTracker(TrackerEvent.started);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
         while (!stopped) {
             if (System.currentTimeMillis() - time > ANNOUNCE_DELAY) {
                 try {
