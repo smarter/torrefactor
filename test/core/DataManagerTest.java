@@ -129,22 +129,22 @@ public class DataManagerTest {
             "data/test/DataManager/test1",
             "data/test/DataManager/test2" };
         long[] fileSizes = {15, 7};
-        int pieceSize = 22;
+        int pieceSize = 4;
         byte[] blockData;
         byte[] blockDataExpected = {
-            0x33 & 0xFF, 0x33 & 0xFF, 0x0A & 0xFF, 0x0A & 0xFF };
+            0x0A & 0xFF, 0x37 & 0xFF, 0x37 & 0xFF, 0x38 & 0xFF };
 
         DataManager dataManager = new DataManager (
                                              filePaths, fileSizes, pieceSize);
 
 
-        DataBlock block = dataManager.getBlock(0, 0, pieceSize);
+        DataBlock block = dataManager.getBlock(3, 2, pieceSize);
         blockData = block.get(0, pieceSize);
         System.out.print("Read: ");
         printByteArray(blockData);
         System.out.print("Expe: ");
         printByteArray(blockDataExpected);
-//        assertTrue(Arrays.equals(blockData, blockDataExpected));
+        assertTrue(Arrays.equals(blockData, blockDataExpected));
 
     }
 }
