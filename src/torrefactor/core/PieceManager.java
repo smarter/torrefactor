@@ -39,12 +39,10 @@ public class PieceManager {
         if (block.getValue() >= begin) {
             // If our right side overlaps with a block B, extend our superior born to B's
             end = Math.max(end, block.getValue());
-            if (block.getKey() > begin) {
-                // Discard all blocks contained in our block
-                while (block != null && block.getKey() > begin) {
-                    this.blockMap.remove(block.getKey());
-                    block = this.blockMap.lowerEntry(block.getKey());
-                }
+            // Discard all blocks contained in our block
+            while (block != null && block.getKey() > begin) {
+                this.blockMap.remove(block.getKey());
+                block = this.blockMap.lowerEntry(block.getKey());
             }
             // If our left side overlaps with a block B, extend B's superior born to ours
             if (block != null && block.getValue() >= begin && block.getValue() <= end) {
@@ -56,6 +54,29 @@ public class PieceManager {
         this.blockMap.put(begin, end);
         return true;
     }
+
+    //Remove blocks of data, blocks overlapping but not contained in it
+    //will be shrunk
+    public boolean removeBlocks(int piece, int offset, int length) {
+        int begin = piece*this.dataManager.pieceLength + offset;
+        int end = begin + length - 1;
+        Map.Entry<Integer, Integer> block = this.blockMap.floorEntry(end);
+        if (block == null || block.getValue() < begin) {
+            return false;
+        }
+        if (block.getValue() > end) {
+            this.blockMap.put(end+1, block.getValue());
+        }
+        while (block != null && block.getKey() >= begin) {
+            this.blockMap.remove(block.getKey());
+            block = this.blockMap.lowerEntry(block.getKey());
+        }
+        if (block != null) {
+            this.blockMap.put(block.getKey(), begin - 1);
+        }
+        return true;
+    }
+
 
     // Return the requested block if it's available, null otherwise
     public DataBlock getBlock(int piece, int offset, int length)
@@ -93,23 +114,13 @@ public class PieceManager {
     public boolean checkPiece(int piece) throws IOException {
         byte[] expectedDigest = new byte[20];
         System.arraycopy(digestArray, 20*piece, expectedDigest, 0, 20);
-        byte[] digest = dataManager.getPiece(piece).get();
+        byte[] digest = this.dataManager.getPiece(piece).get();
         if (!Arrays.equals(digest, expectedDigest)) {
-            removeBlocks(piece*this.dataManager.pieceLength, this.dataManager.pieceLength);
+            removeBlocks(piece, 0, this.dataManager.pieceLength);
             return false;
         }
         int byteIndex = piece / 8;
         this.bitfield[byteIndex] |= 1 << 7 - (piece % 8);
         return true;
-    }
-
-    // Remove every block in the interval between the one including
-    // begin and the one included end
-    private void removeBlocks(int begin, int end) {
-        Integer curKey = this.blockMap.floorKey(begin);
-        while (curKey != null && curKey.compareTo(end) <= 0) {
-            this.blockMap.remove(curKey);
-            curKey = this.blockMap.higherKey(curKey);
-        }
     }
 }

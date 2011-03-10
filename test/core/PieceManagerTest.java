@@ -81,7 +81,7 @@ public class PieceManagerTest {
     //           20^ ^40
     @Test public void contained() {
         PieceManager p = init();
-        assertTrue(p.addBlock(0, 20, 21) == false);
+        assertFalse(p.addBlock(0, 20, 21));
         checkBounds(p, 10, 50);
         checkBounds(p, 100, 140);
     }
@@ -124,7 +124,7 @@ public class PieceManagerTest {
     //         10^ ^30
     @Test public void overlapLeftBorderContained() {
         PieceManager p = init();
-        assertTrue(p.addBlock(0, 10, 30) == false);
+        assertFalse(p.addBlock(0, 10, 30));
         checkBounds(p, 10, 50);
         checkBounds(p, 100, 140);
     }
@@ -145,5 +145,41 @@ public class PieceManagerTest {
         assertTrue(p.addBlock(0, 0, 11));
         checkBounds(p, 0, 50);
         checkBounds(p, 100, 140);
+    }
+
+    //           [--|-]    [-|--]   -->    [--]        [--]
+    //              ^20   120^
+    @Test public void removeOverlapLeftRight() {
+        PieceManager p = init();
+        assertTrue(p.removeBlocks(0, 20, 101));
+        checkBounds(p, 10, 19);
+        checkBounds(p, 121, 140);
+    }
+
+    //           [--|--------|--]   -->    [--]        [--]
+    //         10^  ^20   120^  ^140
+    @Test public void removeOverlapRightLeft() {
+        PieceManager p = init();
+        assertTrue(p.addBlock(0, 10, 131));
+        checkBounds(p, 10, 140);
+        assertTrue(p.removeBlocks(0, 20, 101));
+        checkBounds(p, 10, 19);
+        checkBounds(p, 121, 140);
+    }
+
+    //           [|--|]    [----]   -->    []  []    [----]
+    //          12^  ^38
+    @Test public void removeContained() {
+        PieceManager p = init();
+        assertTrue(p.removeBlocks(0, 12, 27));
+        checkBounds(p, 10, 11);
+        checkBounds(p, 39, 50);
+        checkBounds(p, 100, 140);
+    }
+
+
+    @Test public void removeNothing() {
+        PieceManager p = init();
+        assertFalse(p.removeBlocks(0, 500, 42));
     }
 }
