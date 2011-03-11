@@ -11,13 +11,13 @@ import java.nio.channels.*;
 //  - Are we allowed to use package access for attributes ?
 
 public class DataManager {
-    int pieceLength;
     private String[] filePaths;
     private long[] fileSizes;
     private RandomAccessFile[] raFiles;
     private FileChannel[] fileChannels;
     private long totalSize;
     private int pieceNumber;
+    private int pieceLength;
 
     public DataManager (String[] _filePaths, long[] _fileSizes,
                                int _pieceLength)
@@ -44,8 +44,12 @@ public class DataManager {
         this.pieceNumber = (int) ( (this.totalSize - 1) / this.pieceLength) + 1;
     }
 
-    public int pieceNumber () {
+    public int pieceNumber() {
         return this.pieceNumber;
+    }
+
+    public int pieceLength() {
+        return this.pieceLength;
     }
 
     public DataBlock getBlock(int pieceNumber, int offset, int length)

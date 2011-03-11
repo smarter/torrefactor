@@ -14,8 +14,9 @@ public class PieceManager {
     public byte[] bitfield;
     byte[] digestArray;
 
-    public PieceManager(DataManager _dataManager, byte[] _digestArray) {
-        this.dataManager = _dataManager;
+    public PieceManager(String[] fileList, long[] fileSizes, int pieceLength, byte[] _digestArray)
+    throws FileNotFoundException, IOException {
+        this.dataManager = new DataManager(fileList, fileSizes, pieceLength);
         this.blockMap = new TreeMap<Integer, Integer>();
         int fieldLength = (this.dataManager.pieceNumber() - 1)/8 + 1;
         this.bitfield = new byte[fieldLength];
@@ -23,8 +24,8 @@ public class PieceManager {
         this.digestArray = _digestArray;
     }
 
-    public boolean addBlock(int piece, int offset, int length) {
-        int begin = piece*this.dataManager.pieceLength  + offset;
+    public synchronized boolean addBlock(int piece, int offset, int length) {
+        int begin = piece*this.dataManager.pieceLength()  + offset;
         int end =  begin + length - 1;
         Map.Entry<Integer, Integer> block = this.blockMap.floorEntry(end);
         if (block == null) {
@@ -57,8 +58,8 @@ public class PieceManager {
 
     //Remove blocks of data, blocks overlapping but not contained in it
     //will be shrunk
-    public boolean removeBlocks(int piece, int offset, int length) {
-        int begin = piece*this.dataManager.pieceLength + offset;
+    public synchronized boolean removeBlocks(int piece, int offset, int length) {
+        int begin = piece*this.dataManager.pieceLength() + offset;
         int end = begin + length - 1;
         Map.Entry<Integer, Integer> block = this.blockMap.floorEntry(end);
         if (block == null || block.getValue() < begin) {
@@ -77,11 +78,10 @@ public class PieceManager {
         return true;
     }
 
-
     // Return the requested block if it's available, null otherwise
-    public DataBlock getBlock(int piece, int offset, int length)
+    public synchronized DataBlock getReadBlock(int piece, int offset, int length)
     throws IOException {
-        int begin = piece*this.dataManager.pieceLength + offset;
+        int begin = piece*this.dataManager.pieceLength() + offset;
         int end = begin + length - 1;
         int beginKey = this.blockMap.floorKey(begin);
         int endKey = this.blockMap.floorKey(end);
@@ -92,7 +92,7 @@ public class PieceManager {
         }
     }
 
-    public void putBlock(int piece, int offset, byte[] blockArray)
+    public synchronized void putBlock(int piece, int offset, byte[] blockArray)
     throws IOException {
         DataBlock block = this.dataManager.getBlock(piece, offset, blockArray.length);
         block.put(blockArray);
@@ -116,7 +116,7 @@ public class PieceManager {
         System.arraycopy(digestArray, 20*piece, expectedDigest, 0, 20);
         byte[] digest = this.dataManager.getPiece(piece).get();
         if (!Arrays.equals(digest, expectedDigest)) {
-            removeBlocks(piece, 0, this.dataManager.pieceLength);
+            removeBlocks(piece, 0, this.dataManager.pieceLength());
             return false;
         }
         int byteIndex = piece / 8;

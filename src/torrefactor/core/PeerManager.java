@@ -76,8 +76,8 @@ public class PeerManager implements Runnable {
                 this.torrent.uploaded += peerEntry.getValue().popUploaded();
                 // HACK: for testing only, real algorithm will not call addBlock until we actually get data
                 int offset = this.torrent.pieceManager.getFreeBlock();
-                int pieceIndex = offset / this.torrent.dataManager.pieceLength;
-                int pieceOffset = offset % this.torrent.dataManager.pieceLength;
+                int pieceIndex = offset / this.torrent.pieceLength;
+                int pieceOffset = offset % this.torrent.pieceLength;
                 if (pieceIndex == -1) continue;
                 if (!peerEntry.getValue().hasPiece(pieceIndex)) continue;
                 if (this.torrent.pieceManager.addBlock(pieceIndex, pieceOffset, (1 << 14)) == false) {

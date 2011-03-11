@@ -11,12 +11,10 @@ public class Torrent {
     int pieceLength;
     private String name;
     private int length;
-    byte[] infoHash;
     private byte[] pieceHash;
-    RandomAccessFile file;
+    byte[] infoHash;
     PeerManager peerManager;
     PieceManager pieceManager;
-    DataManager dataManager;
     int uploaded = 0;
     int downloaded = 0;
     int left;
@@ -85,8 +83,7 @@ public class Torrent {
     throws FileNotFoundException, IOException {
         String[] fileList = { fileName };
         long[] fileSizes  = { this.length };
-        dataManager = new DataManager(fileList, fileSizes, this.pieceLength);
-        pieceManager = new PieceManager(dataManager, this.pieceHash);
+        pieceManager = new PieceManager(fileList, fileSizes, this.pieceLength, this.pieceHash);
     }
 
 
@@ -109,13 +106,6 @@ public class Torrent {
 
     public int uploaded() {
         return this.uploaded;
-    }
-
-
-    public void writePiece(int index, int offset, String data)
-    throws IOException {
-        this.file.seek(this.pieceLength * index + offset);
-        this.file.writeBytes(data);
     }
 
     public void start() throws ProtocolException, InvalidBencodeException,

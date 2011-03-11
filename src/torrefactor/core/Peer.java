@@ -156,7 +156,7 @@ public class Peer implements Runnable {
             int offset = socketInput.readInt();
             int blockLength = socketInput.readInt();
             System.out.println("Request, index: " + index + " offset: " + offset + " blockLength : " + blockLength);
-            DataBlock block = this.torrent.pieceManager.getBlock(index, offset, blockLength);
+            DataBlock block = this.torrent.pieceManager.getReadBlock(index, offset, blockLength);
             if (block == null) return;
             sendBlock(index, offset, block.get());
             break;
