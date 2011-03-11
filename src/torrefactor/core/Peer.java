@@ -30,11 +30,11 @@ public class Peer implements Runnable {
     private boolean isInteresting = false;
     private boolean isInterestedInUs = false;
 
-    final static int CONNECTION_TRIES = 5;
+    static final int CONNECTION_TRIES = 5;
 
     // In milliseconds
-    final static int PEER_TIMEOUT =  2*60*1000;
-    final static int SLEEP_DELAY = 1000;
+    static final int PEER_TIMEOUT =  2*60*1000;
+    static final int SLEEP_DELAY = 1000;
 
     public static void main(String[] args) throws Exception {
         Torrent t = new Torrent("deb.torrent");
