@@ -8,7 +8,7 @@ import java.util.Arrays;
 public class Peer implements Runnable {
     public enum MessageType {
         choke, unchoke, interested, not_interested, have, bitfield,
-        request, piece, cancel
+        request, piece, cancel, port
     }
 
     private volatile boolean isValid = true;
@@ -29,6 +29,8 @@ public class Peer implements Runnable {
     private boolean isChokingUs = true;
     private boolean isInteresting = false;
     private boolean isInterestedInUs = false;
+
+    final static int CONNECTION_TRIES = 5;
 
     // In milliseconds
     final static int PEER_TIMEOUT =  2*60*1000;
@@ -53,7 +55,8 @@ public class Peer implements Runnable {
     }
 
     public void run() {
-        if (!this.isConnected) {
+        int tries = 0;
+        while (this.socket == null) {
             try {
                 System.out.println("Connecting: " + this.ip.toString() + ':' + this.port);
                 this.socket = new Socket(this.ip, this.port);
@@ -69,15 +72,22 @@ public class Peer implements Runnable {
                 setChoked(false);
                 setInteresting(true);
             } catch (Exception e) {
-                e.printStackTrace();
-                invalidate();
-                return;
+                tries++;
+                if (this.socket != null) {
+                    //this.socket.close();
+                }
+                this.socket = null;
+                if (tries == CONNECTION_TRIES) {
+                    e.printStackTrace();
+                    invalidate();
+                    return;
+                }
             }
         }
         this.isConnected = true;
         long time = System.currentTimeMillis();
         while (this.isValid) {
-            System.out.println("Loop: " + arrayToString(this.id) + " " + this.isValid + " " + this.isConnected + " " + !this.isChokingUs);
+            System.out.println("Loop: " + arrayToString(this.id) + " " + this.isValid + " " + !this.isChokingUs);
             try {
                 readMessage();
                 if (System.currentTimeMillis() - time > PEER_TIMEOUT / 2) {
@@ -173,7 +183,16 @@ public class Peer implements Runnable {
             break;
         }
         //TODO
-        case cancel:
+        case cancel: {
+            break;
+        }
+        //DHT node port, unsupported for the moment
+        case port: {
+            int lowByte = socketInput.read();
+            int highByte = socketInput.read();
+            int port = (highByte << 8) | lowByte;
+            break;
+        }
         default:
             break;
         }
