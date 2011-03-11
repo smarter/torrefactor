@@ -2,6 +2,9 @@
 # Makefile created at Mon Mar  7 21:42:12 2011, by mmake
 #
 
+# Environment variables
+export CLASSPATH := ${PWD}/src:${PWD}/3rdparty/*:${CLASSPATH}
+
 # Programs (with common options):
 SHELL		= /bin/sh
 CP		= cp

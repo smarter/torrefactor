@@ -1,3 +1,13 @@
-* Build:
-. ./env
+* Build core and tests:
 make
+
+* Run tests:
+make runtest
+
+* Build the GUI:
+- Install QtJambi and get the jar into your CLASSPATH
+make src.torrefactor.gui
+
+* Run the GUI:
+. ./env
+java torrefactor.gui.Main
