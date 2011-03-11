@@ -5,6 +5,7 @@ make
 make runtest
 
 * Run the test client:
+. ./env
 java test.Client <input.torrent> <output>
 
 * Build the GUI:
