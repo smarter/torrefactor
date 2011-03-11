@@ -145,20 +145,28 @@ public class PieceManager {
     throws IOException {
         DataBlock block = this.dataManager.getBlock(piece, offset, blockArray.length);
         block.put(blockArray);
+        checkPiece(piece);
     }
 
-    // If the piece is valid, add it to the bitfield and return true
+    // If the piece is completely downloaded and valid, add it to the
+    // bitfield and return true.
     // Otherwise, discard the blocks it's made of and return false
     public boolean checkPiece(int piece) throws IOException {
+        Map.Entry<Integer, Integer> pieceEntry = this.chunkMap.floorEntry(piece*this.dataManager.pieceLength());
+        if (pieceEntry == null || (pieceEntry.getValue() - pieceEntry.getKey()) < this.dataManager.pieceLength()) {
+            return false;
+        }
         byte[] expectedDigest = new byte[20];
         System.arraycopy(digestArray, 20*piece, expectedDigest, 0, 20);
         byte[] digest = this.dataManager.getPiece(piece).get();
         if (!Arrays.equals(digest, expectedDigest)) {
             removeBlocks(piece, 0, this.dataManager.pieceLength());
+            System.out.println("~~ Invalid piece " + piece);
             return false;
         }
         int byteIndex = piece / 8;
         this.bitfield[byteIndex] |= 1 << 7 - (piece % 8);
+        System.out.println("~~ Valid piece " + piece);
         return true;
     }
 }
