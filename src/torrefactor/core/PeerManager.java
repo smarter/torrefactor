@@ -74,18 +74,10 @@ public class PeerManager implements Runnable {
                 }
                 this.torrent.downloaded += peerEntry.getValue().popDownloaded();
                 this.torrent.uploaded += peerEntry.getValue().popUploaded();
-                // HACK: for testing only, real algorithm will not call addBlock until we actually get data
-                int offset = this.torrent.pieceManager.getFreeBlock();
-                int pieceIndex = offset / this.torrent.pieceLength;
-                int pieceOffset = offset % this.torrent.pieceLength;
-                if (pieceIndex == -1) continue;
-                if (!peerEntry.getValue().hasPiece(pieceIndex)) continue;
-                if (this.torrent.pieceManager.addBlock(pieceIndex, pieceOffset, (1 << 14)) == false) {
-                    continue;
-                }
-                System.out.println("index :" + pieceIndex + " offset: " + pieceOffset);
                 try {
-                    peerEntry.getValue().sendRequest(pieceIndex, pieceOffset, (1 << 14)); // should be made asynchronous
+                    //TODO: save a reference to the DataBlock somewhere?
+                    DataBlock block = this.torrent.pieceManager.getFreeBlock(peerEntry.getValue().bitfield());
+                    peerEntry.getValue().sendRequest(block.pieceIndex(), block.offset(), block.length()); // should be made asynchronous
                 } catch (IOException e) {
                     e.printStackTrace();
                     peerEntry.getValue().invalidate();

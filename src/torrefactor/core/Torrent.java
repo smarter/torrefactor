@@ -8,7 +8,7 @@ import java.security.*;
 import java.util.*;
 
 public class Torrent {
-    int pieceLength;
+    private int pieceLength;
     private String name;
     private int length;
     private byte[] pieceHash;

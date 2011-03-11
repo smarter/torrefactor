@@ -6,10 +6,27 @@ import java.nio.*;
 public class DataBlock {
     private MappedByteBuffer[] buffers;
     private int length;
+    private int pieceIndex;
+    private int offset;
 
-    public DataBlock (MappedByteBuffer[] _buffers, int _length) {
+    public DataBlock (MappedByteBuffer[] _buffers, int _length, int _pieceIndex, int _offset) {
         this.buffers = _buffers;
         this.length = _length;
+        this.pieceIndex = _pieceIndex;
+        this.offset = _offset;
+    }
+
+    public int length() {
+        return this.length;
+    }
+
+    public int pieceIndex() {
+        return this.pieceIndex;
+    }
+
+    // Return the offset within the piece
+    public int offset() {
+        return this.offset;
     }
 
     public byte get (int offset) {
@@ -93,6 +110,9 @@ public class DataBlock {
             if (localOffset < 0) {
                 localOffset = 0;
             }
+            System.out.println("%% Writing to " + offset + " length: " + length);
+            //HACK: for testing, until we have graceful exit support
+            buffers[i].force();
         }
     }
 }

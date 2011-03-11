@@ -84,6 +84,9 @@ public class Peer implements Runnable {
                     keepAlive();
                     time = System.currentTimeMillis();
                 }
+                if (socketInput.available() != 0) {
+                    continue;
+                }
             } catch (IOException e) {
                 e.printStackTrace();
                 invalidate();
@@ -223,6 +226,10 @@ public class Peer implements Runnable {
     public synchronized void setInteresting(boolean b) throws IOException {
         MessageType type = b ? MessageType.interested : MessageType.not_interested;
         sendMessage(type, null, null);
+    }
+
+    public byte[] bitfield() {
+        return this.bitfield;
     }
 
     public boolean isChoked() {

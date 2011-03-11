@@ -52,6 +52,10 @@ public class DataManager {
         return this.pieceLength;
     }
 
+    public long totalSize() {
+        return this.totalSize;
+    }
+
     public DataBlock getBlock(int pieceNumber, int offset, int length)
     throws java.io.IOException {
         long startOffset = (long) pieceNumber * (long) this.pieceLength + offset;
@@ -112,7 +116,7 @@ public class DataManager {
         }
 
         // return the block.
-        return new DataBlock(buffers, length);
+        return new DataBlock(buffers, length, pieceNumber, offset);
     }
 
     public DataBlock getPiece(int number)
