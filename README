@@ -4,6 +4,9 @@ make
 * Run tests:
 make runtest
 
+* Run the test client:
+java test.Client <input.torrent> <output>
+
 * Build the GUI:
 - Install QtJambi and get the jar into your CLASSPATH
 make src.torrefactor.gui

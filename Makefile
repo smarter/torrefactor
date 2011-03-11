@@ -107,6 +107,7 @@ endif
 
 # Packages we should compile
 PACKAGES = \
+    test \
 	test.core \
 	src.torrefactor.util \
 	test.util \

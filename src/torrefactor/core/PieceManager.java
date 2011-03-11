@@ -152,8 +152,10 @@ public class PieceManager {
     // bitfield and return true.
     // Otherwise, discard the blocks it's made of and return false
     public boolean checkPiece(int piece) throws IOException {
-        Map.Entry<Integer, Integer> pieceEntry = this.chunkMap.floorEntry(piece*this.dataManager.pieceLength());
-        if (pieceEntry == null || (pieceEntry.getValue() - pieceEntry.getKey()) < this.dataManager.pieceLength()) {
+        Map.Entry<Integer, Integer> pieceEntry = this.blockMap.floorEntry(piece*this.dataManager.pieceLength());
+        int pieceEnd = (piece + 1) * this.dataManager.pieceLength() - 1;
+        if (pieceEntry == null || pieceEntry.getValue() < pieceEnd
+            || (pieceEntry.getValue() - pieceEntry.getKey()) < this.dataManager.pieceLength()) {
             return false;
         }
         byte[] expectedDigest = new byte[20];
