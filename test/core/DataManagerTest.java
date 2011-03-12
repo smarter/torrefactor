@@ -43,8 +43,7 @@ public class DataManagerTest {
                                              filePaths, fileSizes, pieceSize);
 
 
-        DataBlock block = dataManager.getBlock(0, 0, pieceSize);
-        blockData = block.get(0, pieceSize);
+        blockData = dataManager.getBlock(0, 0, pieceSize);
         System.out.print("Read: ");
         printByteArray(blockData);
         System.out.print("Expe: ");
@@ -68,8 +67,7 @@ public class DataManagerTest {
                                              filePaths, fileSizes, pieceSize);
 
 
-        DataBlock block = dataManager.getBlock(3, 2, pieceSize);
-        blockData = block.get(0, pieceSize);
+        blockData = dataManager.getBlock(3, 2, pieceSize);
         System.out.print("Read: ");
         printByteArray(blockData);
         System.out.print("Expe: ");
@@ -91,8 +89,7 @@ public class DataManagerTest {
         DataManager dataManager = new DataManager (
                                              filePaths, fileSizes, pieceSize);
 
-        DataBlock block = dataManager.getPiece(0);
-        data = block.get(0, pieceSize);
+        data = dataManager.getPiece(0);
 
         dataExpected = new byte[] {
             0x30 & 0xFF, 0x30 & 0xFF, 0x30 & 0xFF, 0x30 & 0xFF };
@@ -105,18 +102,18 @@ public class DataManagerTest {
         System.out.print("Write: ");
         byte[] dataMod = new byte[] {
             0x10 & 0xFF, 0x10 & 0xFF, 0x10 & 0xFF, 0x10 & 0xFF };
-        block.put(0, dataMod);
+        dataManager.putBlock(0, 0, dataMod);
         printByteArray(dataMod);
         System.out.print("Read:  ");
-        data = block.get(0, pieceSize);
+        data = dataManager.getBlock(0, 0, pieceSize);
         printByteArray(data);
         assertTrue(Arrays.equals(data, dataMod));
 
         System.out.print("Write: ");
-        block.put(0, dataExpected);
+        dataManager.putBlock(0, 0, dataExpected);
         printByteArray(dataExpected);
         System.out.print("Read:  ");
-        data = block.get(0, pieceSize);
+        data = dataManager.getBlock(0, 0, pieceSize);
         printByteArray(data);
         assertTrue(Arrays.equals(data, dataExpected));
     }
@@ -138,8 +135,7 @@ public class DataManagerTest {
                                              filePaths, fileSizes, pieceSize);
 
 
-        DataBlock block = dataManager.getBlock(3, 2, pieceSize);
-        blockData = block.get(0, pieceSize);
+        blockData = dataManager.getBlock(3, 2, pieceSize);
         System.out.print("Read: ");
         printByteArray(blockData);
         System.out.print("Expe: ");

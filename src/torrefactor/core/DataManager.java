@@ -56,7 +56,19 @@ public class DataManager {
         return this.totalSize;
     }
 
-    public DataBlock getBlock(int pieceNumber, int offset, int length)
+    public void putBlock(int pieceNumber, int offset, byte[] data)
+    throws IOException {
+        getDataBlock(pieceNumber, offset, data.length).put(data);
+    }
+
+    public byte[] getBlock(int pieceNumber, int offset, int length)
+    throws IOException {
+        return getDataBlock(pieceNumber, offset, length).get();
+    }
+
+
+    //TODO: cache the most recent DataBlocks?
+    private DataBlock getDataBlock(int pieceNumber, int offset, int length)
     throws java.io.IOException {
         long startOffset = (long) pieceNumber * (long) this.pieceLength + offset;
         if (startOffset + length > this.totalSize) {
@@ -119,7 +131,7 @@ public class DataManager {
         return new DataBlock(buffers, length, pieceNumber, offset);
     }
 
-    public DataBlock getPiece(int number)
+    public byte[] getPiece(int number)
     throws java.io.IOException {
         // Does the piece exist?
         long start = number * this.pieceLength;

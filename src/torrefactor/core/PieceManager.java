@@ -14,7 +14,7 @@ public class PieceManager {
     public byte[] bitfield;
     byte[] digestArray;
     //Recommended by http://wiki.theory.org/BitTorrentSpecification#request:_.3Clen.3D0013.3E.3Cid.3D6.3E.3Cindex.3E.3Cbegin.3E.3Clength.3E
-    static final int BLOCK_SIZE = (1 << 14);
+    static final int BLOCK_SIZE = (1 << 14); // in bytes
 
     public PieceManager(String[] fileList, long[] fileSizes, int pieceLength, byte[] _digestArray)
     throws FileNotFoundException, IOException {
@@ -82,9 +82,13 @@ public class PieceManager {
         return true;
     }
 
-    // Return a DataBlock at least partially not downloaded and present
-    // in peerBitfield or null if no such block could be found.
-    public synchronized DataBlock getFreeBlock(byte[] peerBitfield)
+    // Return false if no free block available in the peerBitfield
+    // could be found, true otherwise.
+    // blockParams[] must have length >= 3, it will be filled like this:
+    // blockParams[0] = index of piece
+    // blockParams[1] = offset of block inside the piece, in bytes
+    // blockParams[2] = size of block, in bytes
+    public synchronized boolean getFreeBlock(byte[] peerBitfield, int[] blockParams)
     throws IOException {
          //TODO: should we return a smaller size if we already have part of
          //the block?
@@ -109,21 +113,27 @@ public class PieceManager {
                         int pieceOffset = (block.getValue() + 1) % this.dataManager.pieceLength();
                         System.out.println("XX Free, pieceIndex: " + pieceIndex + " pieceOffset " + pieceOffset);
                         addBlock(pieceIndex, pieceOffset, BLOCK_SIZE);
-                        return this.dataManager.getBlock(pieceIndex, pieceOffset, BLOCK_SIZE);
+                        blockParams[0] = pieceIndex;
+                        blockParams[1] = pieceOffset;
+                        blockParams[2] = BLOCK_SIZE;
+                        return true;
                     }
                 } else {
                     System.out.println("XX " + this.blockMap);
                     System.out.println("XX Free, pieceIndex: " + pieceIndex);
                     addBlock(pieceIndex, 0, BLOCK_SIZE);
-                    return this.dataManager.getBlock(pieceIndex, 0, BLOCK_SIZE);
+                    blockParams[0] = pieceIndex;
+                    blockParams[1] = 0;
+                    blockParams[2] = BLOCK_SIZE;
+                    return true;
                 }
             }
         }
-        return null;
+        return false;
     }
 
     // Return the requested block if it's available, null otherwise
-    public synchronized DataBlock getReadBlock(int piece, int offset, int length)
+    public synchronized byte[] getBlock(int piece, int offset, int length)
     throws IOException {
         int begin = piece*this.dataManager.pieceLength() + offset;
         int end = begin + length - 1;
@@ -143,8 +153,7 @@ public class PieceManager {
 
     public synchronized void putBlock(int piece, int offset, byte[] blockArray)
     throws IOException {
-        DataBlock block = this.dataManager.getBlock(piece, offset, blockArray.length);
-        block.put(blockArray);
+        this.dataManager.putBlock(piece, offset, blockArray);
         checkPiece(piece);
     }
 
@@ -160,7 +169,7 @@ public class PieceManager {
         }
         byte[] expectedDigest = new byte[20];
         System.arraycopy(digestArray, 20*piece, expectedDigest, 0, 20);
-        byte[] digest = this.dataManager.getPiece(piece).get();
+        byte[] digest = this.dataManager.getPiece(piece);
         if (!Arrays.equals(digest, expectedDigest)) {
             removeBlocks(piece, 0, this.dataManager.pieceLength());
             System.out.println("~~ Invalid piece " + piece);

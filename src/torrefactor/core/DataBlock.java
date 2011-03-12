@@ -72,26 +72,15 @@ public class DataBlock {
         return block;
     }
 
-    public void put (int offset, byte block) {
-        for (int i=0; i < this.buffers.length; i++) {
-            if (offset < this.buffers[i].limit()) {
-                this.buffers[i].put(block);
-            }
-            offset -= this.buffers[i].limit();
-        }
-        throw new IllegalArgumentException(
-                "Offset " + offset + "is past block's end.");
+    public void put(byte[] block) {
+        put(0, block.length, block);
     }
 
-    public void put (int offset, byte[] block) {
-        put(block, offset, block.length);
+    public void put(int offset, byte[] block) {
+        put(offset, block.length, block);
     }
 
-    public void put (byte[] block) {
-        put(block, 0, block.length);
-    }
-
-    public void put (byte[] block, int offset, int length) {
+    public void put(int offset, int length, byte[] block) {
         int arrayOffset = 0;
         int localOffset = offset;
         for (int i=0; i<buffers.length; i++) {

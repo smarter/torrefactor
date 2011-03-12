@@ -75,9 +75,12 @@ public class PeerManager implements Runnable {
                 this.torrent.downloaded += peerEntry.getValue().popDownloaded();
                 this.torrent.uploaded += peerEntry.getValue().popUploaded();
                 try {
-                    //TODO: save a reference to the DataBlock somewhere?
-                    DataBlock block = this.torrent.pieceManager.getFreeBlock(peerEntry.getValue().bitfield());
-                    peerEntry.getValue().sendRequest(block.pieceIndex(), block.offset(), block.length()); // should be made asynchronous
+                    int[] requestParams = new int[3];
+                    boolean ok = this.torrent.pieceManager.getFreeBlock(peerEntry.getValue().bitfield(), requestParams);
+                    if (!ok) {
+                        continue;
+                    }
+                    peerEntry.getValue().sendRequest(requestParams[0], requestParams[1], requestParams[2]); // should be made asynchronous
                 } catch (IOException e) {
                     e.printStackTrace();
                     peerEntry.getValue().invalidate();
