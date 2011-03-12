@@ -120,15 +120,17 @@ public class Peer implements Runnable {
             return;
         }
         int typeByte = socketInput.read();
+        length--;
         if (typeByte < 0 || typeByte > 9) {
-            System.out.println("Got unknown message " + typeByte + " " + arrayToString(this.id));
-            while (socketInput.available() != 0) {
+            System.out.println("Got unknown message " + typeByte + " with length: " + length + " " + arrayToString(this.id));
+            while (length != 0 && socketInput.available() != 0) {
                 System.out.print(socketInput.read() + " ");
+                length--;
             }
             return;
         }
         MessageType type = MessageType.values()[typeByte];
-        readMessage(type, length - 1);
+        readMessage(type, length);
     }
 
     private void readMessage(MessageType type, int length)
