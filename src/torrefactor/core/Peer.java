@@ -87,7 +87,7 @@ public class Peer implements Runnable {
         this.isConnected = true;
         long time = System.currentTimeMillis();
         while (this.isValid) {
-            System.out.println("Loop: " + arrayToString(this.id) + " " + this.isValid + " " + !this.isChokingUs);
+            //System.out.println("Loop: " + arrayToString(this.id) + " " + this.isValid + " " + !this.isChokingUs);
             try {
                 readMessage();
                 if (System.currentTimeMillis() - time > PEER_TIMEOUT / 2) {
@@ -115,7 +115,7 @@ public class Peer implements Runnable {
     private void readMessage() throws IOException {
         int length = socketInput.readInt();
         if (length == 0) {
-            System.out.println("Sent keep alive: " + arrayToString(this.id));
+            //System.out.println("Sent keep alive: " + arrayToString(this.id));
             //keepalive, do nothing
             return;
         }
@@ -124,9 +124,11 @@ public class Peer implements Runnable {
         if (typeByte < 0 || typeByte > 9) {
             System.out.println("Got unknown message " + typeByte + " with length: " + length + " " + arrayToString(this.id));
             while (length != 0 && socketInput.available() != 0) {
-                System.out.print(socketInput.read() + " ");
+                //System.out.print(socketInput.read() + " ");
+                socketInput.read();
                 length--;
             }
+            invalidate();
             return;
         }
         MessageType type = MessageType.values()[typeByte];

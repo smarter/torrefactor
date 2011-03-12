@@ -99,7 +99,7 @@ public class DataBlock {
             if (localOffset < 0) {
                 localOffset = 0;
             }
-            System.out.println("%% Writing to " + offset + " length: " + length);
+            System.out.println("%% Writing to " + offset + " length: " + length + " at piece: " + this.pieceIndex);
             //HACK: for testing, until we have graceful exit support
             buffers[i].force();
         }

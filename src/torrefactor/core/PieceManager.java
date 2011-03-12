@@ -4,6 +4,7 @@ import torrefactor.core.*;
 
 import java.io.*;
 import java.util.*;
+import java.security.*;
 
 public class PieceManager {
     //Map every block beginning to its ending
@@ -30,7 +31,7 @@ public class PieceManager {
     public synchronized boolean addBlock(int piece, int offset, int length) {
         int begin = piece*this.dataManager.pieceLength()  + offset;
         int end =  begin + length - 1;
-        Map.Entry<Integer, Integer> block = this.blockMap.floorEntry(end);
+        Map.Entry<Integer, Integer> block = this.blockMap.floorEntry(end + 1);
         if (block == null) {
             // No block beginning before our superior born, so no overlap possible
             this.blockMap.put(begin, end);
@@ -93,6 +94,10 @@ public class PieceManager {
          //TODO: should we return a smaller size if we already have part of
          //the block?
          //We should at least avoid going over piece boundary
+
+        //FIXME: Since we addBlock each time we send a request
+        //checkPiece will be called before each block is properly downloaded
+        //Should we have a queue of sent request instead?
         for (int i = 0; i < peerBitfield.length; i++) {
             if (peerBitfield[i] == 0) continue;
             int byteOffset = 7;
@@ -153,26 +158,37 @@ public class PieceManager {
 
     public synchronized void putBlock(int piece, int offset, byte[] blockArray)
     throws IOException {
+        addBlock(piece, offset, blockArray.length);
         this.dataManager.putBlock(piece, offset, blockArray);
-        checkPiece(piece);
+        try {
+            checkPiece(piece);
+        } catch (NoSuchAlgorithmException e) {
+            //Assume the piece is correct since we have no way of checking
+            System.err.println("Warning: piece + " + piece + " could not be checked and"
+                               + "may potentially be invalid");
+            System.err.println(e.toString());
+        }
     }
 
     // If the piece is completely downloaded and valid, add it to the
     // bitfield and return true.
     // Otherwise, discard the blocks it's made of and return false
-    public boolean checkPiece(int piece) throws IOException {
+    public boolean checkPiece(int piece)
+    throws IOException, NoSuchAlgorithmException {
         Map.Entry<Integer, Integer> pieceEntry = this.blockMap.floorEntry(piece*this.dataManager.pieceLength());
         int pieceEnd = (piece + 1) * this.dataManager.pieceLength() - 1;
         if (pieceEntry == null || pieceEntry.getValue() < pieceEnd
-            || (pieceEntry.getValue() - pieceEntry.getKey()) < this.dataManager.pieceLength()) {
+            || (pieceEntry.getValue() - pieceEntry.getKey() + 1) < this.dataManager.pieceLength()) {
             return false;
         }
         byte[] expectedDigest = new byte[20];
         System.arraycopy(digestArray, 20*piece, expectedDigest, 0, 20);
-        byte[] digest = this.dataManager.getPiece(piece);
+        byte[] pieceArray = this.dataManager.getPiece(piece);
+        byte[] digest = MessageDigest.getInstance("SHA1").digest(pieceArray);
         if (!Arrays.equals(digest, expectedDigest)) {
             removeBlocks(piece, 0, this.dataManager.pieceLength());
-            System.out.println("~~ Invalid piece " + piece);
+            System.out.println("######## " + pieceEntry.getKey() + " " + pieceEntry.getValue());
+            System.out.println("~~ Invalid piece " + piece + " got: " + new String(digest) + " expected " + new String(expectedDigest));
             return false;
         }
         int byteIndex = piece / 8;
