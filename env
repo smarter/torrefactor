@@ -1,6 +1,6 @@
 pwd="$PWD"
 cd $(dirname "$0")
 
-export CLASSPATH=.:/usr/share/java/\*:$PWD/src/
+export CLASSPATH="$PWD/src:$PWD:$PWD/3rdparty/*:/usr/share/java/*"
 
 cd "$pwd"
