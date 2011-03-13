@@ -75,8 +75,7 @@ public class HttpTracker extends Tracker {
 
         // Parse response
         if (answerMap.containsKey("failure reason")) {
-            this.statusMessage = new String(
-                                 answerMap.get("failure reason").toByteArray());
+            throw new ProtocolException(new String(answerMap.get("failure reason").toByteArray()));
         }
         if (answerMap.containsKey("warning message")) {
             this.statusMessage = new String(
