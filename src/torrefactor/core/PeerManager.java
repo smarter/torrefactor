@@ -8,15 +8,13 @@ import java.net.*;
 import java.util.*;
 
 public class PeerManager implements Runnable {
-    public enum TrackerEvent {
-        started, stopped, completed
-    }
 
     private volatile boolean stopped;
 
     private Torrent torrent;
     private Map<InetAddress, Peer> peerMap;
     private Map<InetAddress, Peer> activeMap;
+    private TrackersManager trackersManager;
 
     final byte[] peerId = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
     int port = 6881;
@@ -33,12 +31,16 @@ public class PeerManager implements Runnable {
         this.torrent = _torrent;
         this.peerMap = new HashMap<InetAddress, Peer>();
         this.activeMap = new HashMap<InetAddress, Peer>();
+        this.trackersManager = new TrackersManager(this.torrent);
     }
 
     public void run() {
         long time = System.currentTimeMillis();
         try {
-            announceTracker(TrackerEvent.started);
+            ArrayList<ArrayList> peersList;
+            peersList = this.trackersManager.announce(
+                                                Tracker.Event.started);
+            updateMap(peersList);
         } catch (Exception e) {
             e.printStackTrace();
             return;
@@ -46,7 +48,10 @@ public class PeerManager implements Runnable {
         while (!stopped) {
             if (System.currentTimeMillis() - time > ANNOUNCE_DELAY) {
                 try {
-                    announceTracker(TrackerEvent.started);
+                    ArrayList<ArrayList> peersList;
+                    peersList = this.trackersManager.announce(
+                                                        Tracker.Event.none);
+                    updateMap(peersList);
                 } catch (Exception e) {
                     e.printStackTrace();
                     return;
@@ -100,105 +105,15 @@ public class PeerManager implements Runnable {
         this.stopped = true;
     }
 
-    public void announceTracker(TrackerEvent event) throws ProtocolException, InvalidBencodeException,
-                                                           IOException {
-        String info_hash = urlEncode(torrent.infoHash);
-        String peer_id = urlEncode(peerId);
-        Object[] format = { info_hash, peer_id, port, Integer.toString(torrent.uploaded), Integer.toString(torrent.downloaded),
-                            Integer.toString(torrent.left), event.toString() };
-        String params = String.format("?info_hash=%s&peer_id=%s&port=%s"
-                                      + "&uploaded=%s&downloaded=%s&left=%s&event=%s&compact=1",
-                                      format);
-        System.out.println("Request params: " + params);
-        Map<String, Bencode> answerMap = null;
-        for (List<String> tierList : this.torrent.announceList) {
-            if (answerMap != null) break;
-            for (int i = 0; i < tierList.size(); i++) {
-                if (answerMap != null) break;
-                try {
-                    answerMap = httpAnnounce(tierList.get(i), params);
-                    if (i != 0) {
-                        String tracker = tierList.remove(i);
-                        tierList.add(0, tracker);
-                    }
-                } catch (IOException e) {
-                    answerMap = null;
-                    e.printStackTrace();
-                }
-            }
-        }
-        if (answerMap == null) {
-            throw new IOException("Couldn't connect to any tracker.");
-        }
-
-        if (answerMap.containsKey("failure reason")) {
-            throw new ProtocolException(new String(answerMap.get("failure reason").toByteArray()));
-        }
-        if (answerMap.containsKey("warning message")) {
-            System.err.println(new String(answerMap.get("warning message").toByteArray()));
-        }
-        this.interval = answerMap.get("interval").toInt();
-        if (answerMap.containsKey("tracker id")) {
-            this.trackerId = new String(answerMap.get("tracker id").toByteArray());
-        }
-        this.seeders = answerMap.get("complete").toInt();
-        this.leechers = answerMap.get("incomplete").toInt();
-
+    private void updateMap(ArrayList<ArrayList> peersList)
+    throws IOException, UnknownHostException {
         Map<InetAddress, Peer> oldMap = new HashMap<InetAddress, Peer>(peerMap);
-        if (answerMap.get("peers").toObject() instanceof List) {
-            List<Bencode> peers = answerMap.get("peers").toList();
-            this.peerMap = new HashMap<InetAddress, Peer>();
-            for (int i = 0; i < peers.size(); i++) {
-                Map<String, Bencode> newMap = peers.get(i).toMap();
-                InetAddress ip = InetAddress.getByAddress(newMap.get("ip").toByteArray());
-                int port = newMap.get("port").toInt();
-                updateMap(ip, port, oldMap);
-            }
-        } else if (answerMap.get("peers").toObject() instanceof byte[]) {
-            byte[] peersArray = answerMap.get("peers").toByteArray();
-            this.peerMap = new HashMap<InetAddress, Peer>();
-            int i = 0;
-            i = 0;
-            while (i != peersArray.length) {
-                byte[] ipArray = new byte[4];
-                System.arraycopy(peersArray, i, ipArray, 0, 4);
-                i += 4;
-                InetAddress ip = InetAddress.getByAddress(ipArray);
-                byte[] portArray = new byte[2];
-                System.arraycopy(peersArray, i, portArray, 0, 2);
-                i += 2;
-                int port = (portArray[0] & 0xFF) << 8 | portArray[1] & 0xFF;
-                updateMap(ip, port, oldMap);
-            }
-        } else {
-            throw new ProtocolException("unrecognized peers format");
+        for (ArrayList l: peersList) {
+            System.out.println("Updating peerMap...");
+            InetAddress addr = InetAddress.getByAddress((byte[]) l.get(0));
+            int port = ((Integer) l.get(1)).intValue();
+            updateMap(addr, port, oldMap);
         }
-    }
-
-    private Map<String, Bencode> httpAnnounce(String urlString, String params)
-    throws IOException, InvalidBencodeException {
-        //PROJECT: we really should use URLConnection here, but for the project
-        // we're required to use Socket
-        URL url = new URL(urlString);
-        System.out.println("Tracker " + url.getHost() + ':' + url.getPort() + '/' + url.getPath());
-        Socket socket = new Socket(url.getHost(), url.getPort());
-        BufferedInputStream input = new BufferedInputStream(socket.getInputStream());
-        BufferedOutputStream output = new BufferedOutputStream(socket.getOutputStream());
-        String getRequest = "GET " + url.getPath() + params + "HTTP/1.0\n\r\n\r\n";
-        System.out.println(getRequest);
-        output.write(getRequest.getBytes());
-        output.flush();
-        //Skip headers
-        while (true) {
-            int c = input.read();
-            if (c == -1) throw new IOException("Unexpected end of stream");
-            if (c == (int) '\r' && input.read() == (int) '\n') break;
-        }
-        Map<String, Bencode> answerMap = Bencode.decodeDict(input);
-        input.close();
-        output.close();
-        socket.close();
-        return answerMap;
     }
 
     private void updateMap(InetAddress ip, int port, Map<InetAddress, Peer> oldMap)
@@ -208,15 +123,5 @@ public class PeerManager implements Runnable {
         } else {
             this.peerMap.put(ip, new Peer(ip, port, this.torrent));
         }
-    }
-
-    private String urlEncode(byte[] array) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < array.length; i++) {
-            sb.append("%");
-            if ((array[i] & 0xF0) == 0) sb.append("0");
-            sb.append(Integer.toHexString(array[i] & 0xFF));
-        }
-        return sb.toString();
     }
 }
