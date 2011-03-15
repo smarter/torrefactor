@@ -9,14 +9,14 @@ import java.net.*;
 import java.util.*;
 
 
-public class TrackersManager {
+public class TrackerManager {
     private ArrayList<LinkedList<String>> tiers;
     private long nextAnnounceTime = 0;
     private Torrent torrent;
 
     // Trackers are stored this way:    (t=tracker, b=backup)
     // [ [t1, t2, t3,... ], [b1,...], [b2,...], ...]
-    public TrackersManager (Torrent torrent) {
+    public TrackerManager (Torrent torrent) {
         this.tiers = torrent.announceList;
         this.torrent = torrent;
     }
@@ -41,7 +41,7 @@ public class TrackersManager {
 
         for (String uri: tier) {
             try {
-                tracker = TrackerFactory.getTracker(uri);
+                tracker = getTracker(uri);
                 peersList = tracker.announce(this.torrent, event);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -56,5 +56,25 @@ public class TrackersManager {
 
     public long nextAnnounceTime () {
         return this.nextAnnounceTime;
+    }
+
+    public static Tracker getTracker (String uri) {
+        Tracker tracker = null;
+        try {
+            if (uri.substring(0, 6).equals("udp://")) {
+                tracker = new UdpTracker(uri);
+            } else if (uri.substring(0, 7).equals("http://")) {
+                tracker = new HttpTracker(uri);
+            }/* else if (uri.substring(0, 8).equals("https://")) {
+                return new HttpTracker (uri);
+            }*/
+            throw new UnsupportedOperationException (
+                    "Don't know how to handle uri \"" + uri + "\"");
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("Cannot construct tracker object for uri: \""
+                               + uri + "\"");
+        }
+        return tracker;
     }
 }

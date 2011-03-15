@@ -14,7 +14,7 @@ public class PeerManager implements Runnable {
     private Torrent torrent;
     private Map<InetAddress, Peer> peerMap;
     private Map<InetAddress, Peer> activeMap;
-    private TrackersManager trackersManager;
+    private TrackerManager trackerManager;
 
     final byte[] peerId = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
     int port = 6881;
@@ -31,14 +31,14 @@ public class PeerManager implements Runnable {
         this.torrent = _torrent;
         this.peerMap = new HashMap<InetAddress, Peer>();
         this.activeMap = new HashMap<InetAddress, Peer>();
-        this.trackersManager = new TrackersManager(this.torrent);
+        this.trackerManager = new TrackerManager(this.torrent);
     }
 
     public void run() {
         long time = System.currentTimeMillis();
         try {
             ArrayList<ArrayList> peersList;
-            peersList = this.trackersManager.announce(
+            peersList = this.trackerManager.announce(
                                                 Tracker.Event.started);
             updateMap(peersList);
         } catch (Exception e) {
@@ -49,7 +49,7 @@ public class PeerManager implements Runnable {
             if (System.currentTimeMillis() - time > ANNOUNCE_DELAY) {
                 try {
                     ArrayList<ArrayList> peersList;
-                    peersList = this.trackersManager.announce(
+                    peersList = this.trackerManager.announce(
                                                         Tracker.Event.none);
                     updateMap(peersList);
                 } catch (Exception e) {
