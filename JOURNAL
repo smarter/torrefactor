@@ -1,0 +1,37 @@
+Semaine 1 (21/02):
+- Réflexion sur la structure du programme.
+- Système de compilation basé sur un Makefile fais à la main mis en place.
+- Début d'implémentation des classes Torrent, PeerManager, Peer.
+- Prototype d'interface graphique en Qt avec QtJambi.
+- Peer: support initial du protocole d'échange entre Peers.
+- PeerManager: support des announces classiques.
+- Implémentation d'un décodeur Bencode avec tests unitaires (JUnit).
+- Support des pairs de clés RSA avec test unitaires.
+- Création et utilisation d'un dépôt SVN sur polysvn.epfl.ch.
+
+Semaine 2 (28/02):
+- Choix du modèle "un thread par connexion" après recherches des avantages
+  et inconvénients, notamment:
+  <http://paultyma.blogspot.com/2008/03/writing-java-multithreaded-servers.html>
+- Suppression de l'utilisation des classes hérités de 'Reader' et 'Writer'
+  de Java en faveur de celles hérités de 'InputStream' et 'OutputStream'
+  après découverte des problèmes d'éncodages qui y sont liés.
+- PeerManager: support des announces 'compacts' et de la clé announce-list
+- Écriture des classes DataManager, DataBlock, PieceManager, intégrées dans le
+  dépôt la semaine suivante (voir Semaine 3).
+
+Semaine 3 (07/03):
+- Passage de SVN à GIT sur un serveur privé.
+- Nouveau Makefile généré par l'outil 'mmake'.
+- Nouvelles classes DataManager, DataBlock: gestion de l'écriture sur le disque
+  en passant par des fichiers mappés en mémoire virtuelle, avec tests unitaires
+- Nouvelle classe PieceManager avec tests unitaires: gestion de la réception des
+  blocks par les peers pour savoir qu'est-ce qui a déjà été téléchargé. Gestion
+  du check SHA-1 des pièces.
+- Meilleure gestion des threads et classes plus "thread-safe" suite à la lecture
+  d'une partie du livre "Java Concurrency in Pratice".
+- Ajout d'un répertoire 3rdparty pour contenir les jars utilisés
+- Ajout d'un répertoire data pour les données de tests.
+- Nouvelles classes Tracker, HttpTracker, UdpTracker: modularisation de
+  fonctions auparavant assurées par la classe PeerManager (sauf le support
+  UDP qui est nouveau).
