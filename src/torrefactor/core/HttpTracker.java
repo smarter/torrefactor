@@ -40,7 +40,7 @@ public class HttpTracker extends Tracker {
         System.out.println("path: " + this.path);
     }
 
-    public ArrayList<ArrayList> announce(Torrent torrent, Event event)
+    public ArrayList<Pair<byte[], Integer>> announce(Torrent torrent, Event event)
     throws ProtocolException, InvalidBencodeException, IOException {
         // Construct request
         String infoHash = urlEncode(torrent.infoHash);
@@ -90,7 +90,7 @@ public class HttpTracker extends Tracker {
         this.leechers = answerMap.get("incomplete").toInt();
 
         // Parse peers
-        ArrayList<ArrayList> peersList = new ArrayList();
+        ArrayList<Pair<byte[], Integer>> peersList = new ArrayList<Pair<byte[], Integer>>();
         // FIXME: explain why we do this if-else
         if (answerMap.get("peers").toObject() instanceof List) {
             List<Bencode> peers = answerMap.get("peers").toList();
@@ -98,9 +98,7 @@ public class HttpTracker extends Tracker {
                 Map<String, Bencode> peerMap = peers.get(i).toMap();
                 byte[] ip = peerMap.get("ip").toByteArray();
                 int port = peerMap.get("port").toInt();
-                ArrayList peer = new ArrayList(2);
-                peer.add(ip);
-                peer.add(new Integer(port));
+                Pair<byte[], Integer> peer = new Pair<byte[], Integer>(ip, port);
                 peersList.add(peer);
             }
         } else if (answerMap.get("peers").toObject() instanceof byte[]) {
@@ -114,9 +112,7 @@ public class HttpTracker extends Tracker {
                 System.arraycopy(peersArray, i, portArray, 0, 2);
                 i += 2;
                 int port = (portArray[0] & 0xFF) << 8 | portArray[1] & 0xFF;
-                ArrayList peer = new ArrayList(2);
-                peer.add(ip);
-                peer.add(new Integer(port));
+                Pair<byte[], Integer> peer = new Pair<byte[], Integer>(ip, port);
                 peersList.add(peer);
             }
         } else {

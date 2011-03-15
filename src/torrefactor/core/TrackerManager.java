@@ -21,8 +21,8 @@ public class TrackerManager {
         this.torrent = torrent;
     }
 
-    public ArrayList<ArrayList> announce (Event event) {
-        ArrayList<ArrayList> peersList = null;
+    public ArrayList<Pair<byte[], Integer>> announce (Event event) {
+        ArrayList<Pair<byte[], Integer>> peersList = null;
         System.err.println("Announcing...");
 
         for (LinkedList<String> tier: this.tiers) {
@@ -34,9 +34,9 @@ public class TrackerManager {
         return peersList;
     }
 
-    private ArrayList<ArrayList> announceTier (Event event,
+    private ArrayList<Pair<byte[], Integer>> announceTier (Event event,
                                     LinkedList<String> tier) {
-        ArrayList<ArrayList> peersList = null;
+        ArrayList<Pair<byte[], Integer>> peersList = null;
         Tracker tracker;
 
         for (String uri: tier) {

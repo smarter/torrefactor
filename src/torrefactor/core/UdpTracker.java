@@ -48,8 +48,8 @@ public class UdpTracker extends Tracker {
         this.port = uriObject.getPort();
     }
 
-    public ArrayList<ArrayList> announce (Torrent torrent, Event event) {
-        ArrayList<ArrayList> peers = null;
+    public ArrayList<Pair<byte[], Integer>> announce (Torrent torrent, Event event) {
+        ArrayList<Pair<byte[], Integer>> peers = null;
         try {
             peers = udpAnnounce(torrent, event);
         } catch (Exception e ) {
@@ -93,7 +93,7 @@ public class UdpTracker extends Tracker {
     }
 
 
-  public ArrayList udpAnnounce (Torrent torrent, Event event)
+  public ArrayList<Pair<byte[],Integer>> udpAnnounce (Torrent torrent, Event event)
   throws IOException, SocketException {
         int lport;
         DatagramPacket packet;
@@ -192,17 +192,15 @@ public class UdpTracker extends Tracker {
         int seeders = byteArrayToInt(b);
 
         // Parse peer-port segments
-        ArrayList<ArrayList> peerList = new ArrayList<ArrayList>();
+        ArrayList<Pair<byte[], Integer>> peerList = new ArrayList<Pair<byte[], Integer>>();
         int i = 20;
         while (i+6 <= packet.getLength()) {
-            ArrayList peer = new ArrayList(2);
             byte[] peerAddress = new byte[4];
             System.arraycopy(packet.getData(), i, peerAddress, 0, 4);
-            peer.add(peerAddress);
             byte[] portArray = new byte[2];
             System.arraycopy(packet.getData(), i+4, portArray, 0, 2);
             int peerPort = byteArrayToInt(portArray);
-            peer.add(new Integer(peerPort));
+            Pair<byte[], Integer> peer = new Pair<byte[], Integer>(peerAddress, peerPort);
             peerList.add(peer);
         }
 

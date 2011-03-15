@@ -21,7 +21,7 @@ abstract class Tracker {
 
     public Tracker () {} 
     public Tracker (String _uri) {}
-    abstract ArrayList<ArrayList> announce (Torrent torrent, Event event)
+    abstract ArrayList<Pair<byte[], Integer>> announce (Torrent torrent, Event event)
     throws IOException, InvalidBencodeException;
 
 
