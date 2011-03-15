@@ -153,7 +153,6 @@ public class HttpTracker extends Tracker {
         output.flush();
 
         // Parse headers
-        // TODO: Check http status code
         while (true) {
             int c = input.read();
             if (c == -1) throw new IOException("Unexpected end of stream");
