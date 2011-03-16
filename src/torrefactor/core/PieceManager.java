@@ -11,16 +11,24 @@ public class PieceManager {
     //TreeMap provides O(log(n)) lookup, insert, remove, previous and successor
     //HACK: public until we have something to test private methods with junit
     public TreeMap<Integer, Integer> blockMap;
+
+    //Map a piece number to the time in milliseconds when a block from this
+    //piece was requested. Used to prevent getFreeBlocks from returning blocks
+    //already being requested by a peer
+    private Map<Integer, Long> pieceLockMap;
+
     DataManager dataManager;
     public byte[] bitfield;
     byte[] digestArray;
     //Recommended by http://wiki.theory.org/BitTorrentSpecification#request:_.3Clen.3D0013.3E.3Cid.3D6.3E.3Cindex.3E.3Cbegin.3E.3Clength.3E
     static final int BLOCK_SIZE = (1 << 14); // in bytes
+    static final int PIECE_LOCK_TIMEOUT = 30000; // in milliseconds
 
     public PieceManager(String[] fileList, long[] fileSizes, int pieceLength, byte[] _digestArray)
     throws FileNotFoundException, IOException {
         this.dataManager = new DataManager(fileList, fileSizes, pieceLength);
         this.blockMap = new TreeMap<Integer, Integer>();
+        this.pieceLockMap = new HashMap<Integer, Long>();
         int fieldLength = (this.dataManager.pieceNumber() - 1)/8 + 1;
         this.bitfield = new byte[fieldLength];
         Arrays.fill(this.bitfield, (byte) 0);
@@ -83,58 +91,65 @@ public class PieceManager {
         return true;
     }
 
-    // Return false if no free block available in the peerBitfield
-    // could be found, true otherwise.
-    // blockParams[] must have length >= 3, it will be filled like this:
-    // blockParams[0] = index of piece
-    // blockParams[1] = offset of block inside the piece, in bytes
-    // blockParams[2] = size of block, in bytes
-    public synchronized boolean getFreeBlock(byte[] peerBitfield, int[] blockParams)
+    // Try to find numBlocks free blocks available in the peerBitfield and
+    // return a List of their DataBlockInfo(which size is between 0 and n)
+    public synchronized List<DataBlockInfo> getFreeBlocks(byte[] peerBitfield, int numBlocks)
     throws IOException {
          //TODO: should we return a smaller size if we already have part of
          //the block?
          //We should at least avoid going over piece boundary
+        List<DataBlockInfo> infoList = new ArrayList<DataBlockInfo>();
+        if (numBlocks == 0) return infoList;
 
-        //FIXME: Since we addBlock each time we send a request
-        //checkPiece will be called before each block is properly downloaded
-        //Should we have a queue of sent request instead?
-        for (int i = 0; i < peerBitfield.length; i++) {
+        for (int i = 0; i < peerBitfield.length && infoList.size() < numBlocks; i++) {
             if (peerBitfield[i] == 0) continue;
-            int byteOffset = 7;
-            while (byteOffset != 0) {
+
+            for (int byteOffset = 7; byteOffset != 0 && infoList.size() < numBlocks; byteOffset--) {
+                if ((peerBitfield[i] >>> byteOffset) == 0) continue;
+
                 int pieceIndex = 8*i + (7 - byteOffset);
-                byteOffset--;
-                if ((peerBitfield[i] >>> byteOffset) == 0) {
-                    continue;
-                }
+                if (isLocked(pieceIndex)) continue;
+
                 int pieceBegin = pieceIndex * this.dataManager.pieceLength();
                 int pieceEnd = pieceBegin + this.dataManager.pieceLength() - 1;
+                int pieceOffset = 0;
                 Map.Entry<Integer, Integer> block = this.blockMap.floorEntry(pieceBegin);
-                if (block != null && block.getValue() >= pieceBegin) {
-                    if (block.getValue() >= pieceEnd) {
+                if (block != null) {
+                    if (block.getValue() > pieceEnd) {
                         continue;
-                    } else {
-                        System.out.println("XX " + this.blockMap);
-                        int pieceOffset = (block.getValue() + 1) % this.dataManager.pieceLength();
-                        System.out.println("XX Free, pieceIndex: " + pieceIndex + " pieceOffset " + pieceOffset);
-                        addBlock(pieceIndex, pieceOffset, BLOCK_SIZE);
-                        blockParams[0] = pieceIndex;
-                        blockParams[1] = pieceOffset;
-                        blockParams[2] = BLOCK_SIZE;
-                        return true;
                     }
-                } else {
-                    System.out.println("XX " + this.blockMap);
-                    System.out.println("XX Free, pieceIndex: " + pieceIndex);
-                    addBlock(pieceIndex, 0, BLOCK_SIZE);
-                    blockParams[0] = pieceIndex;
-                    blockParams[1] = 0;
-                    blockParams[2] = BLOCK_SIZE;
-                    return true;
+                    if (block.getValue() > pieceBegin) {
+                        pieceOffset = (block.getValue() + 1) % this.dataManager.pieceLength();
+                    }
                 }
+                Map.Entry<Integer, Integer> higherBlock = null;
+                while (infoList.size() < numBlocks && pieceOffset < pieceEnd) {
+                    System.out.println("** Requested block at piece " + pieceIndex + " offset" + pieceOffset);
+                    infoList.add(new DataBlockInfo(pieceIndex, pieceOffset, BLOCK_SIZE));
+                    pieceOffset += BLOCK_SIZE;
+                    // If the offset is now inside an existing block, skip to its end
+                    higherBlock = this.blockMap.floorEntry(pieceOffset);
+                    if (higherBlock != null && (block == null || higherBlock.getKey() > block.getKey())
+                        && pieceOffset >= higherBlock.getKey()) {
+                        pieceOffset = higherBlock.getValue() + 1;
+                    }
+                }
+                this.pieceLockMap.put(pieceIndex, System.currentTimeMillis());
             }
         }
-        return false;
+        return infoList;
+    }
+
+    private synchronized boolean isLocked(int pieceIndex) {
+        if (!this.pieceLockMap.containsKey(pieceIndex)) {
+            return false;
+        }
+        if (System.currentTimeMillis() - this.pieceLockMap.get(pieceIndex) > PIECE_LOCK_TIMEOUT) {
+            System.out.println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXxXX UNLOCK");
+            this.pieceLockMap.remove(pieceIndex);
+            return false;
+        }
+        return true;
     }
 
     // Return the requested block if it's available, null otherwise
@@ -158,8 +173,13 @@ public class PieceManager {
 
     public synchronized void putBlock(int piece, int offset, byte[] blockArray)
     throws IOException {
-        addBlock(piece, offset, blockArray.length);
+        boolean newBlock = addBlock(piece, offset, blockArray.length);
+        if (!newBlock) {
+            System.out.println("!!! Already got " + piece*this.dataManager.pieceLength() + offset);
+            return;
+        }
         this.dataManager.putBlock(piece, offset, blockArray);
+        System.out.println("XX " + this.blockMap);
         try {
             checkPiece(piece);
         } catch (NoSuchAlgorithmException e) {

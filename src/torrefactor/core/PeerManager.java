@@ -25,7 +25,9 @@ public class PeerManager implements Runnable {
     static final int MAX_PEERS = 25;
     // In milliseconds
     static final int ANNOUNCE_DELAY = 30*60*1000;
-    static final int SLEEP_DELAY = 1000;
+    static final int SLEEP_DELAY = 300;
+    // Number of blocks requested at the same time per peer
+    static final int BLOCKS_PER_REQUEST = 10;
 
     public PeerManager(Torrent _torrent) {
         this.torrent = _torrent;
@@ -80,12 +82,15 @@ public class PeerManager implements Runnable {
                 this.torrent.downloaded += peerEntry.getValue().popDownloaded();
                 this.torrent.uploaded += peerEntry.getValue().popUploaded();
                 try {
-                    int[] requestParams = new int[3];
-                    boolean ok = this.torrent.pieceManager.getFreeBlock(peerEntry.getValue().bitfield(), requestParams);
-                    if (!ok) {
-                        continue;
+                    System.out.println("Queuing requests to peer: " + new String(peerEntry.getValue().id));
+                    List<DataBlockInfo> infoList = this.torrent.pieceManager.getFreeBlocks(peerEntry.getValue().bitfield(), BLOCKS_PER_REQUEST);
+                    System.out.println("OOOOOOOOOOO");
+                    Iterator<DataBlockInfo> iter = infoList.iterator();
+                    System.out.println("MMMMMMMMMMMMMM");
+                    while (iter.hasNext()) {
+                        peerEntry.getValue().queueRequest(iter.next());
                     }
-                    peerEntry.getValue().sendRequest(requestParams[0], requestParams[1], requestParams[2]); // should be made asynchronous
+                    System.out.println("NNNNNNNNNNNNNN");
                 } catch (IOException e) {
                     e.printStackTrace();
                     peerEntry.getValue().invalidate();

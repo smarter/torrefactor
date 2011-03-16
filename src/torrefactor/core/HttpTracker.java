@@ -50,7 +50,7 @@ public class HttpTracker extends Tracker {
                             Integer.toString(torrent.downloaded),
                             Integer.toString(torrent.left),
                             event.toString() };
-        String params = String.format("?info_hash=%s&peer_id=%s&port=%s"
+        String params = String.format("?info_hash=%s&numwant=200&peer_id=%s&port=%s"
                                       + "&uploaded=%s&downloaded=%s"
                                       + "&left=%s&event=%s&compact=1",
                                       format);
