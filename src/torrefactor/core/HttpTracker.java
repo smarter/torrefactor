@@ -194,6 +194,10 @@ public class HttpTracker extends Tracker {
     private static String urlEncode(byte[] array) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < array.length; i++) {
+            if (Character.isISOControl((char) array[i])) {
+                sb.append((char) array[i]);
+                continue;
+            }
             sb.append("%");
             if ((array[i] & 0xF0) == 0) sb.append("0");
             sb.append(Integer.toHexString(array[i] & 0xFF));

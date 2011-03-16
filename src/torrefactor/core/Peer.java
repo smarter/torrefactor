@@ -394,18 +394,10 @@ public class Peer implements Runnable {
         sendMessage(MessageType.piece, params, block);
     }
 
-    // Adapted from http://stackoverflow.com/questions/220547/printable-char-in-java
-    private static boolean isPrintableChar(char c) {
-        Character.UnicodeBlock block = Character.UnicodeBlock.of( c );
-        return (!Character.isISOControl(c)) &&
-                block != null &&
-                block != Character.UnicodeBlock.SPECIALS;
-    }
-
     private static String arrayToString(byte[] data) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < data.length; i++) {
-            if (isPrintableChar((char) data[i])) {
+            if (!Character.isISOControl((char) data[i])) {
                 sb.append((char) data[i]);
             }
         }
