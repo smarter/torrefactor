@@ -16,7 +16,10 @@ public class PeerManager implements Runnable {
     private Map<InetAddress, Peer> activeMap;
     private TrackerManager trackerManager;
 
-    final byte[] peerId = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
+    //Doesn't work with EPFL tracker
+    //final byte[] peerId = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
+    private static final byte a = (byte) 97;
+    final byte[] peerId = { a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a};
     int port = 6881;
     int interval;
     String trackerId;

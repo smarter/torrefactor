@@ -139,11 +139,13 @@ public class HttpTracker extends Tracker {
                                                 socket.getInputStream());
         BufferedOutputStream output = new BufferedOutputStream(
                                                   socket.getOutputStream());
-        
+
         // Send request
         System.out.println("path: " + this.path); //DEBUG
         System.out.println("params: " + params); //DEBUG
-        String getRequest = "GET " + this.path + params + " HTTP/1.0\n\r\n\r\n";
+        String getRequest = "GET " + this.path + params + " HTTP/1.0\r\n"
+                            + "Host: " + this.host + "\r\n"
+                            + "User-Agent: Torrefactor/0.1\r\n\r\n";
         System.out.println(getRequest);
         output.write(getRequest.getBytes());
         output.flush();
@@ -194,7 +196,12 @@ public class HttpTracker extends Tracker {
     private static String urlEncode(byte[] array) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < array.length; i++) {
-            if (Character.isISOControl((char) array[i])) {
+            //Range of characters supported by trackers
+            if (('0' <= (char) array[i] && (char) array[i] <= '9')
+                || ('A' <= (char) array[i] && (char) array[i] <= 'Z')
+                || ('a' <= (char) array[i] && (char) array[i] <= 'z')
+                || (char) array[i] == '.' || (char) array[i] == '-'
+                || (char) array[i] == '_' || (char) array[i] == '~') {
                 sb.append((char) array[i]);
                 continue;
             }
