@@ -16,10 +16,9 @@ public class PeerManager implements Runnable {
     private Map<InetAddress, Peer> activeMap;
     private TrackerManager trackerManager;
 
-    //Doesn't work with EPFL tracker
-    //final byte[] peerId = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
-    private static final byte a = (byte) 97;
-    final byte[] peerId = { a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a};
+    //Shared by all PeerManager instances
+    static byte[] peerId;
+
     int port = 6881;
     int interval;
     String trackerId;
@@ -33,6 +32,14 @@ public class PeerManager implements Runnable {
     static final int BLOCKS_PER_REQUEST = 10;
 
     public PeerManager(Torrent _torrent) {
+        if (this.peerId == null) {
+            // Azureus style, see http://wiki.theory.org/BitTorrentSpecification#peer_id
+            String idInfo = "-T0010-";
+            Random rand = new Random();
+            String idRand = UUID.randomUUID().toString().substring(0, 20 - idInfo.length());
+            System.out.println(idRand);
+            this.peerId = new String(idInfo + idRand).getBytes();
+        }
         this.torrent = _torrent;
         this.peerMap = new HashMap<InetAddress, Peer>();
         this.activeMap = new HashMap<InetAddress, Peer>();
