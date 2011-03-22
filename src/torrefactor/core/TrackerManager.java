@@ -65,11 +65,10 @@ public class TrackerManager {
                 tracker = new UdpTracker(uri);
             } else if (uri.substring(0, 7).equals("http://")) {
                 tracker = new HttpTracker(uri);
-            }/* else if (uri.substring(0, 8).equals("https://")) {
-                return new HttpTracker (uri);
-            }*/
-            throw new UnsupportedOperationException (
+            } else {
+                throw new UnsupportedOperationException (
                     "Don't know how to handle uri \"" + uri + "\"");
+            }
         } catch (Exception e) {
             e.printStackTrace();
             System.err.println("Cannot construct tracker object for uri: \""
