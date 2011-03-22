@@ -40,10 +40,12 @@ public class Bencode {
         return (byte[]) this.value;
     }
 
+    @SuppressWarnings(value = "unchecked")
     public List<Bencode> toList() {
         return (List<Bencode>) this.value;
     }
 
+    @SuppressWarnings(value = "unchecked")
     public HashMap<String, Bencode> toMap() {
         return (HashMap<String, Bencode>) this.value;
     }
