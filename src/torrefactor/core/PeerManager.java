@@ -18,6 +18,7 @@ public class PeerManager implements Runnable {
 
     //Shared by all PeerManager instances
     static byte[] peerId;
+    static final String idInfo = "-TF0010-";
 
     int port = 6881;
     int interval;
@@ -34,7 +35,6 @@ public class PeerManager implements Runnable {
     public PeerManager(Torrent _torrent) {
         if (this.peerId == null) {
             // Azureus style, see http://wiki.theory.org/BitTorrentSpecification#peer_id
-            String idInfo = "-T0010-";
             Random rand = new Random();
             String idRand = UUID.randomUUID().toString().substring(0, 20 - idInfo.length());
             System.out.println(idRand);
