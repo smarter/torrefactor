@@ -7,13 +7,14 @@ import java.net.*;
 import java.security.*;
 import java.util.*;
 
-public class Torrent {
+public class Torrent implements Serializable {
+    public final String FILE_NAME;
     private int pieceLength;
     private String name;
     private int length;
     private byte[] pieceHash;
     byte[] infoHash;
-    PeerManager peerManager;
+    transient PeerManager peerManager;
     PieceManager pieceManager;
     int uploaded = 0;
     int downloaded = 0;
@@ -24,9 +25,10 @@ public class Torrent {
     String createdBy = "";
     String encoding = "";
 
-    public Torrent(String fileName) throws UnsupportedOperationException, IOException,
+    public Torrent(String _fileName) throws UnsupportedOperationException, IOException,
     FileNotFoundException, InvalidBencodeException, NoSuchAlgorithmException {
-        DigestInputStream stream = new DigestInputStream(new BufferedInputStream(new FileInputStream(fileName)), MessageDigest.getInstance("SHA1"));
+        this.FILE_NAME = _fileName;
+        DigestInputStream stream = new DigestInputStream(new BufferedInputStream(new FileInputStream(_fileName)), MessageDigest.getInstance("SHA1"));
 
         infoHash = new byte[20];
         Map<String, Bencode> fileMap = Bencode.decodeDict(stream, "info", infoHash);
@@ -81,9 +83,12 @@ public class Torrent {
 
     public void createFile(String fileName)
     throws FileNotFoundException, IOException {
+        if (this.pieceManager != null) {
+            return;
+        }
         String[] fileList = { fileName };
         long[] fileSizes  = { this.length };
-        pieceManager = new PieceManager(fileList, fileSizes, this.pieceLength, this.pieceHash);
+        this.pieceManager = new PieceManager(fileList, fileSizes, this.pieceLength, this.pieceHash);
     }
 
 
@@ -110,9 +115,11 @@ public class Torrent {
 
     public void start() throws ProtocolException, InvalidBencodeException,
                         IOException {
-        if (this.peerManager != null) return;
-
-        this.peerManager = new PeerManager(this);
+        if (this.peerManager == null) {
+            this.peerManager = new PeerManager(this);
+        } else if (!this.peerManager.isStopped()) {
+            return;
+        }
         new Thread(this.peerManager).start();
     }
 

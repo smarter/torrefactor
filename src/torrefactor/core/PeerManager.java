@@ -33,6 +33,7 @@ public class PeerManager implements Runnable {
     static final int BLOCKS_PER_REQUEST = 10;
 
     public PeerManager(Torrent _torrent) {
+        this.stopped = true;
         if (this.peerId == null) {
             // Azureus style, see http://wiki.theory.org/BitTorrentSpecification#peer_id
             Random rand = new Random();
@@ -57,6 +58,7 @@ public class PeerManager implements Runnable {
             e.printStackTrace();
             return;
         }
+        stopped = false;
         while (!stopped) {
             if (System.currentTimeMillis() - time > ANNOUNCE_DELAY) {
                 try {
@@ -118,6 +120,10 @@ public class PeerManager implements Runnable {
 
     public void stop() {
         this.stopped = true;
+    }
+
+    public boolean isStopped() {
+        return this.stopped;
     }
 
     private void updateMap(ArrayList<Pair<byte[], Integer>> peersList)

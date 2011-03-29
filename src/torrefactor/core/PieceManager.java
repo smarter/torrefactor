@@ -6,7 +6,7 @@ import java.io.*;
 import java.util.*;
 import java.security.*;
 
-public class PieceManager {
+public class PieceManager implements Serializable {
     //Map every block beginning to its ending
     //TreeMap provides O(log(n)) lookup, insert, remove, previous and successor
     //HACK: public until we have something to test private methods with junit
@@ -15,7 +15,7 @@ public class PieceManager {
     //Map a piece number to the time in milliseconds when a block from this
     //piece was requested. Used to prevent getFreeBlocks from returning blocks
     //already being requested by a peer
-    private Map<Integer, Long> pieceLockMap;
+    private transient Map<Integer, Long> pieceLockMap;
 
     DataManager dataManager;
     public byte[] bitfield;
@@ -215,5 +215,11 @@ public class PieceManager {
         this.bitfield[byteIndex] |= 1 << 7 - (piece % 8);
         System.out.println("~~ Valid piece " + piece);
         return true;
+    }
+
+    private void readObject(ObjectInputStream in)
+    throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        this.pieceLockMap = new HashMap<Integer, Long>();
     }
 }

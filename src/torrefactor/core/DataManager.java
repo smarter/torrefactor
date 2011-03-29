@@ -10,26 +10,30 @@ import java.nio.channels.*;
 //  - set buffers limit so we cannot write past the block end.
 //  - Are we allowed to use package access for attributes ?
 
-public class DataManager {
+public class DataManager implements Serializable {
     private String[] filePaths;
     private long[] fileSizes;
-    private RandomAccessFile[] raFiles;
-    private FileChannel[] fileChannels;
+    private transient RandomAccessFile[] raFiles;
+    private transient FileChannel[] fileChannels;
     private long totalSize;
     private int pieceNumber;
     private int pieceLength;
 
     public DataManager (String[] _filePaths, long[] _fileSizes,
                                int _pieceLength)
-    throws java.io.FileNotFoundException, java.io.IOException {
+    throws FileNotFoundException, IOException {
         this.filePaths = _filePaths;
         this.fileSizes = _fileSizes;
         this.pieceLength = _pieceLength;
+        openFiles();
+    }
+
+    // Calculate total size, open each file, allocate disk space if
+    // necessary and get FileChannel.
+    private void openFiles()
+    throws FileNotFoundException, IOException {
         this.raFiles = new RandomAccessFile[this.filePaths.length];
         this.fileChannels = new FileChannel[this.filePaths.length];
-
-        // Calculate total size, open each file, allocate disk space if
-        // necessary and get FileChannel.
         this.totalSize = 0;
         for (int i=0; i<this.fileSizes.length; i++) {
             this.totalSize += this.fileSizes[i];
@@ -40,8 +44,13 @@ public class DataManager {
             this.fileChannels[i] = this.raFiles[i].getChannel();
             System.out.println("Got channel for " + this.filePaths[i]); //DELETEME
         }
-
         this.pieceNumber = (int) ( (this.totalSize - 1) / this.pieceLength) + 1;
+    }
+
+    private void readObject(ObjectInputStream in)
+    throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        openFiles();
     }
 
     public int pieceNumber() {
