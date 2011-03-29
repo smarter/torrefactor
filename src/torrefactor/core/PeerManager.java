@@ -20,7 +20,6 @@ public class PeerManager implements Runnable {
     static byte[] peerId;
     static final String idInfo = "-TF0010-";
 
-    int port = 6881;
     int interval;
     String trackerId;
     int seeders;

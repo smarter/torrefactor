@@ -38,6 +38,10 @@ public class Peer implements Runnable {
     static final int PEER_TIMEOUT =  2*60*1000;
     static final int SLEEP_DELAY = 1000;
 
+    // In bytes
+    static final int SEND_BUFFER_SIZE = 32768;
+    static final int RECEIVE_BUFFER_SIZE = 32768;
+
     public Peer(InetAddress _ip, int _port, Torrent _torrent) throws UnknownHostException, IOException {
         this.outQueue = new LinkedList<DataBlockInfo>();
         this.id = null;
@@ -53,8 +57,13 @@ public class Peer implements Runnable {
         while (this.socket == null) {
             try {
                 System.out.println("Connecting: " + this.ip.toString() + ':' + this.port);
-                this.socket = new Socket(this.ip, this.port);
+                this.socket = new Socket();
+                this.socket.setSendBufferSize(SEND_BUFFER_SIZE);
+                this.socket.setReceiveBufferSize(RECEIVE_BUFFER_SIZE);
                 this.socket.setSoTimeout(PEER_TIMEOUT);
+                InetSocketAddress address = new InetSocketAddress(this.ip, this.port);
+                this.socket.connect(address, PEER_TIMEOUT);
+
                 socketInput = new DataInputStream(new BufferedInputStream(this.socket.getInputStream()));
                 System.out.println("Connected: " + this.ip.toString() + ':' + this.port);
                 socketOutput = new DataOutputStream(new BufferedOutputStream(this.socket.getOutputStream()));
