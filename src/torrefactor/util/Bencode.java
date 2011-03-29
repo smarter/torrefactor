@@ -13,7 +13,12 @@ public class Bencode {
     private Object value = null;
 
     public Bencode(int number) {
-        this.value = Integer.valueOf(number);
+        // This is not an error we store int as long
+        this.value = Long.valueOf(number);
+    }
+
+    public Bencode(long number) {
+        this.value = Long.valueOf(number);
     }
 
     public Bencode(byte[] byteArray) {
@@ -47,7 +52,11 @@ public class Bencode {
     }
 
     public int toInt() {
-        return ((Integer) this.value).intValue();
+        return (int) ((Long) this.value).longValue();
+    }
+
+    public long toLong() {
+        return ((Long) this.value).longValue();
     }
 
     public byte[] toByteArray() {
@@ -78,7 +87,7 @@ public class Bencode {
         }
         switch ((char) c) {
         case 'i':
-            return new Bencode(decodeInt(pbstream));
+            return new Bencode(decodeLong(pbstream));
         case 'l':
             return new Bencode(decodeList(pbstream));
         case 'd':
@@ -90,29 +99,28 @@ public class Bencode {
         }
     }
 
-    //FIXME: We should handle handle gracefully the fact that bencode's int
-    //       may actually be long (for creationDate for instance).
-    static public int decodeInt(InputStream stream)
+    static public long decodeLong(InputStream stream)
     throws java.io.IOException, InvalidBencodeException {
         StringBuilder sb = new StringBuilder();
 
         int c = stream.read();
-        if (c != (int) 'i') throw new InvalidBencodeException("Not an int");
+        if (c != (int) 'i') throw new InvalidBencodeException(
+                                                            "Not an int/long");
         while ((c = stream.read()) != (int) 'e') {
             if (c == -1) throw new InvalidBencodeException(
-                    "Reached end of stream while parsing int.");
+                              "Reached end of stream while parsing int/long.");
             sb.append((char) c);
         }
 
-        int value;
+        long longValue;
         try {
-            value = Integer.parseInt(sb.toString());
+            longValue = Long.parseLong(sb.toString());
+            return longValue;
         } catch (NumberFormatException exception) {
             throw new InvalidBencodeException('"' + sb.toString()
-                                              + "\" is not a bencoded int.");
+                                           + "\" is not a bencoded int/long.");
         }
 
-        return value;
     }
 
     static public byte[] decodeByteArray(InputStream stream)
@@ -172,8 +180,10 @@ public class Bencode {
         }
     }
 
-    static public HashMap<String, Bencode> decodeDict(InputStream stream, String hashTag, byte[] hashArray)
-    throws java.io.IOException, java.security.NoSuchAlgorithmException, InvalidBencodeException {
+    static public HashMap<String, Bencode>
+    decodeDict(InputStream stream, String hashTag, byte[] hashArray)
+    throws java.io.IOException, java.security.NoSuchAlgorithmException,
+           InvalidBencodeException {
         DigestInputStream dstream = null;
 
         PushbackInputStream pbstream;

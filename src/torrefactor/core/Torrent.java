@@ -58,8 +58,7 @@ public class Torrent implements Serializable {
                 Map map = ((Bencode) maps.get(i)).toMap();
                 File file = bencodeToFile((Bencode) map.get("path"));
                 file = new File(basePath, file.toString());
-                //FIXME Bencode should return long
-                long size = (long) ((Bencode) map.get("length")).toInt();
+                long size = ((Bencode) map.get("length")).toLong();
                 this.length += size;
                 Pair<File, Long> fpair = new Pair<File, Long>(file, size);
                 this.files.add(fpair);
@@ -68,8 +67,7 @@ public class Torrent implements Serializable {
             // Single file mode
             String path = new String(infoMap.get("name").toByteArray());
             File file = new File(basePath, path);
-            //FIXME Bencode should return long
-            long size = (long) infoMap.get("length").toInt();
+            long size = infoMap.get("length").toLong();
             this.length = size;
             Pair<File, Long> fpair = new Pair<File, Long>(file, size);
             this.files = new ArrayList<Pair<File, Long>>(1);
