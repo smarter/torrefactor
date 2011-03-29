@@ -9,49 +9,90 @@ import java.util.*;
 
 public class Torrent implements Serializable {
     public final String FILE_NAME;
+    private File basePath;
     private int pieceLength;
-    private String name;
-    private int length;
+    private ArrayList<Pair<File, Long>> files;
     private byte[] pieceHash;
     byte[] infoHash;
     transient PeerManager peerManager;
     PieceManager pieceManager;
-    int uploaded = 0;
-    int downloaded = 0;
-    int left;
-    ArrayList<LinkedList<String>> announceList;
+    long length = 0;
+    long uploaded = 0;
+    long downloaded = 0;
+    long left;
+    List<List<String>> announceList;
     int creationDate = 0;
     String comment = "";
     String createdBy = "";
     String encoding = "";
 
-    public Torrent(String _fileName) throws UnsupportedOperationException, IOException,
-    FileNotFoundException, InvalidBencodeException, NoSuchAlgorithmException {
-        this.FILE_NAME = _fileName;
-        DigestInputStream stream = new DigestInputStream(new BufferedInputStream(new FileInputStream(_fileName)), MessageDigest.getInstance("SHA1"));
+    public Torrent(String fileName, String basePath)
+    throws UnsupportedOperationException, IOException, FileNotFoundException,
+    InvalidBencodeException, NoSuchAlgorithmException {
+
+    if (basePath == "" || basePath == null) {
+        this.basePath = new File(".");
+    } else {
+        this.basePath = new File(basePath);
+    }
+    if (!this.basePath.isDirectory()) {
+        throw new IllegalArgumentException(
+                "\"" + basePath + "\" does not exist or is not a directory.");
+    }
+
+        DigestInputStream stream = new DigestInputStream(
+                    new BufferedInputStream(new FileInputStream(fileName)),
+                    MessageDigest.getInstance("SHA1"));
+
+        this.FILE_NAME = fileName;
 
         infoHash = new byte[20];
         Map<String, Bencode> fileMap = Bencode.decodeDict(stream, "info", infoHash);
 
         Map<String, Bencode> infoMap = fileMap.get("info").toMap();
         if (infoMap.containsKey("files")) {
-            throw new UnsupportedOperationException("Multiple files mode not supported");
+            System.err.println(infoMap.get("files"));
+            List maps = infoMap.get("files").toList();
+            this.files = new ArrayList<Pair<File, Long>>(maps.size());
+            for (int i=0; i<maps.size(); i++) {
+                Map map = ((Bencode) maps.get(i)).toMap();
+                File file = bencodeToFile((Bencode) map.get("path"));
+                file = new File(basePath, file.toString());
+                //FIXME Bencode should return long
+                long size = (long) ((Bencode) map.get("length")).toInt();
+                this.length += size;
+                Pair<File, Long> fpair = new Pair<File, Long>(file, size);
+                this.files.add(fpair);
+            }
+        } else {
+            // Single file mode
+            String path = new String(infoMap.get("name").toByteArray());
+            File file = new File(basePath, path);
+            //FIXME Bencode should return long
+            long size = (long) infoMap.get("length").toInt();
+            this.length = size;
+            Pair<File, Long> fpair = new Pair<File, Long>(file, size);
+            this.files = new ArrayList<Pair<File, Long>>(1);
+            this.files.add(fpair);
         }
 
         this.pieceLength = infoMap.get("piece length").toInt();
         this.pieceHash = infoMap.get("pieces").toByteArray();
-        int pieces = (this.length - 1)/this.pieceLength + 1;
+        int pieces = (int)((this.length - 1)/((long) this.pieceLength + 1));
 
-        this.name = new String(infoMap.get("name").toByteArray());
-        this.length = infoMap.get("length").toInt();
         this.left = this.length;
 
-        announceList = new ArrayList<LinkedList<String>>();
+        this.pieceManager = new PieceManager(this.files, this.pieceLength,
+                                             this.pieceHash);
+
+        announceList = new ArrayList<List<String>>();
         if (fileMap.containsKey("announce-list")) {
             List<Bencode> announces = fileMap.get("announce-list").toList();
+            System.out.println("LENGTH: " + announces.size());
             for (Bencode tierList : announces) {
                 List<Bencode> trackers = tierList.toList();
                 Collections.shuffle(trackers);
+
                 LinkedList<String> trackerList = new LinkedList<String>();
                 for (int i = 0; i < trackers.size(); i++) {
                     trackerList.add(new String(trackers.get(i).toByteArray()));
@@ -59,10 +100,12 @@ public class Torrent implements Serializable {
                 announceList.add(trackerList);
             }
         } else {
+            System.err.println("Single tracker mode");
             LinkedList<String> trackerList = new LinkedList<String>();
             trackerList.add(new String(fileMap.get("announce").toByteArray()));
             announceList.add(trackerList);
         }
+        System.out.println("announceList: " + announceList);
 
         if (fileMap.containsKey("comment")) {
             this.comment = fileMap.get("comment").toString();
@@ -81,35 +124,56 @@ public class Torrent implements Serializable {
         }
     }
 
-    public void createFile(String fileName)
-    throws FileNotFoundException, IOException {
-        if (this.pieceManager != null) {
-            return;
+    private static File[] bencodeListToFiles(Bencode b) {
+        List<Bencode> list = b.toList();
+        File[] files = new File[list.size()];
+        for (int i=0; i<list.size(); i++) {
+            File file = bencodeToFile(list.get(i));
+            files[i] = file;
         }
-        String[] fileList = { fileName };
-        long[] fileSizes  = { this.length };
-        this.pieceManager = new PieceManager(fileList, fileSizes, this.pieceLength, this.pieceHash);
+        return files;
     }
 
-
-    public String name() {
-        return this.name;
+    private static File bencodeToFile(Bencode b) {
+        List l = b.toList();
+        File parent = new File(l.get(0).toString());
+        File current = parent;
+        int i=1;
+        while (i<l.size()) {
+            current = new File(parent, l.get(i).toString());
+            i++;
+        }
+        assert (current != null);
+        return current;
     }
 
-    public int length() {
-        return this.length;
+    private static void mkparentdirs(File[] files) {
+        for (int i=0; i<files.length; i++) {
+            String parentPath = files[i].getParent();
+            if (parentPath == null) {
+                //No parent
+                continue;
+            }
+            File parent = new File(parentPath);
+            parent.mkdirs();
+        }
     }
 
-    public int progress() {
+    public ArrayList<Pair<File, Long>> getFiles() {
+        // FIXME this propably should return a copy.
+        return this.files;
+    }
+
+    public float progress() {
         if (this.length == 0) return 0;
-        return this.downloaded / this.length * 100;
+        return (float) this.downloaded / (float) this.length;
     }
 
-    public int downloaded() {
+    public double downloaded() {
         return this.downloaded;
     }
 
-    public int uploaded() {
+    public double uploaded() {
         return this.uploaded;
     }
 

@@ -38,15 +38,6 @@ public class Peer implements Runnable {
     static final int PEER_TIMEOUT =  2*60*1000;
     static final int SLEEP_DELAY = 1000;
 
-    public static void main(String[] args) throws Exception {
-        Torrent t = new Torrent("deb.torrent");
-        t.createFile("bla");
-        t.start();
-        Peer p = new Peer(InetAddress.getByName("localhost"), 3000, t);
-        new Thread(p).start();
-        return;
-    }
-
     public Peer(InetAddress _ip, int _port, Torrent _torrent) throws UnknownHostException, IOException {
         this.outQueue = new LinkedList<DataBlockInfo>();
         this.id = null;

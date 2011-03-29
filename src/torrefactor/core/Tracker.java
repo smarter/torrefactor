@@ -17,12 +17,15 @@ abstract class Tracker {
     protected int port;
     protected int seeders = -1;
     protected int leechers = -1;
+    protected int uniqKey;
 
 
     public Tracker () {} 
     public Tracker (String _uri) {}
-    abstract ArrayList<Pair<byte[], Integer>> announce (Torrent torrent, Event event)
-    throws IOException, InvalidBencodeException;
+    public Tracker (String _uri, int uniqKey) {}
+    abstract ArrayList<Pair<byte[], Integer>>
+        announce (Torrent torrent, Event event)
+        throws IOException, InvalidBencodeException;
 
 
     public int getInverval () {

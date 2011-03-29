@@ -4,7 +4,8 @@ import org.junit.Test;
 import org.junit.Assert;
 import static org.junit.Assert.*;
 
-import java.util.Arrays;
+import java.io.*;
+import java.util.*;
 
 import torrefactor.core.DataManager;
 import torrefactor.core.DataBlock;
@@ -29,7 +30,7 @@ public class DataManagerTest {
     throws Exception {
         System.out.print('\n');
         int size = 77;
-        String[] filePaths = {"data/test/DataManager/test0123"};
+        File[] files = {new File("data/test/DataManager/test0123")};
         long[] fileSizes = {77};
         int pieceSize = 16;
         byte[] blockData;
@@ -40,7 +41,7 @@ public class DataManagerTest {
             0x33 & 0xFF, 0x33 & 0xFF, 0x33 & 0xFF, 0x33 & 0xFF};
 
         DataManager dataManager = new DataManager (
-                                             filePaths, fileSizes, pieceSize);
+                                             files, fileSizes, pieceSize);
 
 
         blockData = dataManager.getBlock(0, 0, pieceSize);
@@ -56,7 +57,7 @@ public class DataManagerTest {
     throws Exception {
         System.out.print('\n');
         int size = 77;
-        String[] filePaths = {"data/test/DataManager/test0123"};
+        File[] files = {new File("data/test/DataManager/test0123")};
         long[] fileSizes = {77};
         int pieceSize = 4;
         byte[] blockData;
@@ -64,7 +65,7 @@ public class DataManagerTest {
             0x33 & 0xFF, 0x33 & 0xFF, 0x0A & 0xFF, 0x0A & 0xFF };
 
         DataManager dataManager = new DataManager (
-                                             filePaths, fileSizes, pieceSize);
+                                             files, fileSizes, pieceSize);
 
 
         blockData = dataManager.getBlock(3, 2, pieceSize);
@@ -80,14 +81,14 @@ public class DataManagerTest {
     throws Exception {
         System.out.print('\n');
         int size = 77;
-        String[] filePaths = {"data/test/DataManager/test0123"};
+        File[] files = {new File("data/test/DataManager/test0123")};
         long[] fileSizes = {77};
         int pieceSize = 4;
         byte[] data;
         byte[] dataExpected;
 
         DataManager dataManager = new DataManager (
-                                             filePaths, fileSizes, pieceSize);
+                                             files, fileSizes, pieceSize);
 
         data = dataManager.getPiece(0);
 
@@ -122,9 +123,9 @@ public class DataManagerTest {
     throws Exception {
         System.out.print('\n');
         int size = 77;
-        String[] filePaths = {
-            "data/test/DataManager/test1",
-            "data/test/DataManager/test2" };
+        File[] files = {
+            new File("data/test/DataManager/test1"),
+            new File("data/test/DataManager/test2") };
         long[] fileSizes = {15, 7};
         int pieceSize = 4;
         byte[] blockData;
@@ -132,7 +133,7 @@ public class DataManagerTest {
             0x0A & 0xFF, 0x37 & 0xFF, 0x37 & 0xFF, 0x38 & 0xFF };
 
         DataManager dataManager = new DataManager (
-                                             filePaths, fileSizes, pieceSize);
+                                             files, fileSizes, pieceSize);
 
 
         blockData = dataManager.getBlock(3, 2, pieceSize);

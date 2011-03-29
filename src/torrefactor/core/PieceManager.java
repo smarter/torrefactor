@@ -1,6 +1,7 @@
 package torrefactor.core;
 
 import torrefactor.core.*;
+import torrefactor.util.Pair;
 
 import java.io.*;
 import java.util.*;
@@ -24,9 +25,10 @@ public class PieceManager implements Serializable {
     static final int BLOCK_SIZE = (1 << 14); // in bytes
     static final int PIECE_LOCK_TIMEOUT = 30000; // in milliseconds
 
-    public PieceManager(String[] fileList, long[] fileSizes, int pieceLength, byte[] _digestArray)
+    public PieceManager(List<Pair<File, Long>> files,
+                        int pieceLength, byte[] _digestArray)
     throws FileNotFoundException, IOException {
-        this.dataManager = new DataManager(fileList, fileSizes, pieceLength);
+        this.dataManager = new DataManager(files, pieceLength);
         this.blockMap = new TreeMap<Integer, Integer>();
         this.pieceLockMap = new HashMap<Integer, Long>();
         int fieldLength = (this.dataManager.pieceNumber() - 1)/8 + 1;

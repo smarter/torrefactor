@@ -13,6 +13,13 @@ public class HttpTracker extends Tracker {
     private String path;
     private String trackerId; //TODO: what's this thing?
 
+    public HttpTracker (String _uri, int uniqKey)
+    throws UnsupportedOperationException, IllegalArgumentException,
+           UnknownHostException, URISyntaxException {
+        this (_uri);
+        this.uniqKey = uniqKey;
+    }
+
     public HttpTracker (String _uri)
     throws UnsupportedOperationException, IllegalArgumentException,
            UnknownHostException, URISyntaxException {
@@ -26,6 +33,9 @@ public class HttpTracker extends Tracker {
 
         this.host = uriObject.getHost();
         this.port = uriObject.getPort();
+        if (this.port == -1) {
+            this.port = 80;
+        }
         this.path = "";
         if (uriObject.getRawPath() != null) {
             this.path += uriObject.getRawPath();
@@ -45,14 +55,15 @@ public class HttpTracker extends Tracker {
         // Construct request
         String infoHash = urlEncode(torrent.infoHash);
         String peerId = urlEncode(torrent.peerManager.peerId);
+        // FIXME: Don't send event=none when event is Event.none
         Object[] format = { infoHash, peerId, this.port,
-                            Integer.toString(torrent.uploaded),
-                            Integer.toString(torrent.downloaded),
-                            Integer.toString(torrent.left),
-                            event.toString() };
+                            Long.toString(torrent.uploaded),
+                            Long.toString(torrent.downloaded),
+                            Long.toString(torrent.left),
+                            event.toString(), this.uniqKey };
         String params = String.format("?info_hash=%s&numwant=200&peer_id=%s&port=%s"
                                       + "&uploaded=%s&downloaded=%s"
-                                      + "&left=%s&event=%s&compact=1",
+                                      + "&left=%s&event=%s&compact=1&key=%s",
                                       format);
         System.out.println("Request params: " + params);
 
@@ -70,7 +81,8 @@ public class HttpTracker extends Tracker {
         }
 
         if (answerMap == null) {
-            throw new IOException("Couldn't connect to any tracker.");
+            System.err.println("answesMap is null!!!");
+            return null;
         }
 
         // Parse response
@@ -134,7 +146,13 @@ public class HttpTracker extends Tracker {
 
         // Setup socket
         InetAddress address = InetAddress.getByName(this.host);
-        Socket socket = new Socket(address, this.port);
+        Socket socket = null;
+        try {
+            socket = new Socket(address, this.port);
+        } catch (ConnectException e) {
+            System.err.println(e.getMessage());
+            return null;
+        }
         BufferedInputStream input = new BufferedInputStream(
                                                 socket.getInputStream());
         BufferedOutputStream output = new BufferedOutputStream(

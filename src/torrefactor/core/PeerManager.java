@@ -50,9 +50,8 @@ public class PeerManager implements Runnable {
     public void run() {
         long time = System.currentTimeMillis();
         try {
-            ArrayList<Pair<byte[], Integer>> peersList;
-            peersList = this.trackerManager.announce(
-                                                Tracker.Event.started);
+            List<Pair<byte[], Integer>> peersList;
+            peersList = this.trackerManager.announce(Tracker.Event.started);
             updateMap(peersList);
         } catch (Exception e) {
             e.printStackTrace();
@@ -62,7 +61,7 @@ public class PeerManager implements Runnable {
         while (!stopped) {
             if (System.currentTimeMillis() - time > ANNOUNCE_DELAY) {
                 try {
-                    ArrayList<Pair<byte[], Integer>> peersList;
+                    List<Pair<byte[], Integer>> peersList;
                     peersList = this.trackerManager.announce(
                                                         Tracker.Event.none);
                     updateMap(peersList);
@@ -126,7 +125,7 @@ public class PeerManager implements Runnable {
         return this.stopped;
     }
 
-    private void updateMap(ArrayList<Pair<byte[], Integer>> peersList)
+    private void updateMap(List<Pair<byte[], Integer>> peersList)
     throws IOException, UnknownHostException {
         Map<InetAddress, Peer> oldMap = new HashMap<InetAddress, Peer>(peerMap);
         for (Pair<byte[], Integer> p: peersList) {

@@ -26,14 +26,14 @@ public class TorrentManager {
         this.torrentList = new ArrayList<Torrent>();
     }
 
-    public Torrent addTorrent(String fileName)
+    public Torrent addTorrent(String fileName, String basePath)
     throws IOException, InvalidBencodeException, NoSuchAlgorithmException {
         for (Torrent torrent: torrentList) {
             if (fileName.equals(torrent.FILE_NAME)) {
                 return torrent;
             }
         }
-        Torrent torrent = new Torrent(fileName);
+        Torrent torrent = new Torrent(fileName, basePath);
         boolean ok = this.torrentList.add(torrent);
         return (ok ? torrent : null);
     }

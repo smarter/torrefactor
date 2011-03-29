@@ -2,10 +2,14 @@ package test.core;
 
 import torrefactor.core.DataManager;
 import torrefactor.core.PieceManager;
+import torrefactor.util.Pair;
 
 import org.junit.Test;
 import org.junit.Assert;
 import static org.junit.Assert.*;
+
+import java.io.File;
+import java.util.*;
 
 public class PieceManagerTest {
 
@@ -16,14 +20,17 @@ public class PieceManagerTest {
     //           [----]    [----]
     //         10^  50^ 100^    ^140
     private PieceManager init() {
-        String[] fileList = { "data/test/dummy" };
-        long[] fileSizes = { (1 << 8) };
+        File file = new File("data/test/dummy");
+        Long fileSize = (long) (1 << 8);
+        Pair<File, Long> fpair = new Pair<File, Long>(file, fileSize);
+        List<Pair<File, Long>> fpairs = new ArrayList<Pair<File, Long>>(1);
+        fpairs.add(fpair);
         int pieceLength = (1 << 4);
         byte[] fileHash = new byte[20];
         java.util.Arrays.fill(fileHash, (byte) 0);
         PieceManager p = null;
         try {
-            p = new PieceManager(fileList, fileSizes, pieceLength, fileHash);
+            p = new PieceManager(fpairs, pieceLength, fileHash);
         } catch (Exception e) {
             e.printStackTrace();
             assertTrue(false);

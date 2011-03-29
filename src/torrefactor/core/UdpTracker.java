@@ -25,6 +25,13 @@ public class UdpTracker extends Tracker {
     private final static int UDP_ACTION_ANNOUNCE = 1;
     private final static int UDP_ACTION_ERROR = 3;
 
+    public UdpTracker (String _uri, int uniqKey)
+    throws UnsupportedOperationException, IllegalArgumentException,
+           UnknownHostException {
+        this (_uri);
+        this.uniqKey = uniqKey;
+    }
+
     public UdpTracker (String _uri)
     throws UnsupportedOperationException, IllegalArgumentException,
            UnknownHostException {
@@ -46,6 +53,9 @@ public class UdpTracker extends Tracker {
 
         this.host = uriObject.getHost();
         this.port = uriObject.getPort();
+        System.err.println("Uri : " + this.uri);
+        System.err.println("Host: " + this.host);
+        System.err.println("Port: " + this.port);
     }
 
     public ArrayList<Pair<byte[], Integer>> announce (Torrent torrent, Event event) {
@@ -75,6 +85,7 @@ public class UdpTracker extends Tracker {
 
             // Connect reply
             byte[] buffer = new byte[recvlen];
+            System.out.println("Len: " + buffer.length);
             packet = new DatagramPacket(buffer, buffer.length);
             try {
                 this.socket.receive(packet);
@@ -88,6 +99,7 @@ public class UdpTracker extends Tracker {
                 i--;
                 continue;
             }
+            break;
         }
         return packet;
     }
@@ -127,7 +139,7 @@ public class UdpTracker extends Tracker {
 
         // Connect
         buffer = new byte[16];
-        System.arraycopy(new Long(UDP_PROTOCOL_MAGICK).byteValue(), 0,
+        System.arraycopy(longToByteArray(UDP_PROTOCOL_MAGICK), 0,
                                   buffer, 0, 8);
         System.arraycopy(intToByteArray(UDP_ACTION_CONNECTION), 0,
                          buffer, 8, 4);
@@ -168,11 +180,13 @@ public class UdpTracker extends Tracker {
         System.arraycopy(intToByteArray(event.ordinal()), 0,
                          buffer, 80, 4);
         System.arraycopy(address.getAddress(), 0, buffer, 84, 4);
-        byte[] key = intToByteArray(random.nextInt());
+        //byte[] key = intToByteArray(random.nextInt());
+        byte[] key = intToByteArray(this.uniqKey);
         System.arraycopy(key, 0, buffer, 88, 4);
         System.arraycopy(intToByteArray(this.numWant), 0, buffer, 92, 4);
         System.arraycopy(intToByteArray(lport), 2, buffer, 96, 2);
-        System.arraycopy(extensions, 0, buffer, 98, 2);
+        System.arraycopy(longToByteArray(extensions), 0, buffer, 98, 2);
+        packet = new DatagramPacket(buffer, buffer.length, address, this.port);
 
         packet = sendReceive(packet, 20+6*this.numWant,
                                    transactionId);
@@ -194,14 +208,15 @@ public class UdpTracker extends Tracker {
         // Parse peer-port segments
         ArrayList<Pair<byte[], Integer>> peerList = new ArrayList<Pair<byte[], Integer>>();
         int i = 20;
-        while (i+6 <= packet.getLength()) {
+        while (i <= packet.getLength()) {
             byte[] peerAddress = new byte[4];
             System.arraycopy(packet.getData(), i, peerAddress, 0, 4);
             byte[] portArray = new byte[2];
             System.arraycopy(packet.getData(), i+4, portArray, 0, 2);
-            int peerPort = byteArrayToInt(portArray);
+            int peerPort = shortByteArrayToInt(portArray);
             Pair<byte[], Integer> peer = new Pair<byte[], Integer>(peerAddress, peerPort);
             peerList.add(peer);
+            i += 6;
         }
 
         return peerList;
@@ -232,6 +247,13 @@ public class UdpTracker extends Tracker {
     // I'm tired of looking up the API each time I want to do a stupid type
     // convertion. So I've coded want I need here and will spend less time
     // searching the API.
+
+    private static int shortByteArrayToInt(byte[] array) {
+        int i = 0;
+        i += ((int) array[0] & 0xFF) << 8;
+        i += ((int) array[1] & 0xFF);
+        return i;
+    }
 
     private static int byteArrayToInt(byte[] array) {
         int i = 0;

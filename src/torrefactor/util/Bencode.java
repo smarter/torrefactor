@@ -32,6 +32,20 @@ public class Bencode {
         return this.value;
     }
 
+    public String toString() {
+        if (this.value instanceof byte[]) {
+            return new String( (byte[]) this.value);
+        } else if (this.value instanceof Integer) {
+            return ( (Integer) this.value).toString();
+        } else if (this.value instanceof Long) {
+            return ( (Long) this.value).toString();
+        } else if (this.value instanceof List) {
+            return ( (List) this.value).toString();
+        } else {
+            return this.value.toString();
+        }
+    }
+
     public int toInt() {
         return ((Integer) this.value).intValue();
     }
@@ -56,7 +70,8 @@ public class Bencode {
         int c = pbstream.read();
         pbstream.unread(c);
 
-        if (c == -1) throw new InvalidBencodeException("Unexpected end of stream");
+        if (c == -1) throw new InvalidBencodeException(
+                                                   "Unexpected end of stream");
 
         if (Character.isDigit((char) c)) {
             return new Bencode(decodeByteArray(pbstream));
@@ -70,7 +85,8 @@ public class Bencode {
             return new Bencode(decodeDict(pbstream));
         default:
             throw new InvalidBencodeException(
-                      "Not a Bencode string (should start with 'i', 'l', 'd' or a digit)");
+                                     "Not a Bencode string (should start with "
+                                   + "'i', 'l', 'd' or a digit)");
         }
     }
 

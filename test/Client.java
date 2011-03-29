@@ -7,15 +7,16 @@ public class Client {
     public static TorrentManager torrentManager;
 
     public static void main(String[] args)
-    throws java.io.IOException, java.io.FileNotFoundException, java.net.ProtocolException,
-           java.security.NoSuchAlgorithmException, torrefactor.util.InvalidBencodeException {
+    throws java.io.IOException, java.io.FileNotFoundException,
+    java.net.ProtocolException, java.security.NoSuchAlgorithmException,
+    torrefactor.util.InvalidBencodeException {
         if (args.length < 2) {
-            System.out.println("Usage: java test.Client <input.torrent> <output>");
+            System.out.println(
+                    "Usage: java test.Client <input.torrent> <basePath>");
             System.exit(1);
         }
         torrentManager = new TorrentManager("");
-        Torrent torrent = torrentManager.addTorrent(args[0]);
-        torrent.createFile(args[1]);
+        Torrent torrent = torrentManager.addTorrent(args[0], args[1]);
         torrent.start();
         Runtime.getRuntime().addShutdownHook(new Thread(
             new Runnable() {

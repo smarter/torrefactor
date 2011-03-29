@@ -1,17 +1,19 @@
 package torrefactor.core;
 
 import torrefactor.core.DataBlock;
+import torrefactor.util.Pair;
 
 import java.io.*;
 import java.nio.*;
 import java.nio.channels.*;
+import java.util.*;
 
 // TODO
 //  - set buffers limit so we cannot write past the block end.
 //  - Are we allowed to use package access for attributes ?
 
 public class DataManager implements Serializable {
-    private String[] filePaths;
+    private File[]files;
     private long[] fileSizes;
     private transient RandomAccessFile[] raFiles;
     private transient FileChannel[] fileChannels;
@@ -19,38 +21,58 @@ public class DataManager implements Serializable {
     private int pieceNumber;
     private int pieceLength;
 
-    public DataManager (String[] _filePaths, long[] _fileSizes,
-                               int _pieceLength)
-    throws FileNotFoundException, IOException {
-        this.filePaths = _filePaths;
-        this.fileSizes = _fileSizes;
-        this.pieceLength = _pieceLength;
-        openFiles();
+    public DataManager (List<Pair<File, Long>> _files ,int _pieceLength)
+    throws java.io.FileNotFoundException, java.io.IOException {
+        setFilesAndSizes(_files);
+        init(_pieceLength);
     }
 
-    // Calculate total size, open each file, allocate disk space if
-    // necessary and get FileChannel.
-    private void openFiles()
-    throws FileNotFoundException, IOException {
-        this.raFiles = new RandomAccessFile[this.filePaths.length];
-        this.fileChannels = new FileChannel[this.filePaths.length];
+    public DataManager (File[] _files, long[] _sizes, int _pieceLength)
+    throws java.io.FileNotFoundException, java.io.IOException {
+        setFilesAndSizes(_files, _sizes);
+        init(_pieceLength);
+    }
+
+    private void init (int pieceLength)
+    throws java.io.FileNotFoundException, java.io.IOException {
+        this.pieceLength = pieceLength;
+        this.raFiles = new RandomAccessFile[this.files.length];
+        this.fileChannels = new FileChannel[this.files.length];
+
+        // Calculate total size, open each file, allocate disk space if
+        // necessary and get FileChannel.
         this.totalSize = 0;
         for (int i=0; i<this.fileSizes.length; i++) {
             this.totalSize += this.fileSizes[i];
-            this.raFiles[i] = new RandomAccessFile(filePaths[i], "rw");
+            this.raFiles[i] = new RandomAccessFile(this.files[i], "rw");
             if (this.raFiles[i].length() != this.fileSizes[i]) {
                 this.raFiles[i].setLength(this.fileSizes[i]);
             }
             this.fileChannels[i] = this.raFiles[i].getChannel();
-            System.out.println("Got channel for " + this.filePaths[i]); //DELETEME
+            System.out.println("Got channel for " + this.files[i]); //DELETEME
         }
         this.pieceNumber = (int) ( (this.totalSize - 1) / this.pieceLength) + 1;
+    }
+
+    private void setFilesAndSizes (List<Pair<File, Long>> fpairs) {
+        this.files = new File[fpairs.size()];
+        this.fileSizes = new long[fpairs.size()];
+        for (int i=0; i<fpairs.size(); i++) {
+            this.files[i] = fpairs.get(i).first();
+            this.fileSizes[i] = fpairs.get(i).second();
+        }
+    }
+
+    private void setFilesAndSizes (File[] files, long[] sizes) {
+        assert (files.length == sizes.length);
+        this.files = files;
+        this.fileSizes = sizes;
     }
 
     private void readObject(ObjectInputStream in)
     throws IOException, ClassNotFoundException {
         in.defaultReadObject();
-        openFiles();
+        init(this.pieceLength);
     }
 
     public int pieceNumber() {
@@ -94,7 +116,7 @@ public class DataManager implements Serializable {
         for (int i=0; i < this.fileChannels.length; i++) {
             if (localOffset < this.fileSizes[i]) {
                 numBuffers +=1;
-                System.out.println("File: " + this.filePaths[i] + " with size: " + this.fileChannels[i].size());    //DELETEME
+                System.out.println("File: " + files[i] + " with size: " + this.fileChannels[i].size());    //DELETEME
                 System.out.println("localOffest: " + localOffset);
                 remainingLength -= this.fileSizes[i] - localOffset;
                 System.out.println("Remaining length: " + remainingLength); //DELETEME
