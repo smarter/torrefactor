@@ -35,3 +35,18 @@ Semaine 3 (07/03):
 - Nouvelles classes Tracker, HttpTracker, UdpTracker: modularisation de
   fonctions auparavant assurées par la classe PeerManager (sauf le support
   UDP qui est nouveau).
+
+Semaine 4 (14/03):
+- Ajout d'une classe Pair immutable pour gérer des paires d'éléments de types
+  différents avec support des generics.
+- Ajout d'une file d'attente pour les requêtes aux paires.
+- Système pour éviter de demander le même bloc à plusieurs paires différent.
+  (Ce système est a perfectionner)
+
+Semaine 5 (21/03):
+- Support du tracker de l'EPFL alors que d'autres trackers fonctionnaient
+  avant.
+- Support du multifichier.
+- Peer id au format Azureus
+- En cours: reprise des téléchargements lors de l'ouverture du
+  programme (à l'aide de la serialisation des objects).
