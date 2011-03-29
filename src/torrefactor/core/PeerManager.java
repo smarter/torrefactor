@@ -86,7 +86,8 @@ public class PeerManager implements Runnable {
                     it.remove();
                     this.peerMap.remove(peerEntry.getKey());
                 }
-                if (!peerEntry.getValue().isConnected() || peerEntry.getValue().isChokingUs()) {
+                if (!peerEntry.getValue().isConnected() || peerEntry.getValue().isChokingUs()
+                    || peerEntry.getValue().isQueueFull()) {
                     System.out.print(".");
                     continue;
                 }

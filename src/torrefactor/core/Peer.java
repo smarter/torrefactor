@@ -285,6 +285,10 @@ public class Peer implements Runnable {
         return this.isInterestedInUs;
     }
 
+    public boolean isQueueFull() {
+        return this.outQueue.size() >= 10;
+    }
+
     public int popDownloaded() {
         int poped = this.downloaded;
         this.downloaded = 0;
