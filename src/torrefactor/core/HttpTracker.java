@@ -55,16 +55,28 @@ public class HttpTracker extends Tracker {
         // Construct request
         String infoHash = urlEncode(torrent.infoHash);
         String peerId = urlEncode(torrent.peerManager.peerId);
-        // FIXME: Don't send event=none when event is Event.none
-        Object[] format = { infoHash, peerId, this.port,
-                            Long.toString(torrent.uploaded),
-                            Long.toString(torrent.downloaded),
-                            Long.toString(torrent.left),
-                            event.toString(), this.uniqKey };
-        String params = String.format("?info_hash=%s&numwant=200&peer_id=%s&port=%s"
-                                      + "&uploaded=%s&downloaded=%s"
-                                      + "&left=%s&event=%s&compact=1&key=%s",
-                                      format);
+        StringBuilder sb = new StringBuilder(200);
+        sb.append("?info_hash=");
+        sb.append(infoHash);
+        sb.append("&port=");
+        sb.append(this.port); //FIXME: should be PeerManager.port
+        sb.append("&numwant=200");
+        sb.append("&peer_id=");
+        sb.append(peerId);
+        sb.append("&key=");
+        sb.append(this.uniqKey);
+        sb.append("&uploaded=");
+        sb.append(torrent.uploaded);
+        sb.append("&downloaded=");
+        sb.append(torrent.downloaded);
+        sb.append("&left=");
+        sb.append(torrent.left);
+        sb.append("&compact=1");
+        if (event != Event.none) {
+            sb.append("&event=");
+            sb.append(event.toString());
+        }
+        String params = sb.toString();
         System.out.println("Request params: " + params);
 
         // Announce

@@ -1,4 +1,3 @@
-
 package torrefactor.core;
 import torrefactor.core.*;
 import torrefactor.util.*;
@@ -58,7 +57,7 @@ public class PeerManager implements Runnable {
         }
         stopped = false;
         while (!stopped) {
-            if (System.currentTimeMillis() - time > ANNOUNCE_DELAY) {
+            if (System.currentTimeMillis() - time > ANNOUNCE_DELAY || peerMap.size() < MAX_PEERS / 2) {
                 try {
                     List<Pair<byte[], Integer>> peersList;
                     peersList = this.trackerManager.announce(
@@ -84,6 +83,7 @@ public class PeerManager implements Runnable {
                 if (!peerEntry.getValue().isValid()) {
                     it.remove();
                     this.peerMap.remove(peerEntry.getKey());
+                    continue;
                 }
                 if (!peerEntry.getValue().isConnected() || peerEntry.getValue().isChokingUs()
                     || peerEntry.getValue().isQueueFull()) {

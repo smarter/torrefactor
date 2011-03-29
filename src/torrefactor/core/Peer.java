@@ -35,6 +35,7 @@ public class Peer implements Runnable {
     static final int CONNECTION_TRIES = 5;
 
     // In milliseconds
+    static final int CONNECT_TIMEOUT =  1000;
     static final int PEER_TIMEOUT =  2*60*1000;
     static final int SLEEP_DELAY = 1000;
 
@@ -62,7 +63,7 @@ public class Peer implements Runnable {
                 this.socket.setReceiveBufferSize(RECEIVE_BUFFER_SIZE);
                 this.socket.setSoTimeout(PEER_TIMEOUT);
                 InetSocketAddress address = new InetSocketAddress(this.ip, this.port);
-                this.socket.connect(address, PEER_TIMEOUT);
+                this.socket.connect(address, CONNECT_TIMEOUT);
 
                 socketInput = new DataInputStream(new BufferedInputStream(this.socket.getInputStream()));
                 System.out.println("Connected: " + this.ip.toString() + ':' + this.port);
@@ -133,6 +134,7 @@ public class Peer implements Runnable {
         if (typeByte < 0 || typeByte > 9) {
             System.out.println("Got unknown message " + typeByte + " with length: " + length + " " + arrayToString(this.id));
             //HACK: try to find keep alives to get back to known messages
+            /*
             boolean foundKeepAlive = false;
             while (length != 0 && socketInput.available() != 0) {
                 if (socketInput.read() == 0 && socketInput.read() == 0 && socketInput.read() == 0) {
@@ -145,6 +147,8 @@ public class Peer implements Runnable {
             if (!foundKeepAlive) {
                 invalidate();
             }
+            */
+            invalidate();
             return;
         }
         MessageType type = MessageType.values()[typeByte];
