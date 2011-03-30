@@ -23,8 +23,8 @@ public class Peer implements Runnable {
     private Socket socket;
     private DataInputStream socketInput;
     private DataOutputStream socketOutput;
-    private int downloaded = 0;
-    private int uploaded = 0;
+    private long downloaded = 0;
+    private long uploaded = 0;
 
     private byte[] bitfield;
     private boolean isChoked = true;
@@ -300,6 +300,14 @@ public class Peer implements Runnable {
 
     public boolean isQueueFull() {
         return this.outQueue.size() >= 10;
+    }
+
+    public long downloaded() {
+        return this.downloaded;
+    }
+
+    public long uploaded() {
+        return this.uploaded;
     }
 
     public int popDownloaded() {
