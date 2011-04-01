@@ -310,14 +310,14 @@ public class Peer implements Runnable {
         return this.uploaded;
     }
 
-    public int popDownloaded() {
-        int poped = this.downloaded;
+    public long popDownloaded() {
+        long poped = this.downloaded;
         this.downloaded = 0;
         return poped;
     }
 
-    public int popUploaded() {
-        int poped = this.uploaded;
+    public long popUploaded() {
+        long poped = this.uploaded;
         this.uploaded = 0;
         return poped;
     }

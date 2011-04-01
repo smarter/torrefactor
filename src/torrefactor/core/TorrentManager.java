@@ -9,6 +9,7 @@ import java.security.*;
 
 public class TorrentManager {
     private List<Torrent> torrentList;
+    private List<Torrent> readOnlyList;
     private File configFile;
 
     public TorrentManager(String configFileName) {
@@ -24,6 +25,11 @@ public class TorrentManager {
             return;
         }
         this.torrentList = new ArrayList<Torrent>();
+        this.readOnlyList = Collections.unmodifiableList(this.torrentList);
+    }
+
+    public List<Torrent> torrentList() {
+        return this.readOnlyList;
     }
 
     public Torrent addTorrent(String fileName, String basePath)
