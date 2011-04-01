@@ -25,8 +25,8 @@ public class BencodeTest {
         InputStream stream = new ByteArrayInputStream(string.getBytes());
         int expected = 12345;
 
-        int result = Bencode.decodeInt(stream);
-        assertTrue(result == expected);
+        long result = Bencode.decodeLong(stream);
+        assertTrue((int) result == expected);
     }
 
     @Test public void decodeValidString()
