@@ -164,14 +164,16 @@ public class Torrent implements Serializable {
 
     public float progress() {
         if (this.length == 0) return 0;
-        return (float) this.downloaded / (float) this.length;
+        // use length-left instead of downloaded since downloaded may be
+        // greater than length if we downloaded some invalid pieces.
+        return (float) (this.length - this.left) / (float) this.length;
     }
 
-    public double downloaded() {
+    public long downloaded() {
         return this.downloaded;
     }
 
-    public double uploaded() {
+    public long uploaded() {
         return this.uploaded;
     }
 
