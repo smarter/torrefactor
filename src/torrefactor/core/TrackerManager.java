@@ -21,7 +21,8 @@ public class TrackerManager {
         Random random = new Random();
         this.tiers = torrent.announceList;
         this.torrent = torrent;
-        this.uniqKey = random.nextInt();
+        // Remove the sign
+        this.uniqKey = random.nextInt() >>> 1;
     }
 
     public List<Pair<byte[], Integer>> announce (Event event) {
