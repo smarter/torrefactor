@@ -6,6 +6,7 @@ import java.io.*;
 import java.net.*;
 import java.security.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class Torrent implements Serializable {
     public final String FILE_NAME;
@@ -17,9 +18,9 @@ public class Torrent implements Serializable {
     transient PeerManager peerManager;
     PieceManager pieceManager;
     long length = 0;
-    long uploaded = 0;
-    long downloaded = 0;
-    long left;
+    AtomicLong uploaded = new AtomicLong(0);
+    AtomicLong downloaded = new AtomicLong(0);
+    AtomicLong left;
     List<List<String>> announceList;
     int creationDate = 0;
     String comment = "";
@@ -78,7 +79,7 @@ public class Torrent implements Serializable {
         this.pieceHash = infoMap.get("pieces").toByteArray();
         int pieces = (int)((this.length - 1)/((long) this.pieceLength + 1));
 
-        this.left = this.length;
+        this.left = new AtomicLong (this.length);
 
         this.pieceManager = new PieceManager(this.files, this.pieceLength,
                                              this.pieceHash);
@@ -166,15 +167,32 @@ public class Torrent implements Serializable {
         if (this.length == 0) return 0;
         // use length-left instead of downloaded since downloaded may be
         // greater than length if we downloaded some invalid pieces.
-        return (float) (this.length - this.left) / (float) this.length;
+        long left = this.left.longValue();
+        return (float) (this.length - left) / (float) this.length;
+    }
+
+    public long left() {
+        return this.left.longValue();
+    }
+
+    public long setLeft(long value) {
+        return this.left.getAndSet(value);
     }
 
     public long downloaded() {
-        return this.downloaded;
+        return this.downloaded.longValue();
+    }
+
+    public long incrementDownloaded(long value) {
+        return this.downloaded.addAndGet(value);
     }
 
     public long uploaded() {
-        return this.uploaded;
+        return this.uploaded.longValue();
+    }
+
+    public long incrementUploaded(long value) {
+        return this.uploaded.addAndGet(value);
     }
 
     public void start() throws ProtocolException, InvalidBencodeException,
