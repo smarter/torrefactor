@@ -13,6 +13,9 @@ public class Peer implements Runnable {
 
     private Queue<DataBlockInfo> outQueue;
 
+    // Numbers of answers we're waiting for
+    private volatile int requested;
+
     private volatile boolean isValid = true;
     private boolean isConnected = false;
 
@@ -37,11 +40,11 @@ public class Peer implements Runnable {
     // In milliseconds
     static final int CONNECT_TIMEOUT =  1000;
     static final int PEER_TIMEOUT =  2*60*1000;
-    static final int SLEEP_DELAY = 1000;
+    static final int SLEEP_DELAY = 10;
 
     // In bytes
-    static final int SEND_BUFFER_SIZE = 32768;
-    static final int RECEIVE_BUFFER_SIZE = 32768;
+    static final int SEND_BUFFER_SIZE = (1 << 18);
+    static final int RECEIVE_BUFFER_SIZE = (1 << 18);
 
     public Peer(InetAddress _ip, int _port, Torrent _torrent) throws UnknownHostException, IOException {
         this.outQueue = new LinkedList<DataBlockInfo>();
@@ -72,6 +75,7 @@ public class Peer implements Runnable {
                     invalidate();
                     return;
                 }
+                sendMessage(MessageType.bitfield, null, this.torrent.pieceManager.bitfield);
                 //TODO: remove, for testing only
                 setChoked(false);
                 setInteresting(true);
@@ -95,13 +99,7 @@ public class Peer implements Runnable {
             try {
                 readMessage();
                 if (System.currentTimeMillis() - time > PEER_TIMEOUT / 2) {
-                    System.out.println("#################");
-                    DataBlockInfo queuedInfo = outQueue.poll();
-                    if (queuedInfo != null) {
-                        sendRequest(queuedInfo);
-                    } else {
-                        keepAlive();
-                    }
+                    keepAlive();
                     time = System.currentTimeMillis();
                 }
                 if (socketInput.available() != 0) {
@@ -133,22 +131,6 @@ public class Peer implements Runnable {
         length--;
         if (typeByte < 0 || typeByte > 9) {
             System.out.println("Got unknown message " + typeByte + " with length: " + length + " " + arrayToString(this.id));
-            //HACK: try to find keep alives to get back to known messages
-            /*
-            boolean foundKeepAlive = false;
-            while (length != 0 && socketInput.available() != 0) {
-                if (socketInput.read() == 0 && socketInput.read() == 0 && socketInput.read() == 0) {
-                    foundKeepAlive = true;
-                    System.out.println("Found possible Keep Alive, trying to recover");
-                    break;
-                }
-                length -= 3;
-            }
-            if (!foundKeepAlive) {
-                invalidate();
-            }
-            */
-            invalidate();
             return;
         }
         MessageType type = MessageType.values()[typeByte];
@@ -185,7 +167,7 @@ public class Peer implements Runnable {
             if (length != this.bitfield.length) {
                 System.out.println("Wrong bitfield length, got: " + length + " expected: " + this.bitfield.length);
             }
-            socketInput.read(this.bitfield);
+            socketInput.readFully(this.bitfield);
             break;
         }
         case request: {
@@ -202,13 +184,15 @@ public class Peer implements Runnable {
             int index = socketInput.readInt();
             int offset = socketInput.readInt();
             byte[] block = new byte[length - 2*4];
-            socketInput.read(block);
+            socketInput.readFully(block);
             this.torrent.pieceManager.putBlock(index, offset, block);
+            if (requested > 0) {
+                requested--;
+            }
             DataBlockInfo queuedInfo = outQueue.poll();
-            if (queuedInfo != null) {
-                System.out.println("AAAAAAAAAAAAAAAAAA");
-                try {Thread.currentThread().sleep(100);} catch(InterruptedException e) { e.printStackTrace(); invalidate(); return; }
-                System.out.println("BBBBBBBBBBBBBBBBBB");
+            if (queuedInfo != null && requested < this.torrent.peerManager.BLOCKS_PER_REQUEST) {
+                //try {Thread.currentThread().sleep(10);} catch(InterruptedException e) { e.printStackTrace(); invalidate(); return; }
+                System.out.println("Got block, sending new request");
                 sendRequest(queuedInfo);
             }
             break;
@@ -245,23 +229,22 @@ public class Peer implements Runnable {
             return false;
         }
         byte[] inHeader = new byte[inLength];
-        socketInput.read(inHeader);
+        socketInput.readFully(inHeader);
         if (!Arrays.equals(header, inHeader)) {
             System.out.println("Unsupported protocol header: " + new String(inHeader));
             return false;
         }
         byte[] inReserved = new byte[reserved.length];
-        socketInput.read(inReserved);
+        socketInput.readFully(inReserved);
         byte[] inInfoHash = new byte[20];
-        socketInput.read(inInfoHash);
+        socketInput.readFully(inInfoHash);
         if (!Arrays.equals(torrent.infoHash, inInfoHash)) {
             System.out.println("Wrong info_hash");
             return false;
         }
         id = new byte[20];
-        socketInput.read(this.id);
+        socketInput.readFully(this.id);
         System.out.println("Handshake done: " + this.ip.toString() + ':' + this.port + " id: " + arrayToString(this.id));
-        sendMessage(MessageType.bitfield, null, this.torrent.pieceManager.bitfield);
         return true;
     }
 
@@ -299,7 +282,7 @@ public class Peer implements Runnable {
     }
 
     public boolean isQueueFull() {
-        return this.outQueue.size() >= 10;
+        return this.outQueue.size() >= this.torrent.peerManager.BLOCKS_PER_REQUEST;
     }
 
     public long downloaded() {
@@ -333,6 +316,11 @@ public class Peer implements Runnable {
             System.out.println("## " + this.ip.toString() + " invalidated");
         }
         this.isValid = false;
+        try {
+            this.socketInput.close();
+            this.socketOutput.close();
+            this.socket.close();
+        } catch (Exception ignored) {}
     }
 
     public boolean isConnected() {
@@ -389,9 +377,10 @@ public class Peer implements Runnable {
 
     public void queueRequest(DataBlockInfo info) throws IOException {
         System.out.println("Queued!");
-        outQueue.add(info);
-        if (outQueue.size() >= 10) {
-            sendRequest(outQueue.poll());
+        if (requested == 0) {
+            sendRequest(info);
+        } else {
+            outQueue.add(info);
         }
     }
 
@@ -420,3 +409,4 @@ public class Peer implements Runnable {
         return sb.toString();
     }
 }
+

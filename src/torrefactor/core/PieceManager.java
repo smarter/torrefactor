@@ -117,17 +117,17 @@ public class PieceManager implements Serializable {
                 int pieceOffset = 0;
                 Map.Entry<Integer, Integer> block = this.blockMap.floorEntry(pieceBegin);
                 if (block != null) {
-                    if (block.getValue() > pieceEnd) {
+                    if (block.getValue() >= pieceEnd) {
                         continue;
                     }
                     if (block.getValue() > pieceBegin) {
-                        pieceOffset = (block.getValue() + 1) % this.dataManager.pieceLength();
+                        pieceOffset = block.getValue() + 1;
                     }
                 }
                 Map.Entry<Integer, Integer> higherBlock = null;
                 while (infoList.size() < numBlocks && pieceOffset < pieceEnd) {
                     System.out.println("** Requested block at piece " + pieceIndex + " offset" + pieceOffset);
-                    infoList.add(new DataBlockInfo(pieceIndex, pieceOffset, BLOCK_SIZE));
+                    infoList.add(new DataBlockInfo(pieceIndex, (pieceOffset % 524288), BLOCK_SIZE));
                     pieceOffset += BLOCK_SIZE;
                     // If the offset is now inside an existing block, skip to its end
                     higherBlock = this.blockMap.floorEntry(pieceOffset);

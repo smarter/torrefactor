@@ -101,7 +101,7 @@ public class DataBlock {
             }
             System.out.println("%% Writing to " + offset + " length: " + length + " at piece: " + this.pieceIndex);
             //HACK: for testing, until we have graceful exit support
-            buffers[i].force();
+            //buffers[i].force();
         }
     }
 }

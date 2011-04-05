@@ -19,14 +19,12 @@ public class PeerManager implements Runnable {
     static byte[] peerId;
     static final String idInfo = "-TF0010-";
 
-    int interval;
-    String trackerId;
-    int seeders;
-    int leechers;
+    int peersReceived;
+
     static final int MAX_PEERS = 25;
     // In milliseconds
     static final int ANNOUNCE_DELAY = 30*60*1000;
-    static final int SLEEP_DELAY = 300;
+    static final int SLEEP_DELAY = 10;
     // Number of blocks requested at the same time per peer
     static final int BLOCKS_PER_REQUEST = 10;
 
@@ -39,6 +37,7 @@ public class PeerManager implements Runnable {
             System.out.println(idRand);
             this.peerId = new String(idInfo + idRand).getBytes();
         }
+        this.peersReceived = 0;
         this.torrent = _torrent;
         this.peerMap = new HashMap<InetAddress, Peer>();
         this.activeMap = new HashMap<InetAddress, Peer>();
@@ -50,6 +49,7 @@ public class PeerManager implements Runnable {
         try {
             List<Pair<byte[], Integer>> peersList;
             peersList = this.trackerManager.announce(Tracker.Event.started);
+            this.peersReceived = peersList.size();
             updateMap(peersList);
         } catch (Exception e) {
             e.printStackTrace();
@@ -57,7 +57,7 @@ public class PeerManager implements Runnable {
         }
         stopped = false;
         while (!stopped) {
-            if (System.currentTimeMillis() - time > ANNOUNCE_DELAY || peerMap.size() < MAX_PEERS / 2) {
+            if (System.currentTimeMillis() - time > ANNOUNCE_DELAY || peerMap.size() <= this.peersReceived / 2) {
                 try {
                     List<Pair<byte[], Integer>> peersList;
                     peersList = this.trackerManager.announce(
@@ -90,18 +90,15 @@ public class PeerManager implements Runnable {
                     System.out.print(".");
                     continue;
                 }
-                this.torrent.downloaded += peerEntry.getValue().popDownloaded();
-                this.torrent.uploaded += peerEntry.getValue().popUploaded();
+                //this.torrent.downloaded += peerEntry.getValue().popDownloaded();
+                //this.torrent.uploaded += peerEntry.getValue().popUploaded();
                 try {
                     System.out.println("Queuing requests to peer: " + new String(peerEntry.getValue().id));
                     List<DataBlockInfo> infoList = this.torrent.pieceManager.getFreeBlocks(peerEntry.getValue().bitfield(), BLOCKS_PER_REQUEST);
-                    System.out.println("OOOOOOOOOOO");
                     Iterator<DataBlockInfo> iter = infoList.iterator();
-                    System.out.println("MMMMMMMMMMMMMM");
                     while (iter.hasNext()) {
                         peerEntry.getValue().queueRequest(iter.next());
                     }
-                    System.out.println("NNNNNNNNNNNNNN");
                 } catch (IOException e) {
                     e.printStackTrace();
                     peerEntry.getValue().invalidate();
