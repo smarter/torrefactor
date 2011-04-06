@@ -66,9 +66,9 @@ public class HttpTracker extends Tracker {
         sb.append("&key=");
         sb.append(this.uniqKey);
         sb.append("&uploaded=");
-        sb.append(torrent.uploaded);
+        sb.append(torrent.uploaded());
         sb.append("&downloaded=");
-        sb.append(torrent.downloaded);
+        sb.append(torrent.downloaded());
         sb.append("&left=");
         sb.append(torrent.left);
         sb.append("&compact=1");

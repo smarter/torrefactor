@@ -8,10 +8,7 @@ import java.util.*;
 import java.security.*;
 
 public class PieceManager implements Serializable {
-    //Map every block beginning to its ending
-    //TreeMap provides O(log(n)) lookup, insert, remove, previous and successor
-    //HACK: public until we have something to test private methods with junit
-    public TreeMap<Integer, Integer> blockMap;
+    public IntervalMap intervalMap;
 
     //Map a piece number to the time in milliseconds when a block from this
     //piece was requested. Used to prevent getFreeBlocks from returning blocks
@@ -21,76 +18,22 @@ public class PieceManager implements Serializable {
     DataManager dataManager;
     public byte[] bitfield;
     byte[] digestArray;
+
     //Recommended by http://wiki.theory.org/BitTorrentSpecification#request:_.3Clen.3D0013.3E.3Cid.3D6.3E.3Cindex.3E.3Cbegin.3E.3Clength.3E
     static final int BLOCK_SIZE = (1 << 14); // in bytes
+
     static final int PIECE_LOCK_TIMEOUT = 30000; // in milliseconds
 
     public PieceManager(List<Pair<File, Long>> files,
                         int pieceLength, byte[] _digestArray)
     throws FileNotFoundException, IOException {
         this.dataManager = new DataManager(files, pieceLength);
-        this.blockMap = new TreeMap<Integer, Integer>();
+        this.intervalMap = new IntervalMap();
         this.pieceLockMap = new HashMap<Integer, Long>();
         int fieldLength = (this.dataManager.pieceNumber() - 1)/8 + 1;
         this.bitfield = new byte[fieldLength];
         Arrays.fill(this.bitfield, (byte) 0);
         this.digestArray = _digestArray;
-    }
-
-    //HACK: public until we have something to test private methods with junit
-    public synchronized boolean addBlock(int piece, int offset, int length) {
-        int begin = piece*this.dataManager.pieceLength()  + offset;
-        int end =  begin + length - 1;
-        Map.Entry<Integer, Integer> block = this.blockMap.floorEntry(end + 1);
-        if (block == null) {
-            // No block beginning before our superior born, so no overlap possible
-            this.blockMap.put(begin, end);
-            return true;
-        }
-        if (block.getKey() <= begin && block.getValue() >= end) {
-            //We're included in a block, nothing to add
-            return false;
-        }
-        if (block.getValue() + 1 >= begin) {
-            // If our right side overlaps with a block B, extend our superior born to B's
-            end = Math.max(end, block.getValue());
-            // Discard all blocks contained in our block
-            while (block != null && block.getKey() > begin) {
-                this.blockMap.remove(block.getKey());
-                block = this.blockMap.lowerEntry(block.getKey());
-            }
-            // If our left side overlaps with or is adjacent to a block B, extend B's superior born to ours
-            if (block != null && block.getValue() + 1 >= begin && block.getValue() <= end) {
-                this.blockMap.put(block.getKey(), end);
-                return true;
-            }
-        }
-        // The block before our left side doesn't overlap with us or is adjacent to us
-        this.blockMap.put(begin, end);
-        return true;
-    }
-
-    //Remove blocks of data, blocks overlapping but not contained in it
-    //will be shrunk
-    //HACK: public until we have something to test private methods with junit
-    public synchronized boolean removeBlocks(int piece, int offset, int length) {
-        int begin = piece*this.dataManager.pieceLength() + offset;
-        int end = begin + length - 1;
-        Map.Entry<Integer, Integer> block = this.blockMap.floorEntry(end);
-        if (block == null || block.getValue() < begin) {
-            return false;
-        }
-        if (block.getValue() > end) {
-            this.blockMap.put(end+1, block.getValue());
-        }
-        while (block != null && block.getKey() >= begin) {
-            this.blockMap.remove(block.getKey());
-            block = this.blockMap.lowerEntry(block.getKey());
-        }
-        if (block != null) {
-            this.blockMap.put(block.getKey(), begin - 1);
-        }
-        return true;
     }
 
     // Try to find numBlocks free blocks available in the peerBitfield and
@@ -114,30 +57,19 @@ public class PieceManager implements Serializable {
 
                 int pieceBegin = pieceIndex * this.dataManager.pieceLength();
                 int pieceEnd = pieceBegin + this.dataManager.pieceLength() - 1;
-                int pieceOffset = 0;
-                Map.Entry<Integer, Integer> block = this.blockMap.floorEntry(pieceBegin);
-                if (block != null) {
-                    if (block.getValue() >= pieceEnd) {
-                        continue;
-                    }
-                    if (block.getValue() > pieceBegin) {
-                        pieceOffset = block.getValue() + 1;
-                    }
+                int offset = this.intervalMap.nextFreePoint(pieceBegin);
+                if (offset > pieceEnd) {
+                    continue;
                 }
                 Map.Entry<Integer, Integer> higherBlock = null;
-                while (infoList.size() < numBlocks && pieceOffset < pieceEnd) {
-                    System.out.println("** Requested block at piece " + pieceIndex + " offset" + pieceOffset);
+                while (infoList.size() < numBlocks && offset < pieceEnd) {
+                    System.out.println("** Requested block at piece " + pieceIndex + " offset" + (offset % this.dataManager.pieceLength()));
                     // Make sure the block size is not past the piece end or we might get dropped by the peer
-                    int blockSize = Math.min(BLOCK_SIZE, pieceEnd - pieceOffset + 1);
-                    infoList.add(new DataBlockInfo(pieceIndex, (pieceOffset % 524288), blockSize));
-                    pieceOffset += blockSize;
+                    int blockSize = Math.min(BLOCK_SIZE, pieceEnd - offset + 1);
+                    infoList.add(new DataBlockInfo(pieceIndex, (offset % this.dataManager.pieceLength()), blockSize));
 
-                    // If the offset is now inside an existing block, skip to its end
-                    higherBlock = this.blockMap.floorEntry(pieceOffset);
-                    if (higherBlock != null && (block == null || higherBlock.getKey() > block.getKey())
-                        && pieceOffset >= higherBlock.getKey()) {
-                        pieceOffset = higherBlock.getValue() + 1;
-                    }
+                    offset += blockSize;
+                    offset = this.intervalMap.nextFreePoint(offset);
                 }
                 this.pieceLockMap.put(pieceIndex, System.currentTimeMillis());
             }
@@ -158,19 +90,10 @@ public class PieceManager implements Serializable {
     }
 
     // Return the requested block if it's available, null otherwise
-    public synchronized byte[] getBlock(int piece, int offset, int length)
+    public byte[] getBlock(int piece, int offset, int length)
     throws IOException {
         int begin = piece*this.dataManager.pieceLength() + offset;
-        int end = begin + length - 1;
-        Integer beginKey = this.blockMap.floorKey(begin);
-        if (beginKey == null) {
-            return null;
-        }
-        Integer endKey = this.blockMap.ceilingKey(end);
-        if (endKey == null) {
-            return null;
-        }
-        if (!beginKey.equals(endKey)) {
+        if (!this.intervalMap.containsInterval(begin, length)) {
             return null;
         }
         return this.dataManager.getBlock(piece, offset, length);
@@ -178,13 +101,14 @@ public class PieceManager implements Serializable {
 
     public synchronized void putBlock(int piece, int offset, byte[] blockArray)
     throws IOException {
-        boolean newBlock = addBlock(piece, offset, blockArray.length);
-        if (!newBlock) {
+        int begin = piece * this.dataManager.pieceLength() + offset;
+        if (this.intervalMap.containsInterval(begin, blockArray.length)) {
             System.out.println("!!! Already got " + piece*this.dataManager.pieceLength() + offset);
             return;
         }
+        this.intervalMap.addInterval(begin, blockArray.length);
         this.dataManager.putBlock(piece, offset, blockArray);
-        System.out.println("XX " + this.blockMap);
+        System.out.println(this.intervalMap);
         try {
             checkPiece(piece);
         } catch (NoSuchAlgorithmException e) {
@@ -200,25 +124,23 @@ public class PieceManager implements Serializable {
     // Otherwise, discard the blocks it's made of and return false
     public boolean checkPiece(int piece)
     throws IOException, NoSuchAlgorithmException {
-        Map.Entry<Integer, Integer> pieceEntry = this.blockMap.floorEntry(piece*this.dataManager.pieceLength());
-        int pieceEnd = (piece + 1) * this.dataManager.pieceLength() - 1;
-        if (pieceEntry == null || pieceEntry.getValue() < pieceEnd
-            || (pieceEntry.getValue() - pieceEntry.getKey() + 1) < this.dataManager.pieceLength()) {
+        if (!this.intervalMap.containsInterval(piece*this.dataManager.pieceLength(), this.dataManager.pieceLength())) {
             return false;
         }
+
         byte[] expectedDigest = new byte[20];
         System.arraycopy(digestArray, 20*piece, expectedDigest, 0, 20);
         byte[] pieceArray = this.dataManager.getPiece(piece);
         byte[] digest = MessageDigest.getInstance("SHA1").digest(pieceArray);
         if (!Arrays.equals(digest, expectedDigest)) {
-            removeBlocks(piece, 0, this.dataManager.pieceLength());
-            System.out.println("######## " + pieceEntry.getKey() + " " + pieceEntry.getValue());
+            this.intervalMap.removeIntervals(piece * this.dataManager.pieceLength(), this.dataManager.pieceLength());
             System.out.println("~~ Invalid piece " + piece + " got: " + new String(digest) + " expected " + new String(expectedDigest));
             return false;
         }
         int byteIndex = piece / 8;
-        this.bitfield[byteIndex] |= 1 << 7 - (piece % 8);
+        this.bitfield[byteIndex] |= 1 << (7 - (piece % 8));
         System.out.println("~~ Valid piece " + piece);
+        //TODO: send "have" message to peers
         return true;
     }
 
