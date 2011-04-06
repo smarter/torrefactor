@@ -79,9 +79,8 @@ public class IntervalMap extends TreeMap<Integer, Integer> {
     }
 
     /**
-     * Return the point bigger than or equal to point
-     * that is not contained in any interval or -1 if
-     * there is no such point.
+     * Return the first point in the interval between
+     * begin and end that is not contained in any interval.
      *
      * This function is thread-safe.
      */
@@ -94,7 +93,7 @@ public class IntervalMap extends TreeMap<Integer, Integer> {
             return point;
         }
         int end = interval.getValue();
-        if (end < point) {
+        if (point > end) {
             return point;
         }
         return end + 1;

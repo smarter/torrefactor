@@ -8,12 +8,10 @@ import java.util.*;
 import java.security.*;
 
 public class PieceManager implements Serializable {
+    //Map of the downloaded blocks
     public IntervalMap intervalMap;
-
-    //Map a piece number to the time in milliseconds when a block from this
-    //piece was requested. Used to prevent getFreeBlocks from returning blocks
-    //already being requested by a peer
-    private transient Map<Integer, Long> pieceLockMap;
+    //map of the requested but not yet downloaded blocks
+    private SawToothIntervalMap requestedMap;
 
     DataManager dataManager;
     public byte[] bitfield;
@@ -22,14 +20,12 @@ public class PieceManager implements Serializable {
     //Recommended by http://wiki.theory.org/BitTorrentSpecification#request:_.3Clen.3D0013.3E.3Cid.3D6.3E.3Cindex.3E.3Cbegin.3E.3Clength.3E
     static final int BLOCK_SIZE = (1 << 14); // in bytes
 
-    static final int PIECE_LOCK_TIMEOUT = 30000; // in milliseconds
-
     public PieceManager(List<Pair<File, Long>> files,
                         int pieceLength, byte[] _digestArray)
     throws FileNotFoundException, IOException {
         this.dataManager = new DataManager(files, pieceLength);
         this.intervalMap = new IntervalMap();
-        this.pieceLockMap = new HashMap<Integer, Long>();
+        this.requestedMap = new SawToothIntervalMap(50);
         int fieldLength = (this.dataManager.pieceNumber() - 1)/8 + 1;
         this.bitfield = new byte[fieldLength];
         Arrays.fill(this.bitfield, (byte) 0);
@@ -46,47 +42,44 @@ public class PieceManager implements Serializable {
         List<DataBlockInfo> infoList = new ArrayList<DataBlockInfo>();
         if (numBlocks == 0) return infoList;
 
-        for (int i = 0; i < peerBitfield.length && infoList.size() < numBlocks; i++) {
-            if (peerBitfield[i] == 0) continue;
+        for (int i = 0; i < 8*peerBitfield.length && infoList.size() < numBlocks; i++) {
+            if (peerBitfield[i/8] == 0) continue;
+            int byteOffset = 7 - (i % 8);
+            if ((peerBitfield[i/8] >>> byteOffset) == 0) continue;
+            int pieceBegin = i * this.dataManager.pieceLength();
+            int pieceEnd = pieceBegin + this.dataManager.pieceLength() - 1;
 
-            for (int byteOffset = 7; byteOffset != 0 && infoList.size() < numBlocks; byteOffset--) {
-                if ((peerBitfield[i] >>> byteOffset) == 0) continue;
-
-                int pieceIndex = 8*i + (7 - byteOffset);
-                if (isLocked(pieceIndex)) continue;
-
-                int pieceBegin = pieceIndex * this.dataManager.pieceLength();
-                int pieceEnd = pieceBegin + this.dataManager.pieceLength() - 1;
-                int offset = this.intervalMap.nextFreePoint(pieceBegin);
+            int offset = nextFreeByte(pieceBegin);
+            while (infoList.size() < numBlocks) {
+                if (offset > this.dataManager.totalSize()) return infoList;
                 if (offset > pieceEnd) {
-                    continue;
+                    // "- 1" because of the i++ in the for loop
+                    i = offset / this.dataManager.pieceLength() - 1;
+                    break;
                 }
-                Map.Entry<Integer, Integer> higherBlock = null;
-                while (infoList.size() < numBlocks && offset < pieceEnd) {
-                    System.out.println("** Requested block at piece " + pieceIndex + " offset" + (offset % this.dataManager.pieceLength()));
-                    // Make sure the block size is not past the piece end or we might get dropped by the peer
-                    int blockSize = Math.min(BLOCK_SIZE, pieceEnd - offset + 1);
-                    infoList.add(new DataBlockInfo(pieceIndex, (offset % this.dataManager.pieceLength()), blockSize));
+                // Make sure the block size is not past the piece end or we might get dropped by the peer
+                int blockSize = Math.min(BLOCK_SIZE, pieceEnd - offset + 1);
+                infoList.add(new DataBlockInfo(i, (offset % this.dataManager.pieceLength()), blockSize));
+                this.requestedMap.addInterval(offset, blockSize);
+                System.out.println("** Requested block at piece: " + i + " offset: " + (offset % this.dataManager.pieceLength())
+                                   + " length: " + blockSize);
 
-                    offset += blockSize;
-                    offset = this.intervalMap.nextFreePoint(offset);
-                }
-                this.pieceLockMap.put(pieceIndex, System.currentTimeMillis());
+                offset += blockSize;
+                offset = nextFreeByte(offset);
             }
         }
         return infoList;
     }
 
-    private synchronized boolean isLocked(int pieceIndex) {
-        if (!this.pieceLockMap.containsKey(pieceIndex)) {
-            return false;
-        }
-        if (System.currentTimeMillis() - this.pieceLockMap.get(pieceIndex) > PIECE_LOCK_TIMEOUT) {
-            System.out.println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXxXX UNLOCK");
-            this.pieceLockMap.remove(pieceIndex);
-            return false;
-        }
-        return true;
+    // Return the offset of the next free byte not contained
+    // in either the map of downloaded or the map of requested blocks
+    private int nextFreeByte(int offset) {
+        int reqOffset;
+        do {
+            reqOffset = this.requestedMap.nextFreePoint(offset);
+            offset = this.intervalMap.nextFreePoint(reqOffset);
+        } while (reqOffset != offset);
+        return offset;
     }
 
     // Return the requested block if it's available, null otherwise
@@ -103,7 +96,7 @@ public class PieceManager implements Serializable {
     throws IOException {
         int begin = piece * this.dataManager.pieceLength() + offset;
         if (this.intervalMap.containsInterval(begin, blockArray.length)) {
-            System.out.println("!!! Already got " + piece*this.dataManager.pieceLength() + offset);
+            System.out.println("!!! Already got " + begin);
             return;
         }
         this.intervalMap.addInterval(begin, blockArray.length);
@@ -147,6 +140,5 @@ public class PieceManager implements Serializable {
     private void readObject(ObjectInputStream in)
     throws IOException, ClassNotFoundException {
         in.defaultReadObject();
-        this.pieceLockMap = new HashMap<Integer, Long>();
     }
 }

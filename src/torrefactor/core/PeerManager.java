@@ -93,7 +93,6 @@ public class PeerManager implements Runnable {
                 //this.torrent.downloaded += peerEntry.getValue().popDownloaded();
                 //this.torrent.uploaded += peerEntry.getValue().popUploaded();
                 try {
-                    System.out.println("Queuing requests to peer: " + new String(peerEntry.getValue().id));
                     List<DataBlockInfo> infoList = this.torrent.pieceManager.getFreeBlocks(peerEntry.getValue().bitfield(), BLOCKS_PER_REQUEST);
                     Iterator<DataBlockInfo> iter = infoList.iterator();
                     while (iter.hasNext()) {
