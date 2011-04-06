@@ -119,4 +119,14 @@ public class IntervalMap extends TreeMap<Integer, Integer> {
         }
         return true;
     }
+
+    public Integer put(Integer key, Integer value)
+    throws UnsupportedOperationException {
+        throw new UnsupportedOperationException();
+    }
+
+    public void putAll(Map<? extends Integer, ? extends Integer> m)
+    throws UnsupportedOperationException {
+        throw new UnsupportedOperationException();
+    }
 }
