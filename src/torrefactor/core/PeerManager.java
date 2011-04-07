@@ -90,8 +90,10 @@ public class PeerManager implements Runnable {
                     System.out.print(".");
                     continue;
                 }
-                //this.torrent.downloaded += peerEntry.getValue().popDownloaded();
-                //this.torrent.uploaded += peerEntry.getValue().popUploaded();
+                this.torrent.incrementDownloaded(
+                                        peerEntry.getValue().popDownloaded());
+                this.torrent.incrementUploaded(
+                                        peerEntry.getValue().popUploaded());
                 try {
                     List<DataBlockInfo> infoList = this.torrent.pieceManager.getFreeBlocks(peerEntry.getValue().bitfield(), BLOCKS_PER_REQUEST);
                     Iterator<DataBlockInfo> iter = infoList.iterator();

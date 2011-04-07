@@ -14,13 +14,13 @@ public class Torrent implements Serializable {
     private int pieceLength;
     private ArrayList<Pair<File, Long>> files;
     private byte[] pieceHash;
+    private AtomicLong uploaded = new AtomicLong(0);
+    private AtomicLong downloaded = new AtomicLong(0);
+    private AtomicLong left;
     byte[] infoHash;
     transient PeerManager peerManager;
     PieceManager pieceManager;
     long length = 0;
-    AtomicLong uploaded = new AtomicLong(0);
-    AtomicLong downloaded = new AtomicLong(0);
-    AtomicLong left;
     List<List<String>> announceList;
     int creationDate = 0;
     String comment = "";

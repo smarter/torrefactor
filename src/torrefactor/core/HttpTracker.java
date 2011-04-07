@@ -70,7 +70,7 @@ public class HttpTracker extends Tracker {
         sb.append("&downloaded=");
         sb.append(torrent.downloaded());
         sb.append("&left=");
-        sb.append(torrent.left);
+        sb.append(torrent.left());
         sb.append("&compact=1");
         if (event != Event.none) {
             sb.append("&event=");

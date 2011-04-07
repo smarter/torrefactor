@@ -171,11 +171,11 @@ public class UdpTracker extends Tracker {
         System.arraycopy(transactionId, 0, buffer, 12, 4);
         System.arraycopy(torrent.infoHash, 0, buffer, 16, 20);
         System.arraycopy(torrent.peerManager.peerId, 0, buffer, 36, 20);
-        System.arraycopy(longToByteArray(torrent.downloaded), 0,
+        System.arraycopy(longToByteArray(torrent.downloaded()), 0,
                          buffer, 56, 8);
-        System.arraycopy(longToByteArray(torrent.left), 0,
+        System.arraycopy(longToByteArray(torrent.left()), 0,
                          buffer, 64, 8);
-        System.arraycopy(longToByteArray(torrent.uploaded), 0,
+        System.arraycopy(longToByteArray(torrent.uploaded()), 0,
                          buffer, 72, 8);
         System.arraycopy(intToByteArray(event.ordinal()), 0,
                          buffer, 80, 4);
