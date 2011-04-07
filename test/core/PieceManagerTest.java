@@ -10,7 +10,7 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.util.*;
-
+/*
 public class PieceManagerTest {
 
     public static void main (String[] args) {
@@ -189,3 +189,4 @@ public class PieceManagerTest {
         assertFalse(p.removeBlocks(0, 500, 42));
     }
 }
+*/
