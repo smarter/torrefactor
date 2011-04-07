@@ -26,6 +26,7 @@ public class Peer implements Runnable {
     private Socket socket;
     private DataInputStream socketInput;
     private DataOutputStream socketOutput;
+    //FIXME we likely should use AtomicLong for downloaded and uploaded
     private long downloaded = 0;
     private long uploaded = 0;
 
@@ -185,6 +186,7 @@ public class Peer implements Runnable {
             int offset = socketInput.readInt();
             byte[] block = new byte[length - 2*4];
             socketInput.readFully(block);
+            downloaded += block.length;
             this.torrent.pieceManager.putBlock(index, offset, block);
             if (requested > 0) {
                 requested--;
@@ -373,6 +375,12 @@ public class Peer implements Runnable {
             socketOutput.write(data);
         }
         socketOutput.flush();
+
+        //Increment uploaded counter if we've sent some data
+        if (type == MessageType.piece) {
+            uploaded += data.length;
+        }
+
     }
 
     public void queueRequest(DataBlockInfo info) throws IOException {
