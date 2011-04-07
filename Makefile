@@ -421,6 +421,6 @@ src.torrefactor.gui : $(call PACKAGE_OBJS,src.torrefactor.gui)
 ## Custom targets
 runtest: all
 	java test.core.DataManagerTest
-	java test.core.PieceManagerTest
+	java test.core.IntervalMapTest
 	java test.util.BencodeTest
 	java test.util.RsaTest
