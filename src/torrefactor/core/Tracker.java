@@ -25,7 +25,7 @@ abstract class Tracker {
     public Tracker (String _uri, int uniqKey) {}
     abstract ArrayList<Pair<byte[], Integer>>
         announce (Torrent torrent, Event event)
-        throws IOException, InvalidBencodeException;
+        throws IOException, InvalidBDecodeException;
 
 
     public int getInverval () {

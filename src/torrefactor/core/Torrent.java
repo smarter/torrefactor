@@ -29,7 +29,7 @@ public class Torrent implements Serializable {
 
     public Torrent(String fileName, String basePath)
     throws UnsupportedOperationException, IOException, FileNotFoundException,
-    InvalidBencodeException, NoSuchAlgorithmException {
+    InvalidBDecodeException, NoSuchAlgorithmException {
 
     if (basePath == "" || basePath == null) {
         this.basePath = new File(".");
@@ -48,18 +48,18 @@ public class Torrent implements Serializable {
         this.FILE_NAME = fileName;
 
         infoHash = new byte[20];
-        Map<String, Bencode> fileMap = Bencode.decodeDict(stream, "info", infoHash);
+        Map<String, BValue> fileMap = BDecode.decodeDict(stream, "info", infoHash);
 
-        Map<String, Bencode> infoMap = fileMap.get("info").toMap();
+        Map<String, BValue> infoMap = fileMap.get("info").toMap();
         if (infoMap.containsKey("files")) {
             System.err.println(infoMap.get("files"));
             List maps = infoMap.get("files").toList();
             this.files = new ArrayList<Pair<File, Long>>(maps.size());
             for (int i=0; i<maps.size(); i++) {
-                Map map = ((Bencode) maps.get(i)).toMap();
-                File file = bencodeToFile((Bencode) map.get("path"));
+                Map map = ((BValue) maps.get(i)).toMap();
+                File file = bencodeToFile((BValue) map.get("path"));
                 file = new File(basePath, file.toString());
-                long size = ((Bencode) map.get("length")).toLong();
+                long size = ((BValue) map.get("length")).toLong();
                 this.length += size;
                 Pair<File, Long> fpair = new Pair<File, Long>(file, size);
                 this.files.add(fpair);
@@ -86,10 +86,10 @@ public class Torrent implements Serializable {
 
         announceList = new ArrayList<List<String>>();
         if (fileMap.containsKey("announce-list")) {
-            List<Bencode> announces = fileMap.get("announce-list").toList();
+            List<BValue> announces = fileMap.get("announce-list").toList();
             System.out.println("LENGTH: " + announces.size());
-            for (Bencode tierList : announces) {
-                List<Bencode> trackers = tierList.toList();
+            for (BValue tierList : announces) {
+                List<BValue> trackers = tierList.toList();
                 Collections.shuffle(trackers);
 
                 LinkedList<String> trackerList = new LinkedList<String>();
@@ -111,7 +111,7 @@ public class Torrent implements Serializable {
         }
         if (fileMap.containsKey("creation date")) {
             //TODO: there should be a way to parse bencoded int as double
-            //      in util.Bencode since the date is coded on a long.
+            //      in util.BDecode since the date is coded on a long.
             //this.creationDate = fileMap.get("creation date").toDouble();
             System.err.println("Ignoring 'creation date' in torrent file.");
         }
@@ -123,8 +123,8 @@ public class Torrent implements Serializable {
         }
     }
 
-    private static File[] bencodeListToFiles(Bencode b) {
-        List<Bencode> list = b.toList();
+    private static File[] bencodeListToFiles(BValue b) {
+        List<BValue> list = b.toList();
         File[] files = new File[list.size()];
         for (int i=0; i<list.size(); i++) {
             File file = bencodeToFile(list.get(i));
@@ -133,7 +133,7 @@ public class Torrent implements Serializable {
         return files;
     }
 
-    private static File bencodeToFile(Bencode b) {
+    private static File bencodeToFile(BValue b) {
         List l = b.toList();
         File parent = new File(l.get(0).toString());
         File current = parent;
@@ -195,7 +195,7 @@ public class Torrent implements Serializable {
         return this.uploaded.addAndGet(value);
     }
 
-    public void start() throws ProtocolException, InvalidBencodeException,
+    public void start() throws ProtocolException, InvalidBDecodeException,
                         IOException {
         if (this.peerManager == null) {
             this.peerManager = new PeerManager(this);

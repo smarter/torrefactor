@@ -51,7 +51,7 @@ public class HttpTracker extends Tracker {
     }
 
     public ArrayList<Pair<byte[], Integer>> announce(Torrent torrent, Event event)
-    throws ProtocolException, InvalidBencodeException, IOException {
+    throws ProtocolException, InvalidBDecodeException, IOException {
         // Construct request
         String infoHash = urlEncode(torrent.infoHash);
         String peerId = urlEncode(torrent.peerManager.peerId);
@@ -80,13 +80,13 @@ public class HttpTracker extends Tracker {
         System.out.println("Request params: " + params);
 
         // Announce
-        Map<String, Bencode> answerMap = null;
+        Map<String, BValue> answerMap = null;
         try {
             answerMap = httpAnnounce(this.path, params);
         } catch (IOException e) {
             this.statusMessage = e.getMessage();
             throw e;
-        } catch (InvalidBencodeException e) {
+        } catch (InvalidBDecodeException e) {
             this.statusMessage = "Didn't understood response: "
                                  + e.getMessage();
             throw e;
@@ -117,9 +117,9 @@ public class HttpTracker extends Tracker {
         ArrayList<Pair<byte[], Integer>> peersList = new ArrayList<Pair<byte[], Integer>>();
         // FIXME: explain why we do this if-else
         if (answerMap.get("peers").toObject() instanceof List) {
-            List<Bencode> peers = answerMap.get("peers").toList();
+            List<BValue> peers = answerMap.get("peers").toList();
             for (int i = 0; i < peers.size(); i++) {
-                Map<String, Bencode> peerMap = peers.get(i).toMap();
+                Map<String, BValue> peerMap = peers.get(i).toMap();
                 byte[] ip = peerMap.get("ip").toByteArray();
                 int port = peerMap.get("port").toInt();
                 Pair<byte[], Integer> peer = new Pair<byte[], Integer>(ip, port);
@@ -149,8 +149,8 @@ public class HttpTracker extends Tracker {
         return peersList;
     }
 
-    private Map<String, Bencode> httpAnnounce(String path, String params)
-    throws IOException, InvalidBencodeException {
+    private Map<String, BValue> httpAnnounce(String path, String params)
+    throws IOException, InvalidBDecodeException {
         //PROJECT: we really should use URLConnection here, but for the project
         // we're required to use Socket
         // Aka: «I deny you to use the thing you should use and you're stupid
@@ -216,7 +216,7 @@ public class HttpTracker extends Tracker {
 //            if (c == -1) System.exit(123);
 //        }
 
-        Map<String, Bencode> answerMap = Bencode.decodeDict(input);
+        Map<String, BValue> answerMap = BDecode.decodeDict(input);
         input.close();
         output.close();
         socket.close();

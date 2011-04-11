@@ -9,7 +9,7 @@ public class Client {
     public static void main(String[] args)
     throws java.io.IOException, java.io.FileNotFoundException,
     java.net.ProtocolException, java.security.NoSuchAlgorithmException,
-    torrefactor.util.InvalidBencodeException {
+    torrefactor.util.InvalidBDecodeException {
         if (args.length < 2) {
             System.out.println(
                     "Usage: java test.Client <input.torrent> <basePath>");
