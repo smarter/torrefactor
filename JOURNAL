@@ -50,3 +50,19 @@ Semaine 5 (21/03):
 - Peer id au format Azureus
 - En cours: reprise des téléchargements lors de l'ouverture du
   programme (à l'aide de la serialisation des objects).
+
+Semaine 6 (28/03):
+- Reprise des téléchargements fonctionne.
+- Queue des requêtes aux peers correctement gérée.
+- Utilise des long à la place des int pour le bencode.
+- Plus de problèmes lors de la réception de message provenant des peers.
+
+Semaine 7 (04/04):
+- Modularisation: la structure de données gérant les blocs (ajout-suppression
+  overlap) est maintenant dans la classe IntervalMap.
+- Nouvelle classe SawToothIntervalMap pour la gestion des blocs demandés mais
+  par encore récupérés. (Évite de demander la même chose à plusieurs peers
+  simultanémant)
+- Gestion correcte des variables contenant le nombre d'octet téléchargé et
+  envoyé par peer.
+- En cours: classe pour la gestion des logs.
