@@ -2,6 +2,7 @@ package torrefactor.gui;
 
 import torrefactor.core.Torrent;
 import torrefactor.gui.*;
+import torrefactor.util.*;
 
 import com.trolltech.qt.QVariant;
 import com.trolltech.qt.core.*;
@@ -82,7 +83,7 @@ public class MainWindow extends QMainWindow {
     }
 
     public void startDownload() {
-        System.out.println(torrentView.currentIndex().row());
+        Log.i().debug(this, torrentView.currentIndex().row());
     }
 
     public void stopDownload() {
