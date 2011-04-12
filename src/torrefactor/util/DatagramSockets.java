@@ -4,6 +4,7 @@ import java.net.DatagramSocket;
 import java.net.SocketException;
 
 public class DatagramSockets {
+    private static Log LOG = Log.getInstance ();
     /* See http://www.iana.org/assignments/port-numbers for port range
      * definitions. */
     public final static int IANA_RESERVED_END = 1024;
@@ -29,14 +30,14 @@ public class DatagramSockets {
                 socket = new DatagramSocket(port);
             }
             catch (SocketException e) {
-                System.err.println(e.getMessage());
+                LOG.log(Log.DEBUG, DatagramSockets.class, e.getMessage());
                 if (port < IANA_PRIVATE_START) {
                     port = IANA_PRIVATE_START;
                 } else if (port < IANA_MAX_PORT) {
                     port ++;
                 } else {
-                    System.err.println(
-                                    "No port available in private port range.");
+                   LOG.log(Log.WARNING, DatagramSockets.class,  
+                           "No port available in private port range.");
                     return null;
                 }
             }
