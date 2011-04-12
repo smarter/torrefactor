@@ -1,7 +1,7 @@
 package torrefactor.core;
 
 import torrefactor.core.DataBlock;
-import torrefactor.util.Pair;
+import torrefactor.util.*;
 
 import java.io.*;
 import java.nio.*;
@@ -13,6 +13,7 @@ import java.util.*;
 //  - Are we allowed to use package access for attributes ?
 
 public class DataManager implements Serializable {
+    private static Log LOG = Log.getInstance();
     private File[]files;
     private long[] fileSizes;
     private transient RandomAccessFile[] raFiles;
@@ -49,7 +50,7 @@ public class DataManager implements Serializable {
                 this.raFiles[i].setLength(this.fileSizes[i]);
             }
             this.fileChannels[i] = this.raFiles[i].getChannel();
-            System.out.println("Got channel for " + this.files[i]); //DELETEME
+            LOG.log(Log.DEBUG, this, "Got channel for " + this.files[i]); //DELETEME
         }
         this.pieceNumber = (int) ( (this.totalSize - 1) / this.pieceLength) + 1;
     }
@@ -112,14 +113,16 @@ public class DataManager implements Serializable {
         int numBuffers = 0;
         int remainingLength = length;
         long localOffset = startOffset;
-        System.out.println("Length of block: " + remainingLength); //DELETEME
+        LOG.log(Log.DEBUG, this, "Length of block: " + remainingLength);
         for (int i=0; i < this.fileChannels.length; i++) {
             if (localOffset < this.fileSizes[i]) {
                 numBuffers +=1;
-                System.out.println("File: " + files[i] + " with size: " + this.fileChannels[i].size());    //DELETEME
-                System.out.println("localOffest: " + localOffset);
+                LOG.log(Log.DEBUG, this, "File: " + files[i] + " with size: "
+                                         + this.fileChannels[i].size());
+                LOG.log(Log.DEBUG, this, "localOffest: " + localOffset);
                 remainingLength -= this.fileSizes[i] - localOffset;
-                System.out.println("Remaining length: " + remainingLength); //DELETEME
+                LOG.log(Log.DEBUG, this,
+                        "Remaining length: " + remainingLength);
                 if (remainingLength <= 0) {
                     break;
                 }
@@ -131,7 +134,7 @@ public class DataManager implements Serializable {
         }
 
         // Map the block
-        System.out.println("NumBuffers: " + numBuffers);    //DELETEME
+        LOG.log(Log.DEBUG, this, "NumBuffers: " + numBuffers);
         MappedByteBuffer[] buffers = new MappedByteBuffer[numBuffers];
         remainingLength = length;
         localOffset = startOffset;
