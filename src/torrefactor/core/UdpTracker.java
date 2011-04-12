@@ -16,9 +16,6 @@ public class UdpTracker extends Tracker {
     private String host;
     private int port;
     private DatagramSocket socket;
-    private final static int IANA_RESERVED_END = 1024;
-    private final static int IANA_PRIVATE_START = 49152;
-    private final static int IANA_MAX_PORT = 65535;
     private final static int UDP_SOCKET_TIMEOUT = 15000;
     private final static long UDP_PROTOCOL_MAGICK = 0x41727101980L;
     private final static int UDP_ACTION_CONNECTION = 0;
@@ -107,7 +104,6 @@ public class UdpTracker extends Tracker {
 
   public ArrayList<Pair<byte[],Integer>> udpAnnounce (Torrent torrent, Event event)
   throws IOException, SocketException {
-        int lport;
         DatagramPacket packet;
         byte[] transactionId;
         byte[] buffer;
@@ -115,27 +111,9 @@ public class UdpTracker extends Tracker {
         Random random = new Random();
 
         // Get socket
-        lport = this.port;
-        if (lport < 1024) {
-            lport = IANA_PRIVATE_START;
-        }
-        this.socket = null;
-        while (this.socket == null) {
-            try {
-                this.socket = new DatagramSocket(lport);
-            }
-            catch (SocketException e) {
-                System.err.println(e.getMessage());
-                if (lport < IANA_PRIVATE_START) {
-                    lport = IANA_PRIVATE_START;
-                } else if (lport < 65535) {
-                    lport ++;
-                } else {
-                    System.err.println("No port available in private port range.");
-                    return null;
-                }
-            }
-        }
+        this.socket = DatagramSockets.getDatagramSocket(this.port);
+        if (this.socket == null) return null;
+        int lport = this.socket.getPort();
 
         // Connect
         buffer = new byte[16];
