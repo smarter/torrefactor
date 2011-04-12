@@ -8,6 +8,7 @@ import java.net.*;
 import java.util.*;
 
 public class HttpTracker extends Tracker {
+    private static Log LOG = Log.getInstance();
     private String host;
     private int port;
     private String path;
@@ -45,9 +46,9 @@ public class HttpTracker extends Tracker {
         }
 
         //DEBUG
-        System.out.println("host: " + this.host);
-        System.out.println("port: " + this.port);
-        System.out.println("path: " + this.path);
+        LOG.log(Log.DEBUG, this, "host: " + this.host);
+        LOG.log(Log.DEBUG, this, "port: " + this.port);
+        LOG.log(Log.DEBUG, this, "path: " + this.path);
     }
 
     public ArrayList<Pair<byte[], Integer>> announce(Torrent torrent, Event event)
@@ -77,7 +78,7 @@ public class HttpTracker extends Tracker {
             sb.append(event.toString());
         }
         String params = sb.toString();
-        System.out.println("Request params: " + params);
+        LOG.log(Log.DEBUG, this, "Request params: " + params);
 
         // Announce
         Map<String, BValue> answerMap = null;
@@ -93,7 +94,7 @@ public class HttpTracker extends Tracker {
         }
 
         if (answerMap == null) {
-            System.err.println("answesMap is null!!!");
+            LOG.log(Log.ERROR, this, "answesMap is null!!!");
             return null;
         }
 
@@ -162,7 +163,7 @@ public class HttpTracker extends Tracker {
         try {
             socket = new Socket(address, this.port);
         } catch (ConnectException e) {
-            System.err.println(e.getMessage());
+            LOG.log(Log.WARNING, this, e.getMessage());
             return null;
         }
         BufferedInputStream input = new BufferedInputStream(
@@ -171,12 +172,12 @@ public class HttpTracker extends Tracker {
                                                   socket.getOutputStream());
 
         // Send request
-        System.out.println("path: " + this.path); //DEBUG
-        System.out.println("params: " + params); //DEBUG
+        LOG.log(Log.DEBUG, this, "path: " + this.path); //DEBUG
+        LOG.log(Log.DEBUG, this, "params: " + params); //DEBUG
         String getRequest = "GET " + this.path + params + " HTTP/1.0\r\n"
                             + "Host: " + this.host + "\r\n"
                             + "User-Agent: Torrefactor/0.1\r\n\r\n";
-        System.out.println(getRequest);
+        LOG.log(Log.DEBUG, this, getRequest);
         output.write(getRequest.getBytes());
         output.flush();
 
