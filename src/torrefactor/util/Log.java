@@ -86,6 +86,9 @@ public class Log {
         synchronized (this) {
             this.ring.put (this.ringPosition, quad);
             this.ringPosition ++;
+            if (ringPosition >= this.ring.length) {
+                this.ringPosition = 0;
+            }
         }
         if (this.printAdded) print (quad);
     }
