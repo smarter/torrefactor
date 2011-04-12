@@ -118,11 +118,11 @@ public class UdpTracker extends Tracker {
 
         // Connect
         buffer = new byte[16];
-        System.arraycopy(longToByteArray(UDP_PROTOCOL_MAGICK), 0,
+        System.arraycopy(ByteArrays.fromLong(UDP_PROTOCOL_MAGICK), 0,
                                   buffer, 0, 8);
-        System.arraycopy(intToByteArray(UDP_ACTION_CONNECTION), 0,
+        System.arraycopy(ByteArrays.fromInt(UDP_ACTION_CONNECTION), 0,
                          buffer, 8, 4);
-        transactionId = intToByteArray(random.nextInt());
+        transactionId = ByteArrays.fromInt(random.nextInt());
         System.arraycopy(transactionId, 0, buffer, 12, 4);
         InetAddress address = InetAddress.getByName(this.host);
         packet = new DatagramPacket(buffer, buffer.length, address, this.port);
@@ -144,27 +144,27 @@ public class UdpTracker extends Tracker {
         // Announce
         buffer = new byte[100];
         System.arraycopy(connectionId, 0, buffer, 0, 8);
-        System.arraycopy(intToByteArray(UDP_ACTION_ANNOUNCE), 0,
+        System.arraycopy(ByteArrays.fromInt(UDP_ACTION_ANNOUNCE), 0,
                          buffer, 8, 4);
-        transactionId = intToByteArray(random.nextInt());
+        transactionId = ByteArrays.fromInt(random.nextInt());
         System.arraycopy(transactionId, 0, buffer, 12, 4);
         System.arraycopy(torrent.infoHash, 0, buffer, 16, 20);
         System.arraycopy(torrent.peerManager.peerId, 0, buffer, 36, 20);
-        System.arraycopy(longToByteArray(torrent.downloaded()), 0,
+        System.arraycopy(ByteArrays.fromLong(torrent.downloaded()), 0,
                          buffer, 56, 8);
-        System.arraycopy(longToByteArray(torrent.left()), 0,
+        System.arraycopy(ByteArrays.fromLong(torrent.left()), 0,
                          buffer, 64, 8);
-        System.arraycopy(longToByteArray(torrent.uploaded()), 0,
+        System.arraycopy(ByteArrays.fromLong(torrent.uploaded()), 0,
                          buffer, 72, 8);
-        System.arraycopy(intToByteArray(event.ordinal()), 0,
+        System.arraycopy(ByteArrays.fromInt(event.ordinal()), 0,
                          buffer, 80, 4);
         System.arraycopy(address.getAddress(), 0, buffer, 84, 4);
-        //byte[] key = intToByteArray(random.nextInt());
-        byte[] key = intToByteArray(this.uniqKey);
+        //byte[] key = ByteArrays.fromInt(random.nextInt());
+        byte[] key = ByteArrays.fromInt(this.uniqKey);
         System.arraycopy(key, 0, buffer, 88, 4);
-        System.arraycopy(intToByteArray(this.numWant), 0, buffer, 92, 4);
-        System.arraycopy(intToByteArray(lport), 2, buffer, 96, 2);
-        System.arraycopy(longToByteArray(extensions), 0, buffer, 98, 2);
+        System.arraycopy(ByteArrays.fromInt(this.numWant), 0, buffer, 92, 4);
+        System.arraycopy(ByteArrays.fromInt(lport), 2, buffer, 96, 2);
+        System.arraycopy(ByteArrays.fromLong(extensions), 0, buffer, 98, 2);
         packet = new DatagramPacket(buffer, buffer.length, address, this.port);
 
         packet = sendReceive(packet, 20+6*this.numWant,
@@ -178,11 +178,11 @@ public class UdpTracker extends Tracker {
         }
         byte[] b = new byte[4];
         System.arraycopy(buffer, 8, b, 0, 4);
-        int interval = byteArrayToInt(b);
+        int interval = ByteArrays.toInt(b);
         System.arraycopy(buffer, 12, b, 0, 4);
-        int leechers = byteArrayToInt(b);
+        int leechers = ByteArrays.toInt(b);
         System.arraycopy(buffer, 16, b, 0, 4);
-        int seeders = byteArrayToInt(b);
+        int seeders = ByteArrays.toInt(b);
 
         // Parse peer-port segments
         ArrayList<Pair<byte[], Integer>> peerList = new ArrayList<Pair<byte[], Integer>>();
@@ -192,7 +192,7 @@ public class UdpTracker extends Tracker {
             System.arraycopy(packet.getData(), i, peerAddress, 0, 4);
             byte[] portArray = new byte[2];
             System.arraycopy(packet.getData(), i+4, portArray, 0, 2);
-            int peerPort = shortByteArrayToInt(portArray);
+            int peerPort = ByteArrays.toShortInt(portArray);
             Pair<byte[], Integer> peer = new Pair<byte[], Integer>(peerAddress, peerPort);
             peerList.add(peer);
             i += 6;
@@ -221,56 +221,5 @@ public class UdpTracker extends Tracker {
             }
         }
         return true;
-    }
-
-    // I'm tired of looking up the API each time I want to do a stupid type
-    // convertion. So I've coded want I need here and will spend less time
-    // searching the API.
-
-    private static int shortByteArrayToInt(byte[] array) {
-        int i = 0;
-        i += ((int) array[0] & 0xFF) << 8;
-        i += ((int) array[1] & 0xFF);
-        return i;
-    }
-
-    private static int byteArrayToInt(byte[] array) {
-        int i = 0;
-        i += ((int) array[0] & 0xFF) << 24;
-        i += ((int) array[1] & 0xFF) << 16;
-        i += ((int) array[2] & 0xFF) << 8;
-        i += ((int) array[3] & 0xFF);
-        return i;
-    }
-
-    private static long byteArrayToLong(byte[] array) {
-        long l = 0;
-        l += ((int) array[0] & 0xFF) << 56;
-        l += ((int) array[1] & 0xFF) << 48;
-        l += ((int) array[2] & 0xFF) << 40;
-        l += ((int) array[3] & 0xFF) << 32;
-        l += ((int) array[3] & 0xFF) << 24;
-        l += ((int) array[3] & 0xFF) << 16;
-        l += ((int) array[3] & 0xFF) << 8;
-        l += ((int) array[3] & 0xFF);
-        return l;
-    }
-
-    private static byte[] intToByteArray(int i) {
-        return new byte[] { (byte)(i >>> 24),
-                            (byte)(i >>> 16),
-                            (byte)(i >>> 8),
-                            (byte) i };
-    }
-
-    private static byte[] longToByteArray(long l) {
-        return new byte[] { (byte)(l >>> 56),
-                            (byte)(l >>> 48),
-                            (byte)(l >>> 40),
-                            (byte)(l >>> 32),
-                            (byte)(l >>> 24),
-                            (byte)(l >>> 16),
-                            (byte)(l >>> 8),
-                            (byte) l };
     }
 }
