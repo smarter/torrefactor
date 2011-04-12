@@ -47,14 +47,10 @@ public class TrackerManager {
         LOG.log(Log.DEBUG, this, "Trying tier: " + tier);
         for (String uri: tier) {
             try {
-                //if (! uri.substring(0,3).equals("udp")) {
-                //    System.out.println("Skipping: " + uri);
-                //    continue;
-                //}
                 tracker = getTracker(uri);
                 peersList = tracker.announce(this.torrent, event);
             } catch (Exception e) {
-                e.printStackTrace();
+                LOG.error(this ,e);
                 continue;
             }
             if (peersList == null) {
@@ -84,7 +80,7 @@ public class TrackerManager {
                     "Don't know how to handle uri \"" + uri + "\"");
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error(this, e);
             LOG.log(Log.DEBUG, this,
                     "Cannot construct tracker object for uri: \"" + uri + "\"");
         }
