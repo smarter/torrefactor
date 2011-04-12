@@ -10,6 +10,7 @@ import java.util.*;
 
 
 public class TrackerManager {
+    private static Log LOG = Log.getInstance();
     private List<List<String>> tiers;
     private long nextAnnounceTime = 0;
     private Torrent torrent;
@@ -27,7 +28,7 @@ public class TrackerManager {
 
     public List<Pair<byte[], Integer>> announce (Event event) {
         List<Pair<byte[], Integer>> peersList = null;
-        System.err.println("Announcing...");
+        LOG.log(Log.INFO, this, "Announcing...");
 
         for (List<String> tier: this.tiers) {
             peersList = announceTier(event, tier);
@@ -43,7 +44,7 @@ public class TrackerManager {
         ArrayList<Pair<byte[], Integer>> peersList = null;
         Tracker tracker;
 
-        System.err.println("Trying tier: " + tier);
+        LOG.log(Log.DEBUG, this, "Trying tier: " + tier);
         for (String uri: tier) {
             try {
                 //if (! uri.substring(0,3).equals("udp")) {
@@ -72,7 +73,7 @@ public class TrackerManager {
 
     public Tracker getTracker (String uri) {
         Tracker tracker = null;
-        System.err.println("Get tracker: " + uri);
+        LOG.log(Log.DEBUG, this, "Get tracker: " + uri);
         try {
             if (uri.substring(0, 6).equals("udp://")) {
                 tracker = new UdpTracker(uri, this.uniqKey);
@@ -84,8 +85,8 @@ public class TrackerManager {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            System.err.println("Cannot construct tracker object for uri: \""
-                               + uri + "\"");
+            LOG.log(Log.DEBUG, this,
+                    "Cannot construct tracker object for uri: \"" + uri + "\"");
         }
         return tracker;
     }
