@@ -54,7 +54,8 @@ public class BEncode {
         }
     }
 
-    public static byte[] encode(BValue elem) {
+    public static byte[] encode(BValue elem)
+    throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         encode(elem, out);
         return out.toByteArray();
