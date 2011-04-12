@@ -1,9 +1,12 @@
 package torrefactor.core;
 
+import torrefactor.util.*;
+
 import java.nio.*;
 
 
 public class DataBlock {
+    private static Log LOG = Log.getInstance();
     private MappedByteBuffer[] buffers;
     private int length;
     private int pieceIndex;
@@ -53,11 +56,12 @@ public class DataBlock {
                 buffers[i].position(localOffset);
                 int remaining = buffers[i].remaining();
                 if (length <= remaining) {
-                    System.out.println("arrayOffset: " + arrayOffset);  //DELETEME
+                    LOG.log(Log.DEBUG, this, "arrayOffset: " + arrayOffset);
                     buffers[i].get(block, arrayOffset, length);
                     break;
                 }
-                System.out.println("GetBlock " + arrayOffset + " " + remaining);
+                LOG.log(Log.DEBUG, this,
+                        "GetBlock " + arrayOffset + " " + remaining);
                 buffers[i].get(block, arrayOffset, remaining);
                 length -= remaining;
                 arrayOffset += remaining;
@@ -99,9 +103,9 @@ public class DataBlock {
             if (localOffset < 0) {
                 localOffset = 0;
             }
-            System.out.println("%% Writing to " + offset + " length: " + length + " at piece: " + this.pieceIndex);
-            //HACK: for testing, until we have graceful exit support
-            //buffers[i].force();
+            LOG.log(Log.DEBUG, this,
+                    "%% Writing to " + offset + " length: " + length
+                    + " at piece: " + this.pieceIndex);
         }
     }
 }
