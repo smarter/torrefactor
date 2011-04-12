@@ -94,6 +94,10 @@ public class Log {
         log (ERROR, object, message);
     }
 
+    public void error (Object object, Exception e) {
+        log (ERROR, object, e.getStackTrace().toString());
+    }
+
     public void warning (Object object, String message) {
         log (WARNING, object, message);
     }
