@@ -9,6 +9,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Torrent implements Serializable {
+    private static Log LOG = Log.getInstance();
     public final String FILE_NAME;
     private File basePath;
     private int pieceLength;
@@ -52,7 +53,6 @@ public class Torrent implements Serializable {
 
         Map<String, BValue> infoMap = fileMap.get("info").toMap();
         if (infoMap.containsKey("files")) {
-            System.err.println(infoMap.get("files"));
             List maps = infoMap.get("files").toList();
             this.files = new ArrayList<Pair<File, Long>>(maps.size());
             for (int i=0; i<maps.size(); i++) {
@@ -87,7 +87,7 @@ public class Torrent implements Serializable {
         announceList = new ArrayList<List<String>>();
         if (fileMap.containsKey("announce-list")) {
             List<BValue> announces = fileMap.get("announce-list").toList();
-            System.out.println("LENGTH: " + announces.size());
+            LOG.log(Log.DEBUG, this, "LENGTH: " + announces.size());
             for (BValue tierList : announces) {
                 List<BValue> trackers = tierList.toList();
                 Collections.shuffle(trackers);
@@ -99,12 +99,12 @@ public class Torrent implements Serializable {
                 announceList.add(trackerList);
             }
         } else {
-            System.err.println("Single tracker mode");
+            LOG.log(Log.DEBUG, this, "Single tracker mode");
             LinkedList<String> trackerList = new LinkedList<String>();
             trackerList.add(new String(fileMap.get("announce").toByteArray()));
             announceList.add(trackerList);
         }
-        System.out.println("announceList: " + announceList);
+        LOG.log(Log.DEBUG, this, "announceList: " + announceList);
 
         if (fileMap.containsKey("comment")) {
             this.comment = fileMap.get("comment").toString();
@@ -113,7 +113,7 @@ public class Torrent implements Serializable {
             //TODO: there should be a way to parse bencoded int as double
             //      in util.BDecode since the date is coded on a long.
             //this.creationDate = fileMap.get("creation date").toDouble();
-            System.err.println("Ignoring 'creation date' in torrent file.");
+            LOG.log(Log.WARNING, this, "Ignoring 'creation date' in torrent file.");
         }
         if (fileMap.containsKey("created by")) {
             this.createdBy = fileMap.get("created by").toString();
