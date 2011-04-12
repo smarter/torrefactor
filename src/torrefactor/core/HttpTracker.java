@@ -210,13 +210,6 @@ public class HttpTracker extends Tracker {
                 && input.read() == (int) '\n') break;
         }
 
-//        System.out.println("----------------------------");
-//        while (true) {
-//            int c = input.read();
-//            System.out.print((char)c);
-//            if (c == -1) System.exit(123);
-//        }
-
         Map<String, BValue> answerMap = BDecode.decodeDict(input);
         input.close();
         output.close();
