@@ -1,11 +1,14 @@
 package torrefactor.core;
+
 import torrefactor.core.*;
+import torrefactor.util.*;
 
 import java.io.*;
 import java.net.*;
 import java.util.*;
 
 public class Peer implements Runnable {
+    private static Log LOG = Log.getInstance();
     public enum MessageType {
         choke, unchoke, interested, not_interested, have, bitfield,
         request, piece, cancel, port
@@ -61,7 +64,7 @@ public class Peer implements Runnable {
         int tries = 0;
         while (this.socket == null) {
             try {
-                System.out.println("Connecting: " + this.ip.toString() + ':' + this.port);
+                LOG.log(Log.DEBUG, this, "Connecting: " + this.ip.toString() + ':' + this.port);
                 this.socket = new Socket();
                 this.socket.setSendBufferSize(SEND_BUFFER_SIZE);
                 this.socket.setReceiveBufferSize(RECEIVE_BUFFER_SIZE);
@@ -70,7 +73,7 @@ public class Peer implements Runnable {
                 this.socket.connect(address, CONNECT_TIMEOUT);
 
                 socketInput = new DataInputStream(new BufferedInputStream(this.socket.getInputStream()));
-                System.out.println("Connected: " + this.ip.toString() + ':' + this.port);
+                LOG.log(Log.DEBUG, this, "Connected: " + this.ip.toString() + ':' + this.port);
                 socketOutput = new DataOutputStream(new BufferedOutputStream(this.socket.getOutputStream()));
                 if (!handshake()) {
                     invalidate();
@@ -87,7 +90,7 @@ public class Peer implements Runnable {
                 }
                 this.socket = null;
                 if (tries == CONNECTION_TRIES) {
-                    e.printStackTrace();
+                    LOG.error(this, e);
                     invalidate();
                     return;
                 }
@@ -96,7 +99,6 @@ public class Peer implements Runnable {
         this.isConnected = true;
         long time = System.currentTimeMillis();
         while (this.isValid) {
-            //System.out.println("Loop: " + arrayToString(this.id) + " " + this.isValid + " " + !this.isChokingUs);
             try {
                 readMessage();
                 if (System.currentTimeMillis() - time > PEER_TIMEOUT / 2) {
@@ -107,7 +109,7 @@ public class Peer implements Runnable {
                     continue;
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                LOG.error(this, e);
                 invalidate();
                 return;
             }
@@ -124,14 +126,14 @@ public class Peer implements Runnable {
     private void readMessage() throws IOException {
         int length = socketInput.readInt();
         if (length == 0) {
-            //System.out.println("Got keep alive: " + arrayToString(this.id));
-            //keepalive, do nothing
             return;
         }
         int typeByte = socketInput.read();
         length--;
         if (typeByte < 0 || typeByte > 9) {
-            System.out.println("Got unknown message " + typeByte + " with length: " + length + " " + arrayToString(this.id));
+            LOG.log(Log.DEBUG, this, "Got unknown message " + typeByte
+                                     + " with length: " + length + " "
+                                     + arrayToString(this.id));
             return;
         }
         MessageType type = MessageType.values()[typeByte];
@@ -140,7 +142,8 @@ public class Peer implements Runnable {
 
     private void readMessage(MessageType type, int length)
     throws IOException {
-        System.out.println("Got message " + type.toString() + " " + arrayToString(this.id) + " " + length);
+        LOG.log(Log.DEBUG, this, "Got message " + type.toString() + " "
+                                 + arrayToString(this.id) + " " + length);
         switch (type) {
         case choke: {
             this.isChokingUs = true;
@@ -166,7 +169,8 @@ public class Peer implements Runnable {
         }
         case bitfield: {
             if (length != this.bitfield.length) {
-                System.out.println("Wrong bitfield length, got: " + length + " expected: " + this.bitfield.length);
+                LOG.log(Log.DEBUG, this, "Wrong bitfield length, got: "
+                        + length + " expected: " + this.bitfield.length);
             }
             socketInput.readFully(this.bitfield);
             break;
@@ -175,7 +179,9 @@ public class Peer implements Runnable {
             int index = socketInput.readInt();
             int offset = socketInput.readInt();
             int blockLength = socketInput.readInt();
-            System.out.println("Request, index: " + index + " offset: " + offset + " blockLength : " + blockLength);
+            LOG.log(Log.DEBUG, this, "Request, index: " + index
+                                     + " offset: " + offset
+                                     + " blockLength : " + blockLength);
             byte[] block = this.torrent.pieceManager.getBlock(index, offset, blockLength);
             if (block == null) return;
             sendBlock(index, offset, block);
@@ -193,8 +199,7 @@ public class Peer implements Runnable {
             }
             DataBlockInfo queuedInfo = outQueue.poll();
             if (queuedInfo != null && requested < this.torrent.peerManager.BLOCKS_PER_REQUEST) {
-                //try {Thread.currentThread().sleep(10);} catch(InterruptedException e) { e.printStackTrace(); invalidate(); return; }
-                System.out.println("Got block, sending new request");
+                LOG.log(Log.DEBUG, this, "Got block, sending new request");
                 sendRequest(queuedInfo);
             }
             break;
@@ -216,7 +221,8 @@ public class Peer implements Runnable {
     }
 
     private boolean handshake() throws IOException {
-        System.out.println("Handshake start: " + this.ip.toString() + ':' + this.port);
+        LOG.log(Log.DEBUG, this, "Handshake start: "
+                                 + this.ip.toString() + ':' + this.port);
         socketOutput.writeByte(19);
         byte header[] = (new String("BitTorrent protocol")).getBytes();
         socketOutput.write(header);
@@ -233,7 +239,8 @@ public class Peer implements Runnable {
         byte[] inHeader = new byte[inLength];
         socketInput.readFully(inHeader);
         if (!Arrays.equals(header, inHeader)) {
-            System.out.println("Unsupported protocol header: " + new String(inHeader));
+            LOG.log(Log.DEBUG, this, "Unsupported protocol header: "
+                                     + new String(inHeader));
             return false;
         }
         byte[] inReserved = new byte[reserved.length];
@@ -241,12 +248,13 @@ public class Peer implements Runnable {
         byte[] inInfoHash = new byte[20];
         socketInput.readFully(inInfoHash);
         if (!Arrays.equals(torrent.infoHash, inInfoHash)) {
-            System.out.println("Wrong info_hash");
+            LOG.log(Log.DEBUG, this, "Wrong info_hash");
             return false;
         }
         id = new byte[20];
         socketInput.readFully(this.id);
-        System.out.println("Handshake done: " + this.ip.toString() + ':' + this.port + " id: " + arrayToString(this.id));
+        LOG.log(Log.DEBUG, this, "Handshake done: " + this.ip.toString() + ':'
+                + this.port + " id: " + arrayToString(this.id));
         return true;
     }
 
@@ -313,9 +321,11 @@ public class Peer implements Runnable {
 
     public void invalidate() {
         if (this.id != null) {
-            System.out.println("## " + arrayToString(this.id) + " invalidated");
+            LOG.log(Log.DEBUG, this, "## " + arrayToString(this.id)
+                                     + " invalidated");
         } else {
-            System.out.println("## " + this.ip.toString() + " invalidated");
+            LOG.log(Log.DEBUG, this, "## " + this.ip.toString()
+                                     + " invalidated");
         }
         this.isValid = false;
         try {
@@ -339,7 +349,7 @@ public class Peer implements Runnable {
             }
             return 8*i + 7 - offset;
         }
-        System.out.println("No piece: " + arrayToString(this.id));
+        LOG.log(Log.DEBUG, this, "No piece: " + arrayToString(this.id));
         return -1;
     }
 
@@ -350,13 +360,14 @@ public class Peer implements Runnable {
     }
 
     private synchronized void keepAlive() throws IOException {
-        System.out.println("KeepAlive :" + arrayToString(this.id));
+        LOG.log(Log.DEBUG, this, "KeepAlive :" + arrayToString(this.id));
         socketOutput.writeInt(0);
         socketOutput.flush();
     }
 
     private synchronized void sendMessage(MessageType type, int[] params, byte[] data) throws IOException {
-        System.out.println("Sending " + type.toString() + " to :" + arrayToString(this.id));
+        LOG.log(Log.DEBUG, this, "Sending " + type.toString()
+                                 + " to :" + arrayToString(this.id));
         int length = 1;
         if (params != null) {
             length += 4 * params.length;
@@ -384,7 +395,7 @@ public class Peer implements Runnable {
     }
 
     public void queueRequest(DataBlockInfo info) throws IOException {
-        System.out.println("Queued!");
+        LOG.log(Log.DEBUG, this, "Queued!");
         if (requested == 0) {
             sendRequest(info);
         } else {
@@ -397,7 +408,8 @@ public class Peer implements Runnable {
     throws IOException {
         if (!isConnected()) return;
         int[] params = { info.pieceIndex(), info.offset(), info.length() };
-        System.out.print("pieceIndex: " + info.pieceIndex() + " offset: " + info.offset() + " ");
+        LOG.log(Log.DEBUG, this, "pieceIndex: " + info.pieceIndex()
+                                 + " offset: " + info.offset() + " ");
         sendMessage(MessageType.request, params, null);
     }
 
