@@ -8,7 +8,7 @@ import java.net.*;
 import java.util.*;
 
 public class Peer implements Runnable {
-    private static Log LOG = Log.getInstance();
+    private static Logger LOG = new Logger();
     public enum MessageType {
         choke, unchoke, interested, not_interested, have, bitfield,
         request, piece, cancel, port
@@ -64,7 +64,7 @@ public class Peer implements Runnable {
         int tries = 0;
         while (this.socket == null) {
             try {
-                LOG.log(Log.DEBUG, this, "Connecting: " + this.ip.toString() + ':' + this.port);
+                LOG.debug(this, "Connecting: " + this.ip.toString() + ':' + this.port);
                 this.socket = new Socket();
                 this.socket.setSendBufferSize(SEND_BUFFER_SIZE);
                 this.socket.setReceiveBufferSize(RECEIVE_BUFFER_SIZE);
@@ -73,7 +73,7 @@ public class Peer implements Runnable {
                 this.socket.connect(address, CONNECT_TIMEOUT);
 
                 socketInput = new DataInputStream(new BufferedInputStream(this.socket.getInputStream()));
-                LOG.log(Log.DEBUG, this, "Connected: " + this.ip.toString() + ':' + this.port);
+                LOG.debug(this, "Connected: " + this.ip.toString() + ':' + this.port);
                 socketOutput = new DataOutputStream(new BufferedOutputStream(this.socket.getOutputStream()));
                 if (!handshake()) {
                     invalidate();
@@ -131,9 +131,9 @@ public class Peer implements Runnable {
         int typeByte = socketInput.read();
         length--;
         if (typeByte < 0 || typeByte > 9) {
-            LOG.log(Log.DEBUG, this, "Got unknown message " + typeByte
-                                     + " with length: " + length + " "
-                                     + arrayToString(this.id));
+            LOG.debug(this, "Got unknown message " + typeByte
+                            + " with length: " + length + " "
+                            + arrayToString(this.id));
             return;
         }
         MessageType type = MessageType.values()[typeByte];
@@ -142,8 +142,8 @@ public class Peer implements Runnable {
 
     private void readMessage(MessageType type, int length)
     throws IOException {
-        LOG.log(Log.DEBUG, this, "Got message " + type.toString() + " "
-                                 + arrayToString(this.id) + " " + length);
+        LOG.debug(this, "Got message " + type.toString() + " "
+                        + arrayToString(this.id) + " " + length);
         switch (type) {
         case choke: {
             this.isChokingUs = true;
@@ -169,8 +169,8 @@ public class Peer implements Runnable {
         }
         case bitfield: {
             if (length != this.bitfield.length) {
-                LOG.log(Log.DEBUG, this, "Wrong bitfield length, got: "
-                        + length + " expected: " + this.bitfield.length);
+                LOG.debug(this, "Wrong bitfield length, got: " + length
+                                + " expected: " + this.bitfield.length);
             }
             socketInput.readFully(this.bitfield);
             break;
@@ -179,9 +179,9 @@ public class Peer implements Runnable {
             int index = socketInput.readInt();
             int offset = socketInput.readInt();
             int blockLength = socketInput.readInt();
-            LOG.log(Log.DEBUG, this, "Request, index: " + index
-                                     + " offset: " + offset
-                                     + " blockLength : " + blockLength);
+            LOG.debug(this, "Request, index: " + index
+                            + " offset: " + offset
+                            + " blockLength : " + blockLength);
             byte[] block = this.torrent.pieceManager.getBlock(index, offset, blockLength);
             if (block == null) return;
             sendBlock(index, offset, block);
@@ -199,7 +199,7 @@ public class Peer implements Runnable {
             }
             DataBlockInfo queuedInfo = outQueue.poll();
             if (queuedInfo != null && requested < this.torrent.peerManager.BLOCKS_PER_REQUEST) {
-                LOG.log(Log.DEBUG, this, "Got block, sending new request");
+                LOG.debug(this, "Got block, sending new request");
                 sendRequest(queuedInfo);
             }
             break;
@@ -221,8 +221,8 @@ public class Peer implements Runnable {
     }
 
     private boolean handshake() throws IOException {
-        LOG.log(Log.DEBUG, this, "Handshake start: "
-                                 + this.ip.toString() + ':' + this.port);
+        LOG.debug(this, "Handshake start: "
+                        + this.ip.toString() + ':' + this.port);
         socketOutput.writeByte(19);
         byte header[] = (new String("BitTorrent protocol")).getBytes();
         socketOutput.write(header);
@@ -239,8 +239,8 @@ public class Peer implements Runnable {
         byte[] inHeader = new byte[inLength];
         socketInput.readFully(inHeader);
         if (!Arrays.equals(header, inHeader)) {
-            LOG.log(Log.DEBUG, this, "Unsupported protocol header: "
-                                     + new String(inHeader));
+            LOG.debug(this, "Unsupported protocol header: "
+                            + new String(inHeader));
             return false;
         }
         byte[] inReserved = new byte[reserved.length];
@@ -248,13 +248,13 @@ public class Peer implements Runnable {
         byte[] inInfoHash = new byte[20];
         socketInput.readFully(inInfoHash);
         if (!Arrays.equals(torrent.infoHash, inInfoHash)) {
-            LOG.log(Log.DEBUG, this, "Wrong info_hash");
+            LOG.debug(this, "Wrong info_hash");
             return false;
         }
         id = new byte[20];
         socketInput.readFully(this.id);
-        LOG.log(Log.DEBUG, this, "Handshake done: " + this.ip.toString() + ':'
-                + this.port + " id: " + arrayToString(this.id));
+        LOG.debug(this, "Handshake done: " + this.ip.toString() + ':'
+                        + this.port + " id: " + arrayToString(this.id));
         return true;
     }
 
@@ -321,11 +321,9 @@ public class Peer implements Runnable {
 
     public void invalidate() {
         if (this.id != null) {
-            LOG.log(Log.DEBUG, this, "## " + arrayToString(this.id)
-                                     + " invalidated");
+            LOG.debug(this, "## " + arrayToString(this.id) + " invalidated");
         } else {
-            LOG.log(Log.DEBUG, this, "## " + this.ip.toString()
-                                     + " invalidated");
+            LOG.debug(this, "## " + this.ip.toString() + " invalidated");
         }
         this.isValid = false;
         try {
@@ -349,7 +347,7 @@ public class Peer implements Runnable {
             }
             return 8*i + 7 - offset;
         }
-        LOG.log(Log.DEBUG, this, "No piece: " + arrayToString(this.id));
+        LOG.debug(this, "No piece: " + arrayToString(this.id));
         return -1;
     }
 
@@ -360,14 +358,14 @@ public class Peer implements Runnable {
     }
 
     private synchronized void keepAlive() throws IOException {
-        LOG.log(Log.DEBUG, this, "KeepAlive :" + arrayToString(this.id));
+        LOG.debug(this, "KeepAlive :" + arrayToString(this.id));
         socketOutput.writeInt(0);
         socketOutput.flush();
     }
 
     private synchronized void sendMessage(MessageType type, int[] params, byte[] data) throws IOException {
-        LOG.log(Log.DEBUG, this, "Sending " + type.toString()
-                                 + " to :" + arrayToString(this.id));
+        LOG.debug(this, "Sending " + type.toString()
+                        + " to :" + arrayToString(this.id));
         int length = 1;
         if (params != null) {
             length += 4 * params.length;
@@ -395,7 +393,7 @@ public class Peer implements Runnable {
     }
 
     public void queueRequest(DataBlockInfo info) throws IOException {
-        LOG.log(Log.DEBUG, this, "Queued!");
+        LOG.debug(this, "Queued!");
         if (requested == 0) {
             sendRequest(info);
         } else {
@@ -408,8 +406,8 @@ public class Peer implements Runnable {
     throws IOException {
         if (!isConnected()) return;
         int[] params = { info.pieceIndex(), info.offset(), info.length() };
-        LOG.log(Log.DEBUG, this, "pieceIndex: " + info.pieceIndex()
-                                 + " offset: " + info.offset() + " ");
+        LOG.debug(this, "pieceIndex: " + info.pieceIndex()
+                        + " offset: " + info.offset() + " ");
         sendMessage(MessageType.request, params, null);
     }
 

@@ -9,7 +9,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Torrent implements Serializable {
-    private static Log LOG = Log.getInstance();
+    private static Logger LOG = new Logger();
     public final String FILE_NAME;
     private File basePath;
     private int pieceLength;
@@ -87,7 +87,7 @@ public class Torrent implements Serializable {
         announceList = new ArrayList<List<String>>();
         if (fileMap.containsKey("announce-list")) {
             List<BValue> announces = fileMap.get("announce-list").toList();
-            LOG.log(Log.DEBUG, this, "LENGTH: " + announces.size());
+            LOG.debug(this, "LENGTH: " + announces.size());
             for (BValue tierList : announces) {
                 List<BValue> trackers = tierList.toList();
                 Collections.shuffle(trackers);
@@ -99,12 +99,12 @@ public class Torrent implements Serializable {
                 announceList.add(trackerList);
             }
         } else {
-            LOG.log(Log.DEBUG, this, "Single tracker mode");
+            LOG.debug(this, "Single tracker mode");
             LinkedList<String> trackerList = new LinkedList<String>();
             trackerList.add(new String(fileMap.get("announce").toByteArray()));
             announceList.add(trackerList);
         }
-        LOG.log(Log.DEBUG, this, "announceList: " + announceList);
+        LOG.debug(this, "announceList: " + announceList);
 
         if (fileMap.containsKey("comment")) {
             this.comment = fileMap.get("comment").toString();
@@ -113,7 +113,7 @@ public class Torrent implements Serializable {
             //TODO: there should be a way to parse bencoded int as double
             //      in util.BDecode since the date is coded on a long.
             //this.creationDate = fileMap.get("creation date").toDouble();
-            LOG.log(Log.WARNING, this, "Ignoring 'creation date' in torrent file.");
+            LOG.debug(this, "Ignoring 'creation date' in torrent file.");
         }
         if (fileMap.containsKey("created by")) {
             this.createdBy = fileMap.get("created by").toString();

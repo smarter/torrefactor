@@ -93,26 +93,6 @@ public class Log {
         if (this.printAdded) print (quad);
     }
 
-    public void error (Object object, String message) {
-        log (ERROR, object, message);
-    }
-
-    public void error (Object object, Exception e) {
-        log (ERROR, object, e.getStackTrace().toString());
-    }
-
-    public void warning (Object object, String message) {
-        log (WARNING, object, message);
-    }
-
-    public void info (Object object, String message) {
-        log (INFO, object, message);
-    }
-
-    public void debug (Object object, String message) {
-        log (DEBUG, object, message);
-    }
-
     private void print (Quad<Integer, Long, Object, String> quad) {
         print (quad, this.enableMask, this.disableMask);
     }
@@ -172,7 +152,5 @@ public class Log {
         }
         print (this.ring.get (current));
     }
-
-
 }
 

@@ -7,7 +7,7 @@ import java.net.*;
 import java.util.*;
 
 public class PeerManager implements Runnable {
-    private static Log LOG = Log.getInstance();
+    private static Logger LOG = new Logger();
 
     private volatile boolean stopped;
 
@@ -35,7 +35,7 @@ public class PeerManager implements Runnable {
             // Azureus style, see http://wiki.theory.org/BitTorrentSpecification#peer_id
             Random rand = new Random();
             String idRand = UUID.randomUUID().toString().substring(0, 20 - idInfo.length());
-            LOG.log(Log.DEBUG, this, idRand);
+            LOG.debug(this, idRand);
             this.peerId = new String(idInfo + idRand).getBytes();
         }
         this.peersReceived = 0;
@@ -88,7 +88,7 @@ public class PeerManager implements Runnable {
                 }
                 if (!peerEntry.getValue().isConnected() || peerEntry.getValue().isChokingUs()
                     || peerEntry.getValue().isQueueFull()) {
-                    LOG.log(Log.DEBUG, this, ".");
+                    LOG.debug(this, ".");
                     continue;
                 }
                 this.torrent.incrementDownloaded(
@@ -128,7 +128,7 @@ public class PeerManager implements Runnable {
     throws IOException, UnknownHostException {
         Map<InetAddress, Peer> oldMap = new HashMap<InetAddress, Peer>(peerMap);
         for (Pair<byte[], Integer> p: peersList) {
-            LOG.log(Log.DEBUG, this, "Updating peerMap...");
+            LOG.debug(this, "Updating peerMap...");
             InetAddress addr = InetAddress.getByAddress(p.first());
             int port = (p.second());
             updateMap(addr, port, oldMap);

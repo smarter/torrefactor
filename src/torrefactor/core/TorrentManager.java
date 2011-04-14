@@ -8,7 +8,7 @@ import java.util.*;
 import java.security.*;
 
 public class TorrentManager {
-    private static Log LOG = Log.getInstance();
+    private static Logger LOG = new Logger();
     private List<Torrent> torrentList;
     private List<Torrent> readOnlyList;
     private File configFile;
@@ -65,9 +65,9 @@ public class TorrentManager {
             ObjectInputStream ois = new ObjectInputStream(fis);
             torrentList = (ArrayList<Torrent>) ois.readObject();
         } catch (Exception e) {
-            LOG.log(Log.ERROR, this,
-                    "Couldn't load saved config from " + this.configFile
-                    + " reason: " + e.toString());
+            LOG.error(this,
+                      "Couldn't load saved config from " + this.configFile
+                      + " reason: " + e.toString());
         }
 
         return (torrentList != null);
@@ -79,9 +79,9 @@ public class TorrentManager {
             ObjectOutputStream oos = new ObjectOutputStream(fos);
             oos.writeObject(torrentList);
         } catch (Exception e) {
-            LOG.log(Log.ERROR, this,
-                    "Couldn't save config to " + this.configFile
-                    + " reason: " + e.toString());
+            LOG.error(this,
+                      "Couldn't save config to " + this.configFile
+                      + " reason: " + e.toString());
         }
     }
 }

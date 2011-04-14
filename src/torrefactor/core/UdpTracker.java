@@ -8,7 +8,7 @@ import java.net.*;
 import java.util.*;
 
 public class UdpTracker extends Tracker {
-    private static Log LOG = Log.getInstance();
+    private static Logger LOG = new Logger();
     private long connection_id;
     private byte[] info_hash;
     private byte[] peer_id;
@@ -51,9 +51,9 @@ public class UdpTracker extends Tracker {
 
         this.host = uriObject.getHost();
         this.port = uriObject.getPort();
-        LOG.log(Log.DEBUG, this, "Uri : " + this.uri);
-        LOG.log(Log.DEBUG, this, "Host: " + this.host);
-        LOG.log(Log.DEBUG, this, "Port: " + this.port);
+        LOG.debug(this, "Uri : " + this.uri);
+        LOG.debug(this, "Host: " + this.host);
+        LOG.debug(this, "Port: " + this.port);
     }
 
     public ArrayList<Pair<byte[], Integer>> announce (Torrent torrent, Event event) {
@@ -61,12 +61,12 @@ public class UdpTracker extends Tracker {
         try {
             peers = udpAnnounce(torrent, event);
         } catch (Exception e ) {
-            LOG.log(Log.WARNING, this, "Got exception while announcing to \""
+            LOG.debug(this, "Got exception while announcing to \""
                                + this.uri + "\"");
             e.printStackTrace();
         }
-        if (peers != null) LOG.log(Log.DEBUG, this, "Got " + peers.size()
-                                              + " peers."); //DEBUG
+        if (peers != null) LOG.debug(this, "Got " + peers.size()
+                                           + " peers.");
         return peers;
     }
 
@@ -83,17 +83,17 @@ public class UdpTracker extends Tracker {
 
             // Connect reply
             byte[] buffer = new byte[recvlen];
-            LOG.log(Log.DEBUG, this, "Len: " + buffer.length);
+            LOG.debug(this, "Len: " + buffer.length);
             packet = new DatagramPacket(buffer, buffer.length);
             try {
                 this.socket.receive(packet);
             }
             catch (SocketTimeoutException e) {
-                LOG.log(Log.DEBUG, this, e.getMessage()); //DEBUG
+                LOG.debug(this, e.getMessage());
             }
             if ( ! udpCheckTransactionId(packet, transactionId)) {
                 // Got a packet with different transactionId
-                LOG.log(Log.DEBUG, this, "TransactionId do not match."); //DEBUG
+                LOG.debug(this, "TransactionId do not match.");
                 i--;
                 continue;
             }
@@ -134,7 +134,7 @@ public class UdpTracker extends Tracker {
         System.arraycopy(packet.getData(), 4, action, 0, 4);
         if (action[3] == (byte) UDP_ACTION_ERROR) {
             // error
-            LOG.log(Log.ERROR, this, udpGetErrorMessage(packet));
+            LOG.error(this, udpGetErrorMessage(packet));
         }
         // Get connection_id
         connectionId = new byte[8];
@@ -174,7 +174,7 @@ public class UdpTracker extends Tracker {
         System.arraycopy(packet.getData(), 0, action, 0, 4);
         if (action[3] == (byte) UDP_ACTION_ERROR) {
             // error
-            LOG.log(Log.ERROR, this, udpGetErrorMessage(packet));
+            LOG.error(this, udpGetErrorMessage(packet));
         }
         byte[] b = new byte[4];
         System.arraycopy(buffer, 8, b, 0, 4);

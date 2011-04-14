@@ -6,7 +6,7 @@ import java.nio.*;
 
 
 public class DataBlock {
-    private static Log LOG = Log.getInstance();
+    private static Logger LOG = new Logger();
     private MappedByteBuffer[] buffers;
     private int length;
     private int pieceIndex;
@@ -56,12 +56,11 @@ public class DataBlock {
                 buffers[i].position(localOffset);
                 int remaining = buffers[i].remaining();
                 if (length <= remaining) {
-                    LOG.log(Log.DEBUG, this, "arrayOffset: " + arrayOffset);
+                    LOG.debug(this, "arrayOffset: " + arrayOffset);
                     buffers[i].get(block, arrayOffset, length);
                     break;
                 }
-                LOG.log(Log.DEBUG, this,
-                        "GetBlock " + arrayOffset + " " + remaining);
+                LOG.debug(this, "GetBlock " + arrayOffset + " " + remaining);
                 buffers[i].get(block, arrayOffset, remaining);
                 length -= remaining;
                 arrayOffset += remaining;
@@ -103,9 +102,8 @@ public class DataBlock {
             if (localOffset < 0) {
                 localOffset = 0;
             }
-            LOG.log(Log.DEBUG, this,
-                    "%% Writing to " + offset + " length: " + length
-                    + " at piece: " + this.pieceIndex);
+            LOG.debug(this, "%% Writing to " + offset + " length: " + length
+                            + " at piece: " + this.pieceIndex);
         }
     }
 }

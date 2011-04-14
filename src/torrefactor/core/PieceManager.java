@@ -8,7 +8,7 @@ import java.util.*;
 import java.security.*;
 
 public class PieceManager implements Serializable {
-    private static Log LOG = Log.getInstance();
+    private static Logger LOG = new Logger();
     //Map of the downloaded blocks
     public IntervalMap intervalMap;
     //map of the requested but not yet downloaded blocks
@@ -62,7 +62,7 @@ public class PieceManager implements Serializable {
                 int blockSize = Math.min(BLOCK_SIZE, pieceEnd - offset + 1);
                 infoList.add(new DataBlockInfo(i, (offset % this.dataManager.pieceLength()), blockSize));
                 this.requestedMap.addInterval(offset, blockSize);
-                LOG.log(Log.DEBUG, this, "** Requested block at piece: " + i + " offset: " + (offset % this.dataManager.pieceLength())
+                LOG.debug(this, "** Requested block at piece: " + i + " offset: " + (offset % this.dataManager.pieceLength())
                                          + " length: " + blockSize);
 
                 offset += blockSize;
@@ -97,19 +97,19 @@ public class PieceManager implements Serializable {
     throws IOException {
         int begin = piece * this.dataManager.pieceLength() + offset;
         if (this.intervalMap.containsInterval(begin, blockArray.length)) {
-            LOG.log(Log.DEBUG, this, "!!! Already got " + begin);
+            LOG.debug(this, "!!! Already got " + begin);
             return;
         }
         this.intervalMap.addInterval(begin, blockArray.length);
         this.dataManager.putBlock(piece, offset, blockArray);
-        LOG.log(Log.DEBUG, this, this.intervalMap.toString());
+        LOG.debug(this, this.intervalMap.toString());
         try {
             checkPiece(piece);
         } catch (NoSuchAlgorithmException e) {
             //Assume the piece is correct since we have no way of checking
-            LOG.log(Log.DEBUG, this, "Warning: piece + " + piece + " could not be checked and"
+            LOG.debug(this, "Warning: piece + " + piece + " could not be checked and"
                                      + "may potentially be invalid");
-            LOG.log(Log.DEBUG, this, e.toString());
+            LOG.debug(this, e.toString());
         }
     }
 
@@ -128,12 +128,12 @@ public class PieceManager implements Serializable {
         byte[] digest = MessageDigest.getInstance("SHA1").digest(pieceArray);
         if (!Arrays.equals(digest, expectedDigest)) {
             this.intervalMap.removeIntervals(piece * this.dataManager.pieceLength(), this.dataManager.pieceLength());
-            LOG.log(Log.DEBUG, this, "~~ Invalid piece " + piece + " got: " + new String(digest) + " expected " + new String(expectedDigest));
+            LOG.debug(this, "~~ Invalid piece " + piece + " got: " + new String(digest) + " expected " + new String(expectedDigest));
             return false;
         }
         int byteIndex = piece / 8;
         this.bitfield[byteIndex] |= 1 << (7 - (piece % 8));
-        LOG.log(Log.DEBUG, this, "~~ Valid piece " + piece);
+        LOG.debug(this, "~~ Valid piece " + piece);
         //TODO: send "have" message to peers
         return true;
     }

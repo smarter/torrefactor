@@ -10,7 +10,7 @@ import java.util.*;
 
 
 public class TrackerManager {
-    private static Log LOG = Log.getInstance();
+    private static Logger LOG = new Logger();
     private List<List<String>> tiers;
     private long nextAnnounceTime = 0;
     private Torrent torrent;
@@ -28,7 +28,7 @@ public class TrackerManager {
 
     public List<Pair<byte[], Integer>> announce (Event event) {
         List<Pair<byte[], Integer>> peersList = null;
-        LOG.log(Log.INFO, this, "Announcing...");
+        LOG.info(this, "Announcing...");
 
         for (List<String> tier: this.tiers) {
             peersList = announceTier(event, tier);
@@ -44,7 +44,7 @@ public class TrackerManager {
         ArrayList<Pair<byte[], Integer>> peersList = null;
         Tracker tracker;
 
-        LOG.log(Log.DEBUG, this, "Trying tier: " + tier);
+        LOG.debug(this, "Trying tier: " + tier);
         for (String uri: tier) {
             try {
                 tracker = getTracker(uri);
@@ -69,7 +69,7 @@ public class TrackerManager {
 
     public Tracker getTracker (String uri) {
         Tracker tracker = null;
-        LOG.log(Log.DEBUG, this, "Get tracker: " + uri);
+        LOG.debug(this, "Get tracker: " + uri);
         try {
             if (uri.substring(0, 6).equals("udp://")) {
                 tracker = new UdpTracker(uri, this.uniqKey);
@@ -81,7 +81,7 @@ public class TrackerManager {
             }
         } catch (Exception e) {
             LOG.error(this, e);
-            LOG.log(Log.DEBUG, this,
+            LOG.debug(this,
                     "Cannot construct tracker object for uri: \"" + uri + "\"");
         }
         return tracker;
