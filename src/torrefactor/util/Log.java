@@ -15,6 +15,7 @@ public class Log {
     private int enableMask;
     private int disableMask;
     private int reservedBits = 255;
+    private long refTime = 0;
     public static final int ERROR = 1;
     public static final int WARNING = 1 << 1;
     public static final int INFO = 1 << 2;
@@ -32,6 +33,8 @@ public class Log {
         this.ring = new GenericArray<Quad<Integer, Long, Object, String>> (50);
         this.enableMask = ERROR | WARNING | INFO | DEBUG;
         this.disableMask = 0;
+        this.refTime = System.currentTimeMillis ();
+        log (INFO, this, "Logging started at " + this.refTime);
     }
 
     /* alias for get instance */
@@ -103,7 +106,7 @@ public class Log {
         if ((quad.first () & enableMask & (~disableMask)) == 0) {
             return;
         }
-        this.printStream.print ("[" + quad.second () + "]" + "["
+        this.printStream.print ("[" + (quad.second () - this.refTime) + "]" + "["
                                 + quad.third ().getClass (). getName () + "]"
                                 + " " + quad.fourth () + "\n");
     }
