@@ -112,6 +112,8 @@ PACKAGES = \
 	src.torrefactor.util \
 	test.util \
 	src.torrefactor.core \
+	src.torrefactor.ui\
+	src.torrefactor.ui.swing\
 	#src.torrefactor.gui
 
 
