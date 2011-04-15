@@ -33,7 +33,7 @@ public class Logger {
     public void error (Object object, Exception e) {
         if (this.enabled) {
             log.log (Log.ERROR | this.localFlag, object,
-                     e.getStackTrace().toString());
+                     e.toString());
         }
     }
 
