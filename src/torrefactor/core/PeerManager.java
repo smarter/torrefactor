@@ -114,6 +114,12 @@ public class PeerManager implements Runnable {
                 return;
             }
         }
+
+        // peerManager is now stopped
+       for (Map.Entry<InetAddress, Peer> entry : this.peerMap.entrySet()) {
+            entry.getValue().stop();
+       }
+
     }
 
     public void stop() {

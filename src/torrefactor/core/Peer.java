@@ -20,6 +20,7 @@ public class Peer implements Runnable {
     private volatile int requested;
 
     private volatile boolean isValid = true;
+    private volatile boolean isStopped = false;
     private boolean isConnected = false;
 
     byte[] id;
@@ -62,7 +63,7 @@ public class Peer implements Runnable {
 
     public void run() {
         int tries = 0;
-        while (this.socket == null) {
+        while (this.socket == null && (! this.isStopped)) {
             try {
                 LOG.debug(this, "Connecting: " + this.ip.toString() + ':' + this.port);
                 this.socket = new Socket();
@@ -98,7 +99,7 @@ public class Peer implements Runnable {
         }
         this.isConnected = true;
         long time = System.currentTimeMillis();
-        while (this.isValid) {
+        while (this.isValid && (! this.isStopped)) {
             try {
                 readMessage();
                 if (System.currentTimeMillis() - time > PEER_TIMEOUT / 2) {
@@ -119,6 +120,15 @@ public class Peer implements Runnable {
                 Thread.currentThread().interrupt();
                 invalidate();
                 return;
+            }
+        }
+        if ( (this.socket != null) && (! this.socket.isClosed())) {
+            try {
+                this.socket.close ();
+            } catch (IOException e) {
+                LOG.error (this, "While closing socket of "
+                                 + this.ip + " " + this.port + ":");
+                LOG.error (this, e.getMessage());
             }
         }
     }
@@ -415,6 +425,11 @@ public class Peer implements Runnable {
     throws IOException {
         int[] params = { index, offset };
         sendMessage(MessageType.piece, params, block);
+    }
+
+    public void stop() {
+        LOG.debug(this, "Stopping peer " + this.ip + " " + this.port);
+        this.isStopped = true;
     }
 
     private static String arrayToString(byte[] data) {
