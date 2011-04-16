@@ -114,7 +114,7 @@ PACKAGES = \
 	src.torrefactor.core \
 	src.torrefactor.ui\
 	src.torrefactor.ui.swing\
-	#src.torrefactor.gui
+	#src.torrefactor.ui.qt
 
 
 # All packages that can be recursively compiled.
@@ -418,7 +418,7 @@ test.core : $(call PACKAGE_OBJS,test.core)
 src.torrefactor.util : $(call PACKAGE_OBJS,src.torrefactor.util)
 test.util : $(call PACKAGE_OBJS,test.util)
 src.torrefactor.core : $(call PACKAGE_OBJS,src.torrefactor.core)
-src.torrefactor.gui : $(call PACKAGE_OBJS,src.torrefactor.gui)
+src.torrefactor.ui.qt : $(call PACKAGE_OBJS,src.torrefactor.ui.qt)
 
 ## Custom targets
 runtest: all

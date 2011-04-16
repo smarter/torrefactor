@@ -1,6 +1,6 @@
-package torrefactor.gui;
+package torrefactor.ui.qt;
 
-import torrefactor.gui.MainWindow;
+import torrefactor.ui.qt.MainWindow;
 
 import com.trolltech.qt.core.*;
 import com.trolltech.qt.gui.*;

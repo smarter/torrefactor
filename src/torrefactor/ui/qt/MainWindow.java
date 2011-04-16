@@ -1,7 +1,7 @@
-package torrefactor.gui;
+package torrefactor.ui.qt;
 
 import torrefactor.core.Torrent;
-import torrefactor.gui.*;
+import torrefactor.ui.qt.*;
 import torrefactor.util.*;
 
 import com.trolltech.qt.QVariant;

@@ -1,17 +1,22 @@
 * Build core and tests:
 make
 
+* Run the Swing GUI:
+. ./env
+java torrefactor.ui.swing.SwingClient
+
 * Run tests:
 make runtest
 
 * Run the test client:
 . ./env
-java test.Client <input.torrent> <output>
+java test.Client <input.torrent> <output directory>
 
-* Build the GUI:
+
+* Build the experimental and not usable Qt GUI:
 - Install QtJambi and get the jar into your CLASSPATH
-make src.torrefactor.gui
+make src.torrefactor.ui.qt
 
-* Run the GUI:
+* Run the Qt GUI:
 . ./env
-java torrefactor.gui.Main
+java torrefactor.ui.qt.Main

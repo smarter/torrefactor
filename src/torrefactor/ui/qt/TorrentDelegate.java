@@ -1,10 +1,10 @@
-package torrefactor.gui;
+package torrefactor.ui.qt;
 
 import com.trolltech.qt.QVariant;
 import com.trolltech.qt.core.*;
 import com.trolltech.qt.gui.*;
 
-import torrefactor.gui.*;
+import torrefactor.ui.qt.*;
 
 public class TorrentDelegate extends QStyledItemDelegate {
     public void paint(QPainter painter, QStyleOptionViewItem option, QModelIndex index) {

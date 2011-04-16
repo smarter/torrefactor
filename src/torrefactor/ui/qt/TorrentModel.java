@@ -1,4 +1,4 @@
-package torrefactor.gui;
+package torrefactor.ui.qt;
 
 import torrefactor.core.Torrent;
 

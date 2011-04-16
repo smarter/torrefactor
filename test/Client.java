@@ -12,7 +12,7 @@ public class Client {
     torrefactor.util.InvalidBDecodeException {
         if (args.length < 2) {
             System.out.println(
-                    "Usage: java test.Client <input.torrent> <basePath>");
+                    "Usage: java test.Client <input.torrent> <output directory>");
             System.exit(1);
         }
         torrentManager = new TorrentManager("");
