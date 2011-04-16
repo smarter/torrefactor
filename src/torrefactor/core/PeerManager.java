@@ -88,7 +88,7 @@ public class PeerManager implements Runnable {
                 }
                 if (!peerEntry.getValue().isConnected() || peerEntry.getValue().isChokingUs()
                     || peerEntry.getValue().isQueueFull()) {
-                    LOG.debug(this, ".");
+                    //LOG.debug(this, ".");
                     continue;
                 }
                 this.torrent.incrementDownloaded(
