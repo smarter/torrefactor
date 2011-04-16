@@ -25,16 +25,14 @@ public class MainWindow implements ActionListener {
     private JScrollPane torrentPane;
     private TorrentTableModel torrentModel;
     private JTable torrentTable;
-    private TorrentManager torrentManager;
     private String basePath = "./data";
     private Timer tableTimer;
 
     public MainWindow (TorrentManager torrentManager) {
-        this.torrentManager = torrentManager;
         this.mainFrame = new JFrame ();
         this.menuBar = new JMenuBar ();
         this.buildMenu ();
-        this.buildTorrentTable (this.torrentManager.torrentList ());
+        this.buildTorrentTable(torrentManager);
 
         // HACK: Use BorderLayout as LayoutManager for the mainFrame since I
         // didn't manage to make swing display the menubar correctly with a
@@ -61,30 +59,32 @@ public class MainWindow implements ActionListener {
         JMenu menuFile = new JMenu ("File");
         JMenuItem itemOpen = new JMenuItem ("Open…");
         JMenuItem itemQuit = new JMenuItem ("Quit");
+        JMenuItem itemStart = new JMenuItem("Start Downloading");
+        JMenuItem itemStop = new JMenuItem("Stop Downloading");
         menuFile.add (itemOpen);
+        menuFile.addSeparator();
+        menuFile.add (itemStart);
+        menuFile.add (itemStop);
         menuFile.addSeparator();
         menuFile.add (itemQuit);
         itemOpen.setActionCommand ("OpenTorrent");
         itemQuit.setActionCommand ("QuitClient");
+        itemStart.setActionCommand ("StartDownload");
+        itemStop.setActionCommand ("StopDownload");
         itemOpen.addActionListener (this);
         itemQuit.addActionListener (this);
-                
+        itemStart.addActionListener (this);
+        itemStop.addActionListener (this);
 
         this.menuBar.add (menuFile);
     }
 
-    private void buildTorrentTable (List<Torrent> torrents) {
-        this.torrentModel = new TorrentTableModel (torrents);
-        this.torrentTable = new JTable (this.torrentModel);
-        this.torrentPane = new JScrollPane (torrentTable);
-    }
-
-    public void updateTorrentTable (List<Torrent> torrents) {
-        this.torrentModel.setTorrents (torrents);
-    }
-
-    public void updateTorrentTable () {
-        this.torrentModel.fireTableDataChanged ();
+    private void buildTorrentTable (TorrentManager torrentManager) {
+        this.torrentModel = new TorrentTableModel(torrentManager);
+        this.torrentTable = new JTable(this.torrentModel);
+        this.torrentTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        this.torrentTable.setRowSelectionAllowed(true);
+        this.torrentPane = new JScrollPane(torrentTable);
     }
 
     public void setVisible (Boolean bool) {
@@ -98,9 +98,20 @@ public class MainWindow implements ActionListener {
             openTorrent ();
         } else if (action.equals("QuitClient")) {
             quit ();
+        } else if (action.equals("StartDownload")) {
+            if (this.torrentTable.getSelectedRow() == -1) return;
+            try {
+                this.torrentModel.getTorrentAt(this.torrentTable.getSelectedRow()).start();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else if (action.equals("StopDownload")) {
+            if (this.torrentTable.getSelectedRow() == -1) return;
+            this.torrentModel.getTorrentAt(this.torrentTable.getSelectedRow()).stop();
         } else if (action.equals("UpdateTorrentTable")) {
-            this.torrentModel.fireTableDataChanged ();
-            this.torrentTable.repaint ();
+            //this.torrentModel.fireTableChanged(new TableModelEvent(this.torrentModel, 0, this.torrentModel.getRowCount() - 1, TableModelEvent.UPDATE));
+            this.torrentModel.fireTableRowsUpdated(0, this.torrentModel.getRowCount() - 1);
+            this.torrentTable.repaint();
         } else {
             LOG.error(this, "Unknown action command \"" + action + "\"");
         }
@@ -113,7 +124,7 @@ public class MainWindow implements ActionListener {
     }
 
     public void stopAll () {
-        torrentManager.stop ();
+       this.torrentModel.stop();
     }
 
     public void openTorrent () {
@@ -134,7 +145,7 @@ public class MainWindow implements ActionListener {
 
     public void openTorrent (String path) {
         try {
-            Torrent torrent = this.torrentManager.addTorrent (path,
+            Torrent torrent = this.torrentModel.addTorrent(path,
                                                               this.basePath);
             torrent.start ();
         } catch (IOException e) {
@@ -148,7 +159,6 @@ public class MainWindow implements ActionListener {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this.mainFrame, e.getMessage ());
         }
-        this.torrentModel.fireTableDataChanged ();
     }
 }
 

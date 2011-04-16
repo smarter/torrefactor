@@ -10,26 +10,42 @@ import java.util.*;
 import java.util.List;
 
 import torrefactor.core.*;
+import torrefactor.util.*;
+
+import java.security.NoSuchAlgorithmException;
+import java.io.IOException;
 
 public class TorrentTableModel extends AbstractTableModel {
-    private List<Torrent> torrents;
+    private TorrentManager torrentManager;
     public String[] columnNames = {"Torrent", "Percentage", "Uploaded",
                                    "Downloaded"};
     public enum Column { NAME, PERCENT, UPLOADED, DOWNLOADED };
     public Column[] columns;
 
-    public TorrentTableModel (List<Torrent> _torrents) {
-        setTorrents (_torrents);
+    public TorrentTableModel (TorrentManager _torrentManager) {
+        this.torrentManager=  _torrentManager;
         this.columns = new Column[] {Column.NAME, Column.PERCENT,
                                      Column.UPLOADED, Column.DOWNLOADED};
+        fireTableDataChanged();
     }
 
-    public void setTorrents (List<Torrent> torrents) {
-        this.torrents = torrents;
-        fireTableDataChanged ();
+    public Torrent getTorrentAt(int row) {
+        return this.torrentManager.torrentList().get(row);
     }
 
-    public void setColumns (Column[] columns) {
+    public Torrent addTorrent(String directory, String basePath)
+    throws IOException, InvalidBDecodeException, NoSuchAlgorithmException {
+        Torrent t = this.torrentManager.addTorrent(directory, basePath);
+        int rows = this.torrentManager.torrentList().size();
+        fireTableRowsInserted(rows - 1, rows - 1);
+        return t;
+    }
+
+    public void stop() {
+        this.torrentManager.stop();
+    }
+
+    public void setColumns(Column[] columns) {
         this.columns = columns;
         fireTableStructureChanged ();
     }
@@ -40,7 +56,7 @@ public class TorrentTableModel extends AbstractTableModel {
     }
 
     public int getRowCount() {
-        return this.torrents.size();
+        return this.torrentManager.torrentList().size();
     }
 
     public int getColumnCount() {
@@ -48,7 +64,7 @@ public class TorrentTableModel extends AbstractTableModel {
     }
 
     public Object getValueAt(int row, int col) {
-        Torrent torrent = this.torrents.get(row);
+        Torrent torrent = this.torrentManager.torrentList().get(row);
         Column column = this.columns[col];
 
         Object data;
