@@ -10,7 +10,7 @@ import java.security.*;
 public class TorrentManager {
     private static Logger LOG = new Logger();
     private List<Torrent> torrentList;
-    private List<Torrent> readOnlyList;
+    private transient List<Torrent> readOnlyList;
     private File configFile;
 
     public TorrentManager(String configFileName) {
@@ -61,23 +61,25 @@ public class TorrentManager {
             return false;
         }
         try {
+            LOG.info(this, "Restoring config from " + this.configFile);
             FileInputStream fis = new FileInputStream(this.configFile);
             ObjectInputStream ois = new ObjectInputStream(fis);
-            torrentList = (ArrayList<Torrent>) ois.readObject();
+            this.torrentList = (ArrayList<Torrent>) ois.readObject();
+            this.readOnlyList = Collections.unmodifiableList(this.torrentList);
         } catch (Exception e) {
             LOG.error(this,
                       "Couldn't load saved config from " + this.configFile
                       + " reason: " + e.toString());
         }
 
-        return (torrentList != null);
+        return (this.torrentList != null);
     }
 
     private void saveConfig() {
         try {
             FileOutputStream fos = new FileOutputStream(this.configFile);
             ObjectOutputStream oos = new ObjectOutputStream(fos);
-            oos.writeObject(torrentList);
+            oos.writeObject(this.torrentList);
         } catch (Exception e) {
             LOG.error(this,
                       "Couldn't save config to " + this.configFile
