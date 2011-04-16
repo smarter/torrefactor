@@ -11,13 +11,15 @@ import java.security.NoSuchAlgorithmException;
 
 import torrefactor.core.Torrent;
 import torrefactor.core.TorrentManager;
-import torrefactor.util.InvalidBDecodeException;
+import torrefactor.util.*;
 
 // swing colide with java.util so import the one we want explicitly
 import javax.swing.Timer;
 import java.util.List;
 
 public class MainWindow implements ActionListener {
+    private static Logger LOG = new Logger();
+
     private JFrame mainFrame;
     private JMenuBar menuBar;
     private JScrollPane torrentPane;
@@ -100,7 +102,7 @@ public class MainWindow implements ActionListener {
             this.torrentModel.fireTableDataChanged ();
             this.torrentTable.repaint ();
         } else {
-            System.err.println ("Unknown action command \"" + action + "\"");
+            LOG.error(this, "Unknown action command \"" + action + "\"");
         }
     }
 
@@ -136,14 +138,14 @@ public class MainWindow implements ActionListener {
                                                               this.basePath);
             torrent.start ();
         } catch (IOException e) {
-            System.err.println (e.getMessage ());
+            e.printStackTrace();
             JOptionPane.showMessageDialog(this.mainFrame, e.getMessage ());
         } catch (InvalidBDecodeException e) {
-            System.err.println (e.getMessage ());
+            e.printStackTrace();
             JOptionPane.showMessageDialog(this.mainFrame,
                     "\"" + path + "\" is not a torrent file.");
         } catch (NoSuchAlgorithmException e) {
-            System.err.println (e.getMessage ());
+            e.printStackTrace();
             JOptionPane.showMessageDialog(this.mainFrame, e.getMessage ());
         }
         this.torrentModel.fireTableDataChanged ();

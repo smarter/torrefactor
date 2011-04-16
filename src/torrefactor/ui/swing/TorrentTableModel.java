@@ -25,10 +25,6 @@ public class TorrentTableModel extends AbstractTableModel {
     }
 
     public void setTorrents (List<Torrent> torrents) {
-        if (torrents == null) {
-            System.err.println ("_torrents is null");
-            torrents = new ArrayList<Torrent> ();
-        }
         this.torrents = torrents;
         fireTableDataChanged ();
     }
