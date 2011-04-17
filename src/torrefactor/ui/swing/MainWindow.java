@@ -29,7 +29,7 @@ public class MainWindow implements ActionListener {
     private Timer tableTimer;
 
     public MainWindow (TorrentManager torrentManager) {
-        this.mainFrame = new JFrame ();
+        this.mainFrame = new JFrame ("Torrefactor");
         this.menuBar = new JMenuBar ();
         this.buildMenu ();
         this.buildTorrentTable(torrentManager);
