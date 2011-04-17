@@ -424,5 +424,6 @@ src.torrefactor.ui.qt : $(call PACKAGE_OBJS,src.torrefactor.ui.qt)
 runtest: all
 	java test.core.DataManagerTest
 	java test.core.IntervalMapTest
-	java test.util.BencodeTest
+	java test.util.BDecodeTest
+	java test.util.BEncodeTest
 	java test.util.RsaTest
