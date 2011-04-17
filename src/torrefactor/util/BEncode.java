@@ -7,10 +7,10 @@ import java.io.*;
 import java.util.*;
 
 public class BEncode {
-    private static void encode(int val, ByteArrayOutputStream out)
+    private static void encode(long val, ByteArrayOutputStream out)
     throws IOException {
         out.write('i');
-        out.write(Integer.toString(val).getBytes());
+        out.write(Long.toString(val).getBytes());
         out.write('e');
     }
 
@@ -43,8 +43,8 @@ public class BEncode {
     public static void encode(BValue elem, ByteArrayOutputStream out)
     throws IOException {
         Object object = elem.toObject();
-        if (object instanceof Integer) {
-            encode(elem.toInt(), out);
+        if (object instanceof Long) {
+            encode(elem.toLong(), out);
         } else if (object instanceof byte[]) {
             encode(elem.toByteArray(), out);
         } else if (object instanceof List) {
