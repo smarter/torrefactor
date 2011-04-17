@@ -109,7 +109,6 @@ public class MainWindow implements ActionListener {
             if (this.torrentTable.getSelectedRow() == -1) return;
             this.torrentModel.getTorrentAt(this.torrentTable.getSelectedRow()).stop();
         } else if (action.equals("UpdateTorrentTable")) {
-            //this.torrentModel.fireTableChanged(new TableModelEvent(this.torrentModel, 0, this.torrentModel.getRowCount() - 1, TableModelEvent.UPDATE));
             this.torrentModel.fireTableRowsUpdated(0, this.torrentModel.getRowCount() - 1);
             this.torrentTable.repaint();
         } else {
