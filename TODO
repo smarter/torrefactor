@@ -1,0 +1,12 @@
+Incomplete list of stuff to do:
+- When start()ing a Torrent that was previously stop()ed it seems no or
+  few peers get picked up and so nothing is downloaded.
+- Don't spam trackers with announces when we're lacking peers
+- Algorithm to decide when to send choke and interested messages to peers
+- Algorithm to decide if and when peers request messages should be answered
+- Make the Qt GUI usable
+- DHT Support (see BEP 0005)
+- PEX Support (see https://trac.transmissionbt.com/browser/trunk/extras/extended-messaging.txt)
+- More tests
+- More documentation
+- find . -name "*.java"|xargs grep -E '(TODO|FIXME|HACK|PROJECT)'

@@ -4,6 +4,9 @@ make
 * Run the Swing GUI:
 . ./env
 java torrefactor.ui.swing.SwingClient
+**FIXME: The "Start Downloading" and "Stop Downloading" menu items only work
+  when a torrent is selected, otherwise they do nothing. They should be
+  disabled when not usabled.**
 
 * Run tests:
 make runtest
