@@ -30,6 +30,16 @@ public class BValue {
         this.value = map;
     }
 
+    public boolean equals(Object obj) {
+        if (! (obj instanceof BValue)) return false;
+        BValue other = (BValue) obj;
+        if (this.value instanceof byte[]) {
+            return Arrays.equals((byte[]) this.value, (byte[]) other.value);
+        } else {
+            return this.value.equals(other.value);
+        }
+    }
+
     public Object toObject() {
         return this.value;
     }
