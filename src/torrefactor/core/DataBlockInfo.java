@@ -1,5 +1,9 @@
 package torrefactor.core;
 
+/**
+ * An immutable object used internally by DataManager to handle
+ * blocks of datas from bittorent pieces.
+ */
 public class DataBlockInfo {
     final int pieceIndex;
     final int offset;

@@ -8,6 +8,9 @@ import java.security.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * A Torrent object represents a torrent currently being downloaded.
+ */
 public class Torrent implements Serializable {
     private static Logger LOG = new Logger();
     public final String FILE_NAME;

@@ -7,6 +7,15 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
+/**
+ * This class handles both standard and compact responses from
+ * HTTP trackers.
+ *
+ * References:
+ * - Standard format:
+     http://wiki.theory.org/BitTorrentSpecification#Tracker_HTTP.2FHTTPS_Protocol
+ * - Compact format: http://bittorrent.org/beps/bep_0023.html
+ */
 public class HttpTracker extends Tracker {
     private static Logger LOG = new Logger();
     private String host;

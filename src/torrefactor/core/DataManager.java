@@ -12,6 +12,13 @@ import java.util.*;
 //  - set buffers limit so we cannot write past the block end.
 //  - Are we allowed to use package access for attributes ?
 
+/**
+ * The DataManager is responsible for creating files and for
+ * reading and writing blocks of data to them.
+ *
+ * Internally, this is implemented using MappedByteBuffer to
+ * let the Operating System handle the disk I/O.
+ */
 public class DataManager implements Serializable {
     private static Logger LOG = new Logger();
     private File[]files;

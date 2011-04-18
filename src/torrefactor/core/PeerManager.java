@@ -6,6 +6,11 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
+/**
+ * The PeerManager thread keeps track of the known and the active
+ * Peers and decide when to send announces to the known trackers
+ * and when to ask Peers for a block of data.
+ */
 public class PeerManager implements Runnable {
     private static Logger LOG = new Logger();
 

@@ -7,6 +7,10 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
+/**
+ * Handle an UDP Bittorent tracker as described in
+ * http://bittorrent.org/beps/bep_0015.html
+ */
 public class UdpTracker extends Tracker {
     private static Logger LOG = new Logger();
     private long connection_id;

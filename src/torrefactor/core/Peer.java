@@ -7,6 +7,9 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
+/**
+ * A Bittorent peer with the ability to read and write messages to.
+ */
 public class Peer implements Runnable {
     private static Logger LOG = new Logger();
     public enum MessageType {
@@ -218,11 +221,12 @@ public class Peer implements Runnable {
         case cancel: {
             break;
         }
-        //DHT node port, unsupported for the moment
+        //DHT node port, see BEP 0005
         case port: {
             int lowByte = socketInput.read();
             int highByte = socketInput.read();
             int port = (highByte << 8) | lowByte;
+            //NodeManager.add(this.ip, port);
             break;
         }
         default:
@@ -238,6 +242,7 @@ public class Peer implements Runnable {
         socketOutput.write(header);
         socketOutput.flush();
         byte reserved[] = { 0, 0, 0, 0, 0, 0, 0, 0};
+        //reserved[7] = 1; //DHT support
         socketOutput.write(reserved);
         socketOutput.write(torrent.infoHash);
         socketOutput.write(torrent.peerManager.peerId);

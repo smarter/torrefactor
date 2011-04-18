@@ -7,6 +7,13 @@ import java.io.*;
 import java.util.*;
 import java.security.*;
 
+/**
+ * This class keeps track of the download blocks of datas in pieces,
+ * check the SHA1 of pieces when they've finished downloading and
+ * can suggests free blocks to download.
+ *
+ * Internally, it uses DataManager for disk I/O.
+ */
 public class PieceManager implements Serializable {
     private static Logger LOG = new Logger();
     //Map of the downloaded blocks
@@ -33,8 +40,10 @@ public class PieceManager implements Serializable {
         this.digestArray = _digestArray;
     }
 
-    // Try to find numBlocks free blocks available in the peerBitfield and
-    // return a List of their DataBlockInfo(which size is between 0 and n)
+    /**
+     * Try to find numBlocks free blocks available in the peerBitfield and
+     * return a List of their DataBlockInfo(which size is between 0 and n)
+     */
     public synchronized List<DataBlockInfo> getFreeBlocks(byte[] peerBitfield, int numBlocks)
     throws IOException {
          //TODO: should we return a smaller size if we already have part of
@@ -72,8 +81,10 @@ public class PieceManager implements Serializable {
         return infoList;
     }
 
-    // Return the offset of the next free byte not contained
-    // in either the map of downloaded or the map of requested blocks
+    /**
+     * Return the offset of the next free byte not contained
+     * in either the map of downloaded or the map of requested blocks
+     */
     private int nextFreeByte(int offset) {
         int reqOffset;
         do {
@@ -83,7 +94,9 @@ public class PieceManager implements Serializable {
         return offset;
     }
 
-    // Return the requested block if it's available, null otherwise
+    /**
+     * Return the requested block if it's available, null otherwise
+     */
     public byte[] getBlock(int piece, int offset, int length)
     throws IOException {
         int begin = piece*this.dataManager.pieceLength() + offset;
@@ -113,9 +126,11 @@ public class PieceManager implements Serializable {
         }
     }
 
-    // If the piece is completely downloaded and valid, add it to the
-    // bitfield and return true.
-    // Otherwise, discard the blocks it's made of and return false
+    /**
+     * If the piece is completely downloaded and valid, add it to the
+     * bitfield and return true.
+     * Otherwise, discard the blocks it's made of and return false
+     */
     public boolean checkPiece(int piece)
     throws IOException, NoSuchAlgorithmException {
         if (!this.intervalMap.containsInterval(piece*this.dataManager.pieceLength(), this.dataManager.pieceLength())) {

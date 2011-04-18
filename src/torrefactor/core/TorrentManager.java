@@ -7,12 +7,21 @@ import java.io.*;
 import java.util.*;
 import java.security.*;
 
+/**
+ * This class manages a list of Torrent.
+ * When it is instancied, it will attempt to read its state from a config
+ * file. It will write to this file when it's stop()-ed
+ */
 public class TorrentManager {
     private static Logger LOG = new Logger();
     private List<Torrent> torrentList;
     private transient List<Torrent> readOnlyList;
     private File configFile;
 
+    /**
+     * @param configFileName Path to the file to read and write the config too.
+     * Default value: System.getProperty("user.home")/.torrefactor/config.bin
+     */
     public TorrentManager(String configFileName) {
         if (configFileName.isEmpty()) {
             File home = new File(System.getProperty("user.home"));
@@ -45,6 +54,11 @@ public class TorrentManager {
         return (ok ? torrent : null);
     }
 
+    /**
+     * Stop all currently running torrents.
+     * Write config to the config file specified
+     * in the constructor.
+     */
     public void stop() {
         for (Torrent torrent: torrentList) {
             torrent.stop();
@@ -52,10 +66,9 @@ public class TorrentManager {
         saveConfig();
     }
 
-    //FIXME: Serialization can easily break with code changes
-    //Especially since we don't define serialVersionUID
-    // config.bin should contains an ArrayList<Torrent>
-    @SuppressWarnings("unchecked")
+    // FIXME: Serialization can easily break with code changes
+    // Especially since we don't define serialVersionUID
+    @SuppressWarnings("unchecked") // config.bin should contains an ArrayList<Torrent>
     private boolean restoreConfig() {
         if (!configFile.exists()) {
             return false;

@@ -4,7 +4,10 @@ import torrefactor.util.*;
 
 import java.nio.*;
 
-
+/**
+ * An abstraction to read and writes blocks of datas from files via
+ * MappedByteBuffer[].
+ */
 public class DataBlock {
     private static Logger LOG = new Logger();
     private MappedByteBuffer[] buffers;
