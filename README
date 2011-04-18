@@ -16,6 +16,9 @@ make runtest
 java test.Client <input.torrent> <output directory>
 
 
+* Generate the doc(not much tested, not really working for now)
+make doc
+
 * Build the experimental and not usable Qt GUI:
 - Install QtJambi and get the jar into your CLASSPATH
 make src.torrefactor.ui.qt
