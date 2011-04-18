@@ -21,26 +21,26 @@ package torrefactor.core;
  *  			    v
  * elements in map
  *    ↑——————————————————————————————————————————————————  ← halving threshold
- *    │                   /|                 _/|            
- *    │                  / |             ___/  |          
- *    │             ☺   /  |            /      |          
- *    │            (|) /   |           /       |              
- *    │            ↙↙ /    |       ___/        |     _/      
- *    │              /     |      /            |    /      
- *    │             /      |     /             | __/       
- *    │            /       |____/              |/           ←——— Half  
+ *    │                   /|                 _/|
+ *    │                  / |             ___/  |
+ *    │             ☺   /  |            /      |
+ *    │            (|) /   |           /       |
+ *    │            ↙↙ /    |       ___/        |     _/
+ *    │              /     |      /            |    /
+ *    │             /      |     /             | __/
+ *    │            /       |____/              |/           ←——— Half
  *    │           /
  *    │          /
  *    │         /
  *    │        /
  *    │     __/
  *    │   _/
- *    │  / 
- *    │_/ 
+ *    │  /
+ *    │_/
  *    └—————————————————————————————————————————————————→ time
  *      ↑↑ ↑  ↑↑↑↑↑↑↑↑↑↑↑↑↑     ↑↑↑   ↑↑↑   ↑ ↑↑↑  ↑↑ ↑
- *  
- * ↑ = insertion 
+ *
+ * ↑ = insertion
  *
  * ( Skier on the graph of the elements in this map is merely a feature of your
  *   imagination and is in any case not a feature of SawtoothIntervalMap ;) )
