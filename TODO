@@ -9,4 +9,5 @@ Incomplete list of stuff to do:
 - PEX Support (see https://trac.transmissionbt.com/browser/trunk/extras/extended-messaging.txt)
 - More tests
 - More documentation
+- Write CONCEPTION file once the conception is done.
 - find . -name "*.java"|xargs grep -E '(TODO|FIXME|HACK|PROJECT)'
