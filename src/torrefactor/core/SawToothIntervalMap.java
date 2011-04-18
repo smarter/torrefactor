@@ -2,8 +2,8 @@ package torrefactor.core;
 
 /**
  * An IntervalMap with a limited number of elements specified at the object
- * creation. Once the number of elements reaches 2*halvingThresold(), the next
- * element inserted will cause the first halvingThresold() elements inserted to
+ * creation. Once the number of elements reaches halvingThresold(), the next
+ * element inserted will cause the first halvingThresold()/2 elements inserted to
  * be discarded and marked for garbage collection.  The discarding is done in
  * constant time.
  *
