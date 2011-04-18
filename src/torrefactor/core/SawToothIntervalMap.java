@@ -1,5 +1,18 @@
 package torrefactor.core;
 
+/**
+ * An IntervalMap with a limited number of elements specified at the object
+ * creation. Once the number of elements reaches 2*halvingThresold(), the next
+ * element inserted will cause the first halvingThresold() elements inserted to
+ * be discarded and marked for garbage collection.  The discarding is done in
+ * constant time.
+ *
+ * Internally, this is implemented by maintaining two instances of IntervalMap
+ * and querying both when needed. This only changes the complexity of the
+ * IntervalMap operations by a constant factor. Except for the nextFreePoint()
+ * operation whose worst case goes from O(n*log(n)) to O(n^2*log(n)) but this
+ * is unlikely to happen in practice and not a problem for small maps.
+ */
 class SawToothIntervalMap implements java.io.Serializable {
     private IntervalMap[] maps;
 
@@ -10,6 +23,10 @@ class SawToothIntervalMap implements java.io.Serializable {
         this.maps = new IntervalMap[] { new IntervalMap(), new IntervalMap() };
         this.cur = 0;
         this.halvingThresold = _halvingThresold;
+    }
+
+    public int halvingThresold() {
+        return this.halvingThresold;
     }
 
     public boolean addInterval(int begin, int length) {

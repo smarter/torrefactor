@@ -20,6 +20,10 @@ import java.security.*;
 public class IntervalMap extends TreeMap<Integer, Integer> {
 
     /**
+     * Time Complexity:
+     * - Average case: O(log(n))
+     * - Worst case: O(n*log(n))
+     *
      * This function is thread-safe.
      */
     public synchronized boolean addInterval(int begin, int length) {
@@ -57,6 +61,10 @@ public class IntervalMap extends TreeMap<Integer, Integer> {
      * Remove intervals, intervals overlapping but not contained between
      * begin and begin + length - 1 will be shrunk
      *
+     * Time Complexity:
+     * - Average case: O(log(n))
+     * - Worst case: O(n*log(n))
+     *
      * This function is thread-safe.
      */
     public synchronized boolean removeIntervals(int begin, int length) {
@@ -82,6 +90,10 @@ public class IntervalMap extends TreeMap<Integer, Integer> {
      * Return the first point in the interval between
      * begin and end that is not contained in any interval.
      *
+     * Time Complexity:
+     * - Average case: O(log(n))
+     * - Worst case: O(n*log(n))
+     *
      * This function is thread-safe.
      */
     public Integer nextFreePoint(int point) {
@@ -103,6 +115,9 @@ public class IntervalMap extends TreeMap<Integer, Integer> {
      * Returns whether or not the interval between begin
      * and begin + length - 1 is contained inside an existing
      * interval in the map.
+     *
+     * Time Complexity:
+     * - Worst case: O(log(n))
      *
      * This function is thread-safe.
      */
