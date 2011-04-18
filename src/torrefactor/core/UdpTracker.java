@@ -60,7 +60,10 @@ public class UdpTracker extends Tracker {
         LOG.debug(this, "Port: " + this.port);
     }
 
-    public ArrayList<Pair<byte[], Integer>> announce (Torrent torrent, Event event) {
+    /* Announce an event for the torrent to the tracke. Returns a peer list or
+     * null. */
+    public ArrayList<Pair<byte[], Integer>>
+    announce (Torrent torrent, Event event) {
         ArrayList<Pair<byte[], Integer>> peers = null;
         try {
             peers = udpAnnounce(torrent, event);
@@ -71,11 +74,14 @@ public class UdpTracker extends Tracker {
         }
         if (peers != null) LOG.debug(this, "Got " + peers.size()
                                            + " peers.");
+        updateActive();
         return peers;
     }
 
-    private DatagramPacket sendReceive (DatagramPacket packet, int recvlen,
-                                        byte[] transactionId)
+    /* Send a packet to the tracker and return the response of the specified
+     * length. */
+    private DatagramPacket
+    sendReceive (DatagramPacket packet, int recvlen, byte[] transactionId)
     throws IOException, SocketException {
         // Send packet, wait UDP_SOCKET_TIMEOUT seconds for answer
         // When no response retry three times and then abandon
@@ -107,8 +113,11 @@ public class UdpTracker extends Tracker {
     }
 
 
-  public ArrayList<Pair<byte[],Integer>> udpAnnounce (Torrent torrent, Event event)
-  throws IOException, SocketException {
+    /* Makes the actual udp announce to the tracker. Returns a peer list or
+     * null*/
+    public ArrayList<Pair<byte[],Integer>>
+    udpAnnounce (Torrent torrent, Event event)
+    throws IOException, SocketException {
         DatagramPacket packet;
         byte[] transactionId;
         byte[] buffer;
@@ -205,11 +214,13 @@ public class UdpTracker extends Tracker {
         return peerList;
     }
 
+    /* Returns true if the packet matches the transaction id. */
     private static boolean udpCheckTransactionId (DatagramPacket packet,
                                                   byte[] id) {
         return arraycmp(packet.getData(), 4, id, 0, 4);
     }
 
+    /* Returns the error string sent by the tracker in the packet. */
     private static String udpGetErrorMessage (DatagramPacket packet) {
         byte[] data = packet.getData();
         byte[] array = new byte[data.length];
@@ -217,6 +228,9 @@ public class UdpTracker extends Tracker {
         return new String(array);
     }
 
+    /* Returns true if array1 starting at offset1 equals array2 starting at
+     * offset2 for the given size. 'size' data must be available at the given
+     * offsets, no check is done to verify this. */
     private static boolean arraycmp(byte[] array1, int offset1,
                                     byte[] array2, int offset2, int size) {
         for (int i=0; i<size; i++) {

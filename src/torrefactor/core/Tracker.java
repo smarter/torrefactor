@@ -13,7 +13,7 @@ abstract class Tracker {
     public enum Event { none, started, stopped, completed };
 
     protected long lastActive = 0;
-    protected int interval = 1200;
+    protected int interval = 1200;   // 20 min
     protected int port;
     protected int seeders = -1;
     protected int leechers = -1;
@@ -37,18 +37,19 @@ abstract class Tracker {
     }
 
     public long getNextAnnounceTime () {
-        return this.lastActive + (long) this.interval;
+        return this.lastActive + ((long) this.interval * 1000);
     }
 
     public boolean canAnnounce () {
-        if (new Date().getTime() < this.lastActive + (long) this.interval) {
+        if (System.currentTimeMillis() < this.lastActive
+                                         + ((long) this.interval * 1000)) {
             return false;
         }
         return true;
     }
 
     protected void updateActive () {
-        this.lastActive = new Date().getTime();
+        this.lastActive = System.currentTimeMillis();
     }
 
 }

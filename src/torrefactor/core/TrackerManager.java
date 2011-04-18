@@ -26,6 +26,7 @@ public class TrackerManager {
         this.uniqKey = random.nextInt() >>> 1;
     }
 
+    /* Announce the specified event and return a peer list or null. */
     public List<Pair<byte[], Integer>> announce (Event event) {
         List<Pair<byte[], Integer>> peersList = null;
         LOG.info(this, "Announcing...");
@@ -39,6 +40,8 @@ public class TrackerManager {
         return peersList;
     }
 
+    /* Make an announce as per bittorent multitracker specification for the
+     * given tier. */
     private List<Pair<byte[], Integer>>
     announceTier (Event event, List<String> tier) {
         ArrayList<Pair<byte[], Integer>> peersList = null;
@@ -63,10 +66,12 @@ public class TrackerManager {
         return peersList;
     }
 
+    /* Return the time when we are allowed to do the next annouce. */
     public long nextAnnounceTime () {
         return this.nextAnnounceTime;
     }
 
+    /* Returns a new Tracker object for the given URI */
     public Tracker getTracker (String uri) {
         Tracker tracker = null;
         LOG.debug(this, "Get tracker: " + uri);

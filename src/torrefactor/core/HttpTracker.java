@@ -35,6 +35,7 @@ public class HttpTracker extends Tracker {
            UnknownHostException, URISyntaxException {
         this.uri = _uri;
         URI uriObject = new URI(_uri);
+
         //Test whether we support this uri
         if ( ! uriObject.getScheme().equals("http")) {
             throw new UnsupportedOperationException ("HttpTracker does not "
@@ -60,7 +61,10 @@ public class HttpTracker extends Tracker {
         LOG.debug(this, "path: " + this.path);
     }
 
-    public ArrayList<Pair<byte[], Integer>> announce(Torrent torrent, Event event)
+    /* Announce an event for the torrent to the tracker. Returns a peer list
+     * or null */
+    public ArrayList<Pair<byte[], Integer>>
+    announce(Torrent torrent, Event event)
     throws ProtocolException, InvalidBDecodeException, IOException {
         // Construct request
         String infoHash = urlEncode(torrent.infoHash);
@@ -109,7 +113,8 @@ public class HttpTracker extends Tracker {
 
         // Parse response
         if (answerMap.containsKey("failure reason")) {
-            throw new ProtocolException(new String(answerMap.get("failure reason").toByteArray()));
+            throw new ProtocolException(
+                    new String(answerMap.get("failure reason").toByteArray()));
         }
         if (answerMap.containsKey("warning message")) {
             this.statusMessage = new String(
@@ -156,9 +161,11 @@ public class HttpTracker extends Tracker {
 
         this.statusMessage = "Number of peers received: " + peersList.size();
 
+        updateActive();
         return peersList;
     }
 
+    /* Makes the actual http announce to the tracker. Returns the answer map. */
     private Map<String, BValue> httpAnnounce(String path, String params)
     throws IOException, InvalidBDecodeException {
         //PROJECT: we really should use URLConnection here, but for the project
@@ -197,7 +204,7 @@ public class HttpTracker extends Tracker {
             if (c == (int) ' ') break;
         }
 
-        //Check http status code
+        // Check http status code
         char[] scode = new char[3];
         for (int i=0; i<3; i++) {
             int c = input.read();
@@ -210,6 +217,7 @@ public class HttpTracker extends Tracker {
             throw new IOException("Got http status code " + code);
         }
 
+        // Skip until end of header
         while (true) {
             int c = input.read();
             if (c == -1) throw new IOException("Unexpected end of stream");
@@ -219,6 +227,7 @@ public class HttpTracker extends Tracker {
                 && input.read() == (int) '\n') break;
         }
 
+        // Decode response, clean and return
         Map<String, BValue> answerMap = BDecode.decodeDict(input);
         input.close();
         output.close();
@@ -226,6 +235,7 @@ public class HttpTracker extends Tracker {
         return answerMap;
     }
 
+    // Encode a byte array into url format
     private static String urlEncode(byte[] array) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < array.length; i++) {
