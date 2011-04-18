@@ -12,6 +12,39 @@ package torrefactor.core;
  * IntervalMap operations by a constant factor. Except for the nextFreePoint()
  * operation whose worst case goes from O(n*log(n)) to O(n^2*log(n)) but this
  * is unlikely to happen in practice and not a problem for small maps.
+ *
+ * Here's a handy graph showing the number of elements in the map during
+ * normal operation of this class:
+ * <pre>
+ *                skier
+ *  			    |
+ *  			    v
+ * elements in map
+ *    ↑——————————————————————————————————————————————————  ← halving threshold
+ *    │                   /|                 _/|            
+ *    │                  / |             ___/  |          
+ *    │             ☺   /  |            /      |          
+ *    │            (|) /   |           /       |              
+ *    │            ↙↙ /    |       ___/        |     _/      
+ *    │              /     |      /            |    /      
+ *    │             /      |     /             | __/       
+ *    │            /       |____/              |/           ←——— Half  
+ *    │           /
+ *    │          /
+ *    │         /
+ *    │        /
+ *    │     __/
+ *    │   _/
+ *    │  / 
+ *    │_/ 
+ *    └—————————————————————————————————————————————————→ time
+ *      ↑↑ ↑  ↑↑↑↑↑↑↑↑↑↑↑↑↑     ↑↑↑   ↑↑↑   ↑ ↑↑↑  ↑↑ ↑
+ *  
+ * ↑ = insertion 
+ *
+ * ( Skier on the graph of the elements in this map is merely a feature of your
+ *   imagination and is in any case not a feature of SawtoothIntervalMap ;) )
+ * </pre>
  */
 class SawToothIntervalMap implements java.io.Serializable {
     private IntervalMap[] maps;
