@@ -21,9 +21,33 @@ public class TrackerManager {
     public TrackerManager (Torrent torrent) {
         Random random = new Random();
         this.tiers = torrent.announceList;
+        blackList();
         this.torrent = torrent;
         // Remove the sign
         this.uniqKey = random.nextInt() >>> 1;
+    }
+
+    /**
+     * Remove blacklisted trackers.
+     */
+    private void blackList() {
+        // In Haskell, this mess could be reduced to:
+        // filter (not . null) $ map (filter $ not . (isInfixOf "tracker.thepiratebay.org")) tiers
+        Iterator<List<String>> tierIt = this.tiers.iterator();
+        while (tierIt.hasNext()) {
+            List<String> tier = tierIt.next();
+            Iterator<String> trackerIt = tier.iterator();
+            while (trackerIt.hasNext()) {
+                String tracker = trackerIt.next();
+                // TPB tracker has been permanently shut down, avoid timeout
+                if (tracker.contains("tracker.thepiratebay.org")) {
+                    trackerIt.remove();
+                }
+            }
+            if (tier.isEmpty()) {
+                tierIt.remove();
+            }
+        }
     }
 
     /* Announce the specified event and return a peer list or null. */
