@@ -21,8 +21,9 @@ public class PeerManager implements Runnable {
     private Map<InetAddress, Peer> activeMap;
     private TrackerManager trackerManager;
 
-    //Shared by all PeerManager instances
-    static byte[] peerId;
+    //Volatile since several PeerManager could be instantiated at the same time
+    static volatile byte[] peerId;
+
     static final String idInfo = "-TF0010-";
 
     int peersReceived;
