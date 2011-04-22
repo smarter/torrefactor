@@ -35,7 +35,7 @@ public class Torrent implements Serializable {
     throws UnsupportedOperationException, IOException, FileNotFoundException,
     InvalidBDecodeException, NoSuchAlgorithmException {
 
-    if (basePath == "" || basePath == null) {
+    if (basePath == null || basePath.isEmpty()) {
         this.basePath = new File(".");
     } else {
         this.basePath = new File(basePath);
