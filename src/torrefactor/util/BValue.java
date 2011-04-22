@@ -40,6 +40,14 @@ public class BValue {
         }
     }
 
+    public int hashCode() {
+        if (this.value instanceof byte[]) {
+            return Arrays.hashCode((byte[]) this.value);
+        } else {
+            return this.value.hashCode();
+        }
+    }
+
     public Object toObject() {
         return this.value;
     }
