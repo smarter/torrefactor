@@ -71,7 +71,7 @@ public class TorrentTableModel extends AbstractTableModel {
         if (column == Column.NAME) {
             data = torrent.FILE_NAME;
         } else if (column == Column.PERCENT) {
-            data = new Float (torrent.progress());
+            data = Float.valueOf(torrent.progress());
         } else if (column == Column.UPLOADED) {
             data = humanReadable (torrent.uploaded());
         } else if (column == Column.DOWNLOADED) {
