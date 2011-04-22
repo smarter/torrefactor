@@ -42,7 +42,7 @@ public class PeerManager implements Runnable {
             Random rand = new Random();
             String idRand = UUID.randomUUID().toString().substring(0, 20 - idInfo.length());
             LOG.debug(this, idRand);
-            this.peerId = new String(idInfo + idRand).getBytes();
+            this.peerId = (idInfo + idRand).getBytes();
         }
         this.peersReceived = 0;
         this.torrent = _torrent;

@@ -238,7 +238,7 @@ public class Peer implements Runnable {
         LOG.debug(this, "Handshake start: "
                         + this.ip.toString() + ':' + this.port);
         socketOutput.writeByte(19);
-        byte header[] = (new String("BitTorrent protocol")).getBytes();
+        byte header[] = "BitTorrent protocol".getBytes();
         socketOutput.write(header);
         socketOutput.flush();
         byte reserved[] = { 0, 0, 0, 0, 0, 0, 0, 0};

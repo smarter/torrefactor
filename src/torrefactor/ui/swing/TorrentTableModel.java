@@ -87,21 +87,21 @@ public class TorrentTableModel extends AbstractTableModel {
         long t;
         t = l / (8L * 1024L * 1024L * 1024L);
         if ( t > 0 ) {
-            return new String (t + "GB");
+            return (t + "GB");
         }
         t = l / (8L * 1024L * 1024L);
         if ( t > 0 ) {
-            return new String (t + "MB");
+            return (t + "MB");
         }
         t = l / (8L * 1024L);
         if (t > 0) {
-            return new String (t + "KB");
+            return (t + "KB");
         }
         t = l / 8L;
         if (t > 0) {
-            return new String (t + "B");
+            return (t + "B");
         }
-        return new String (t + "b");
+        return (t + "b");
     }
 
     public boolean isCellEditable(int row, int col) {
