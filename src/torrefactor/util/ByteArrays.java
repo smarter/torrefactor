@@ -50,10 +50,10 @@ public class ByteArrays {
         l += ((int) array[1] & 0xFF) << 48;
         l += ((int) array[2] & 0xFF) << 40;
         l += ((int) array[3] & 0xFF) << 32;
-        l += ((int) array[3] & 0xFF) << 24;
-        l += ((int) array[3] & 0xFF) << 16;
-        l += ((int) array[3] & 0xFF) << 8;
-        l += ((int) array[3] & 0xFF);
+        l += ((int) array[4] & 0xFF) << 24;
+        l += ((int) array[5] & 0xFF) << 16;
+        l += ((int) array[6] & 0xFF) << 8;
+        l += ((int) array[7] & 0xFF);
         return l;
     }
 
@@ -79,4 +79,23 @@ public class ByteArrays {
                             (byte)(l >>> 8),
                             (byte) l };
     }
+
+    public static String toHexString(byte[] array) {
+        StringBuilder sb = new StringBuilder(); //FIXME: predict length
+        for (int i=0; i<array.length; i++) {
+            sb.append(Integer.toHexString((int) array[i] & 0xFF));
+            sb.append(" ");
+        }
+        return sb.toString();
+    }
+
+    public static String toBinaryString(byte[] array) {
+        StringBuilder sb = new StringBuilder(); //FIXME: predict length
+        for (int i=0; i<array.length; i++) {
+            sb.append(Integer.toBinaryString((int) array[i] & 0xFF));
+            sb.append(" ");
+        }
+        return sb.toString();
+    }
+
 }
