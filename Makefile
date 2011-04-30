@@ -3,7 +3,7 @@
 #
 
 # Environment variables
-export CLASSPATH := ${PWD}/src:${PWD}/3rdparty/*:${CLASSPATH}
+export CLASSPATH := $(CURDIR)/src:$(CURDIR)/3rdparty/*:${CLASSPATH}
 
 # Programs (with common options):
 SHELL		= /bin/sh
