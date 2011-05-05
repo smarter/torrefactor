@@ -66,3 +66,13 @@ Semaine 7 (04/04):
 - Gestion correcte des variables contenant le nombre d'octet téléchargé et
   envoyé par peer.
 - En cours: classe pour la gestion des logs.
+
+Semaine 8 (11/04), 9 (18/04) et 10 (vacances 25/04)
+- Système de log terminé.
+- Ajout d'une classe utilitaire ByteArrays
+- Amélioration de la GUI(actions du menu start/stop)
+- Implémentation de l'encryption
+- Développment d'un programme en C pour casser l'encryption (par Guillaume)
+- Travail pour implémenter DHT (http://www.bittorrent.org/beps/bep_0005.html)
+- Ajout de documentation dans diverses classes.
+- Début de l'implémentation de PEX. (http://en.wikipedia.org/wiki/Peer_exchange)
