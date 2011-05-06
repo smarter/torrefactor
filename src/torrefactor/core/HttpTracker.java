@@ -22,6 +22,7 @@ public class HttpTracker extends Tracker {
     private int port;
     private String path;
     private String trackerId; //TODO: what's this thing?
+    private static final int CONNECT_TIMEOUT = 5*1000; //in milliseconds
 
     public HttpTracker (String _uri, int uniqKey)
     throws UnsupportedOperationException, IllegalArgumentException,
@@ -177,7 +178,9 @@ public class HttpTracker extends Tracker {
         InetAddress address = InetAddress.getByName(this.host);
         Socket socket = null;
         try {
-            socket = new Socket(address, this.port);
+            SocketAddress socketAddress = new InetSocketAddress(address, this.port);
+            socket = new Socket();
+            socket.connect(socketAddress, CONNECT_TIMEOUT);
         } catch (ConnectException e) {
             LOG.warning(this, e.getMessage());
             return null;
