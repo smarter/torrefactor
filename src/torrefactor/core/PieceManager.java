@@ -134,7 +134,12 @@ public class PieceManager implements Serializable {
      */
     public boolean checkPiece(int piece)
     throws IOException, NoSuchAlgorithmException {
-        if (!this.intervalMap.containsInterval(piece*this.dataManager.pieceLength(), this.dataManager.pieceLength())) {
+        long pieceBegin = piece * this.dataManager.pieceLength();
+        int pieceLength = this.dataManager.pieceLength();
+        if (piece == this.dataManager.pieceNumber() - 1) {
+            pieceLength = (int) (this.dataManager.totalSize() - pieceBegin);
+        }
+        if (!this.intervalMap.containsInterval(pieceBegin, pieceLength)) {
             return false;
         }
 
@@ -143,7 +148,7 @@ public class PieceManager implements Serializable {
         byte[] pieceArray = this.dataManager.getPiece(piece);
         byte[] digest = MessageDigest.getInstance("SHA1").digest(pieceArray);
         if (!Arrays.equals(digest, expectedDigest)) {
-            this.intervalMap.removeIntervals(piece * this.dataManager.pieceLength(), this.dataManager.pieceLength());
+            this.intervalMap.removeIntervals(pieceBegin, pieceLength);
             LOG.debug(this, "~~ Invalid piece " + piece + " got: " + new String(digest) + " expected " + new String(expectedDigest));
             return false;
         }
