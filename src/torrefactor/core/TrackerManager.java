@@ -109,7 +109,7 @@ public class TrackerManager {
                     "Don't know how to handle uri \"" + uri + "\"");
             }
         } catch (Exception e) {
-            LOG.error(this, e);
+            e.printStackTrace();
             LOG.debug(this,
                     "Cannot construct tracker object for uri: \"" + uri + "\"");
         }

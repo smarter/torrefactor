@@ -62,7 +62,7 @@ class SawToothIntervalMap implements java.io.Serializable {
         return this.halvingThresold;
     }
 
-    public boolean addInterval(int begin, int length) {
+    public boolean addInterval(long begin, int length) {
         this.maps[cur].addInterval(begin, length);
         if (this.maps[cur].size() >= halvingThresold/2) {
             cur = 1 - cur;
@@ -73,14 +73,14 @@ class SawToothIntervalMap implements java.io.Serializable {
         return this.maps[cur].addInterval(begin, length);
     }
 
-    public boolean removeIntervals(int begin, int length) {
+    public boolean removeIntervals(long begin, int length) {
         boolean fst = this.maps[0].removeIntervals(begin, length);
         boolean snd = this.maps[1].removeIntervals(begin, length);
         return (fst || snd);
     }
 
-    public int nextFreePoint(int offset) {
-        int sndOffset;
+    public long nextFreePoint(long offset) {
+        long sndOffset;
         do {
             sndOffset = this.maps[0].nextFreePoint(offset);
             offset = this.maps[1].nextFreePoint(sndOffset);
@@ -89,7 +89,7 @@ class SawToothIntervalMap implements java.io.Serializable {
         return offset;
     }
 
-    public boolean containsInterval(int begin, int length) {
+    public boolean containsInterval(long begin, int length) {
         return (this.maps[0].containsInterval(begin, length)
                || this.maps[1].containsInterval(begin, length));
     }

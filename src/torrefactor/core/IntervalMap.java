@@ -17,7 +17,7 @@ import java.security.*;
  * in a synchronized block where the synchronization object is the instance of this class you're
  * using.
  */
-public class IntervalMap extends TreeMap<Integer, Integer> {
+public class IntervalMap extends TreeMap<Long, Long> {
 
     /**
      * Time Complexity:
@@ -26,9 +26,9 @@ public class IntervalMap extends TreeMap<Integer, Integer> {
      *
      * This function is thread-safe.
      */
-    public synchronized boolean addInterval(int begin, int length) {
-        int end =  begin + length - 1;
-        Map.Entry<Integer, Integer> interval = floorEntry(end + 1);
+    public synchronized boolean addInterval(long begin, int length) {
+        long end =  begin + length - 1;
+        Map.Entry<Long, Long> interval = floorEntry(end + 1);
         if (interval == null) {
             // No interval beginning before our superior born, so no overlap possible
             super.put(begin, end);
@@ -67,9 +67,9 @@ public class IntervalMap extends TreeMap<Integer, Integer> {
      *
      * This function is thread-safe.
      */
-    public synchronized boolean removeIntervals(int begin, int length) {
-        int end = begin + length - 1;
-        Map.Entry<Integer, Integer> interval = floorEntry(end);
+    public synchronized boolean removeIntervals(long begin, int length) {
+        long end = begin + length - 1;
+        Map.Entry<Long, Long> interval = floorEntry(end);
         if (interval == null || interval.getValue() < begin) {
             return false;
         }
@@ -96,15 +96,15 @@ public class IntervalMap extends TreeMap<Integer, Integer> {
      *
      * This function is thread-safe.
      */
-    public Integer nextFreePoint(int point) {
-        Map.Entry<Integer, Integer> interval = null;
+    public Long nextFreePoint(long point) {
+        Map.Entry<Long, Long> interval = null;
         synchronized (this) {
             interval = floorEntry(point);
         }
         if (interval == null) {
             return point;
         }
-        int end = interval.getValue();
+        long end = interval.getValue();
         if (point > end) {
             return point;
         }
@@ -121,12 +121,12 @@ public class IntervalMap extends TreeMap<Integer, Integer> {
      *
      * This function is thread-safe.
      */
-    public boolean containsInterval(int begin, int length) {
-        Map.Entry<Integer, Integer> interval = null;
+    public boolean containsInterval(long begin, int length) {
+        Map.Entry<Long, Long> interval = null;
         synchronized (this) {
             interval = floorEntry(begin);
         }
-        int end = begin + length - 1;
+        long end = begin + length - 1;
         if (interval == null || interval.getValue() < end
             || (interval.getValue() - begin + 1) < length) {
             return false;
@@ -134,12 +134,12 @@ public class IntervalMap extends TreeMap<Integer, Integer> {
         return true;
     }
 
-    public Integer put(Integer key, Integer value)
+    public Long put(Long key, Long value)
     throws UnsupportedOperationException {
         throw new UnsupportedOperationException();
     }
 
-    public void putAll(Map<? extends Integer, ? extends Integer> m)
+    public void putAll(Map<? extends Long, ? extends Long> m)
     throws UnsupportedOperationException {
         throw new UnsupportedOperationException();
     }

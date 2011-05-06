@@ -48,7 +48,6 @@ public class PieceManager implements Serializable {
     throws IOException {
          //TODO: should we return a smaller size if we already have part of
          //the block?
-         //We should at least avoid going over piece boundary
         List<DataBlockInfo> infoList = new ArrayList<DataBlockInfo>();
         if (numBlocks == 0) return infoList;
 
@@ -56,20 +55,22 @@ public class PieceManager implements Serializable {
             if (peerBitfield[i/8] == 0) continue;
             int byteOffset = 7 - (i % 8);
             if ((peerBitfield[i/8] >>> byteOffset) == 0) continue;
-            int pieceBegin = i * this.dataManager.pieceLength();
-            int pieceEnd = pieceBegin + this.dataManager.pieceLength() - 1;
+            long pieceBegin = i * this.dataManager.pieceLength();
+            long pieceEnd = pieceBegin + this.dataManager.pieceLength() - 1;
+            // Last block is smaller than the other
+            pieceEnd = Math.min(pieceEnd, this.dataManager.totalSize());
 
-            int offset = nextFreeByte(pieceBegin);
+            long offset = nextFreeByte(pieceBegin);
             while (infoList.size() < numBlocks) {
                 if (offset > this.dataManager.totalSize()) return infoList;
                 if (offset > pieceEnd) {
                     // "- 1" because of the i++ in the for loop
-                    i = offset / this.dataManager.pieceLength() - 1;
+                    i = (int) (offset / this.dataManager.pieceLength()) - 1;
                     break;
                 }
                 // Make sure the block size is not past the piece end or we might get dropped by the peer
-                int blockSize = Math.min(BLOCK_SIZE, pieceEnd - offset + 1);
-                infoList.add(new DataBlockInfo(i, (offset % this.dataManager.pieceLength()), blockSize));
+                int blockSize = Math.min(BLOCK_SIZE, (int) (pieceEnd - offset) + 1);
+                infoList.add(new DataBlockInfo(i, (int) (offset % this.dataManager.pieceLength()), blockSize));
                 this.requestedMap.addInterval(offset, blockSize);
                 LOG.debug(this, "** Requested block at piece: " + i + " offset: " + (offset % this.dataManager.pieceLength())
                                          + " length: " + blockSize);
@@ -85,8 +86,8 @@ public class PieceManager implements Serializable {
      * Return the offset of the next free byte not contained
      * in either the map of downloaded or the map of requested blocks
      */
-    private int nextFreeByte(int offset) {
-        int reqOffset;
+    private long nextFreeByte(long offset) {
+        long reqOffset;
         do {
             reqOffset = this.requestedMap.nextFreePoint(offset);
             offset = this.intervalMap.nextFreePoint(reqOffset);
@@ -99,7 +100,7 @@ public class PieceManager implements Serializable {
      */
     public byte[] getBlock(int piece, int offset, int length)
     throws IOException {
-        int begin = piece*this.dataManager.pieceLength() + offset;
+        long begin = piece*this.dataManager.pieceLength() + offset;
         if (!this.intervalMap.containsInterval(begin, length)) {
             return null;
         }
@@ -108,7 +109,7 @@ public class PieceManager implements Serializable {
 
     public synchronized void putBlock(int piece, int offset, byte[] blockArray)
     throws IOException {
-        int begin = piece * this.dataManager.pieceLength() + offset;
+        long begin = piece * this.dataManager.pieceLength() + offset;
         if (this.intervalMap.containsInterval(begin, blockArray.length)) {
             LOG.debug(this, "!!! Already got " + begin);
             return;

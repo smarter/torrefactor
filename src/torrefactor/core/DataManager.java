@@ -110,10 +110,11 @@ public class DataManager implements Serializable {
     private DataBlock getDataBlock(int pieceNumber, int offset, int length)
     throws java.io.IOException {
         long startOffset = (long) pieceNumber * (long) this.pieceLength + offset;
-        if (startOffset + length > this.totalSize) {
-            throw new IllegalArgumentException ("Block at offset " + offset
-                    + " with length " + length + "is outside of torrent's"
-                    + " data.");
+        if (startOffset + length - 1 > this.totalSize) {
+            throw new IllegalArgumentException
+                ("Block at offset " + startOffset
+                 + " with length " + length + " is outside of torrent's"
+                 + " data which has length " + this.totalSize);
         }
 
         // Calculate the number of buffers necessary to map this block.
