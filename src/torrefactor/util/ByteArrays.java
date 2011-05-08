@@ -1,8 +1,13 @@
 package torrefactor.util;
 
+import torrefactor.util.*;
+
 import java.net.InetAddress;
+import java.math.BigInteger;
 
 public class ByteArrays {
+    private static Logger LOG = new Logger();
+
     /**
      * "Compact IP-address/port info" format as specified in BEP 0005
      * Returns the 4 bytes IP address followed by the 2 bytes port.
@@ -80,15 +85,119 @@ public class ByteArrays {
                             (byte) l };
     }
 
+    /**
+     * Returns the byte array representation the BigInteger fitting the given
+     * length. If the given length is to small, the returned array will be
+     * bigger.
+     */
+    public static byte[] fromBigInteger(BigInteger bi, int arrayLength) {
+        byte[] array;
+        byte[] biArray = bi.toByteArray();
+        if (biArray.length > arrayLength) {
+            // The BigInteger is bigger than the requested length.
+            return biArray;
+        } else {
+            array = new byte[arrayLength];
+        }
+
+        if (isPositiveBigInteger(biArray)) {
+            // BigInteger is positive; pad with zeroes.
+            System.arraycopy(biArray, 0,
+                             array, array.length-biArray.length,
+                             biArray.length);
+        } else {
+            // BigInteger is negative; pad with ones.
+            for (int i=0; i<array.length-biArray.length; i++) {
+                array[i] = (byte) 0xFF;
+            }
+            System.arraycopy(biArray, 0,
+                             array, array.length-biArray.length,
+                             biArray.length);
+        }
+
+        return array;
+    }
+
+    /**
+     * Returns the byte array representation of the unsigned BigInteger padding
+     * left with zeroes to fit the given length.  If the given length is to
+     * small, the returned array will be bigger.  This function is not supposed
+     * to work correctly with negative numbers.
+     */
+    public static byte[] fromUnsignedBigInteger(BigInteger bi, int arrayLength)
+    {
+        int minlen = (bi.bitLength() + 7) / 8;
+        byte[] array;
+        if (minlen > arrayLength) {
+            array = new byte[minlen];
+        } else {
+            array = new byte[arrayLength];
+        }
+
+        byte[] biArray = bi.toByteArray();
+        int biaOffset;
+        if (biArray[0] == 0) {
+            biaOffset = 1; //Remove extra byte for positive sign
+        } else {
+            LOG.debug(ByteArrays.class,
+                        "Non-zero byte at offset 0 for BigInteger "
+                              + bi.toString() + " with representation "
+                              + toHexString(biArray));
+            biaOffset = 0;
+        }
+        int cpLength = biArray.length - biaOffset;
+        int arrayOffset = array.length - cpLength;
+        System.arraycopy(biArray, biaOffset, array, arrayOffset, cpLength);
+        
+        return array;
+    }
+
+    /**
+     * Returns the unsigned BigInteger from the value of the given byte array.
+     */
+    public static BigInteger toUnsignedBigInteger(byte[] array) {
+        byte[] realArray = new byte[array.length];
+        //System.arraycopy(array, 0, realArray, 1, array.length);
+        //BigInteger bi = new BigInteger(realArray);
+        BigInteger bi = new BigInteger(array);
+        return bi;
+    }
+
+    /**
+     * Returns true if the BigInteger that would be constructed from the byte
+     * array is positive.
+     */
+    public static boolean isPositiveBigInteger(byte[] array) {
+        if ((array[0] & (1 << 31)) == 0) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Returns the hexadecimal string representation of the given byte array.
+     */
     public static String toHexString(byte[] array) {
         StringBuilder sb = new StringBuilder(); //FIXME: predict length
         for (int i=0; i<array.length; i++) {
-            sb.append(Integer.toHexString((int) array[i] & 0xFF));
+            int v = (int) array[i] & 0xFF;
+            if (v > 15) {
+                sb.append(Integer.toHexString(v));
+            } else if (v > 0) {
+                sb.append(0);
+                sb.append(Integer.toHexString(v));
+            } else {
+                sb.append(0);
+                sb.append(0);
+            }
             sb.append(" ");
         }
         return sb.toString();
     }
 
+    /**
+     * Returns the binary string representation of the given byte array.
+     */
     public static String toBinaryString(byte[] array) {
         StringBuilder sb = new StringBuilder(); //FIXME: predict length
         for (int i=0; i<array.length; i++) {
