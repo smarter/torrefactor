@@ -81,7 +81,8 @@ public class Rsa {
             generateKeys();
         }
 
-        LOG.debug("PrivateKey bitLength: " + privateKey.bitLength());
+        LOG.debug("Modulo bitlength: " + this.modulo.bitLength());
+        LOG.debug("Modulo length: " + this.modulo.toByteArray().length);
     }
 
     public boolean testKeys() {

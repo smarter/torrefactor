@@ -343,7 +343,7 @@ public class Peer implements Runnable {
      */ 
     private boolean stupidEncryptionSetup () {
         if ((this.reservedBytes[7] & (1 << 4)) == 0) {
-            // Peer does not support stupid encryption
+            // Peer does not support StupidEncryption
             return false;
         }
 
@@ -352,18 +352,19 @@ public class Peer implements Runnable {
 
         Rsa rsa = new Rsa (RSA_KEY_BITLENGTH);
         Pair<DataInputStream, DataOutputStream> oldStreams = null;
+
         SecureRandom srandom = new SecureRandom();
-        byte[] key = new byte[XOR_LENGTH];
-        srandom.nextBytes(key);
+        byte[] outKey = new byte[XOR_LENGTH];
+        srandom.nextBytes(outKey);
 
         try {
-            stupidEncryptionSendRSAKey(rsa, rsa.getModulo().length-1);
-            int mysteriousN = stupidEncryptionReceiveRSAKey(rsa);
-            oldStreams = stupidEncryptionEnableRSAStreams(rsa);
-            stupidEncryptionSendSymmetricKey(key);
-            key = stupidEncryptionReceiveSymmetricKey(mysteriousN);
+            stupidEncryptionSendRSAKey(rsa);
+            int chunkSize = stupidEncryptionReceiveRSAKey(rsa);
+            oldStreams = stupidEncryptionEnableRSAStreams(rsa, chunkSize);
+            stupidEncryptionSendSymmetricKey(outKey);
+            byte[] inKey = stupidEncryptionReceiveSymmetricKey();
             stupidEncryptionDisableRSAStreams(oldStreams);
-            stupidEncryptionEnableSymmetricStreams(key, mysteriousN);
+            stupidEncryptionEnableSymmetricStreams(inKey, outKey);
         } catch (Exception e) {
             if (oldStreams != null) {
                 try {
@@ -381,15 +382,15 @@ public class Peer implements Runnable {
         return true;
     }
 
-    private void stupidEncryptionSendRSAKey(Rsa rsa, int mysteriousN)
+    private void stupidEncryptionSendRSAKey(Rsa rsa)
     throws IOException {
         byte[] key = rsa.getPublicKey();
         byte[] modulo = rsa.getModulo();
         byte[] data = new byte[4 + 4 + 4 + key.length + modulo.length];
         byte[] array;
 
-        // 4 bytes - Mysterious N
-        array = ByteArrays.fromInt(modulo.length-1);
+        // 4 bytes - (chunk size-1)*8
+        array = ByteArrays.fromInt((modulo.length-1)*8);
         System.arraycopy(array, 0, data, 0, 4);
 
         // 4 bytes - length of key in byte
@@ -421,8 +422,9 @@ public class Peer implements Runnable {
                         + " while expecting " + MessageType.sendRSAKey);
         }
 
-        int mysteriousN = this.socketInput.readInt();    // in bits
-        LOG.debug("mysteriousN: " + mysteriousN);
+        // We read (chunk size - 1)*8 thus to chunk size = (read/8) + 1
+        int chunkSize = (this.socketInput.readInt()*8)+1;
+        LOG.debug("mysteriousN: " + chunkSize);
 
         int keyLength = this.socketInput.readInt();    // in bytes
         LOG.debug("keyLength: " + keyLength);
@@ -446,7 +448,7 @@ public class Peer implements Runnable {
         rsa.setEncryptKey(key, modulo);
         LOG.debug("RSA key received.");
 
-        return mysteriousN;
+        return chunkSize;
     }
 
     private void stupidEncryptionSendSymmetricKey (byte[] key)
@@ -455,7 +457,7 @@ public class Peer implements Runnable {
         LOG.debug("XOR key sent.");
     }
 
-    private byte[] stupidEncryptionReceiveSymmetricKey (int length)
+    private byte[] stupidEncryptionReceiveSymmetricKey ()
     throws IOException {
         LOG.debug("ReceiveSymmetricKey: now calling getMessage()");
         Pair<MessageType, Integer> header = getMessage();
@@ -478,13 +480,14 @@ public class Peer implements Runnable {
     }
 
     private Pair <DataInputStream, DataOutputStream> 
-    stupidEncryptionEnableRSAStreams (Rsa rsa) {
+    stupidEncryptionEnableRSAStreams (Rsa rsa, int chunkSize) {
         Pair<DataInputStream, DataOutputStream> oldStreams;
         oldStreams = new Pair<DataInputStream, DataOutputStream>
                          (this.socketInput, this.socketOutput);
 
         this.socketInput = new DataInputStream(
-                                new RsaInputStream(this.socketInput, rsa));
+                                new RsaInputStream(
+                                    this.socketInput, rsa, chunkSize));
         this.socketOutput = new DataOutputStream(
                                 new RsaOutputStream(this.socketOutput, rsa));
 
@@ -492,11 +495,17 @@ public class Peer implements Runnable {
         return oldStreams;
     }
 
-    private void stupidEncryptionEnableSymmetricStreams (byte[] key, int len) {
+    private void stupidEncryptionEnableSymmetricStreams(byte[] in, byte[] out) {
         this.socketInput = new DataInputStream(
-                              new XorInputStream(this.socketInput, key, len));
+                              new XorInputStream(
+                                  this.socketInput,
+                                  in,
+                                  in.length));
         this.socketOutput = new DataOutputStream(
-                              new XorOutputStream(this.socketOutput, key, len));
+                              new XorOutputStream(
+                                  this.socketOutput,
+                                  out,
+                                  out.length));
         LOG.debug("Now using XOR encryption.");
     }
 

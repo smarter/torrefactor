@@ -1,7 +1,6 @@
 bit 60 des bits reservé à 1.
 
-The most stupid features:
-- The length of the xor key is sent without encryption.
+The most stupid feature:
 - Rsa is used to code a value stored in a byte, resulting in a very predictable
   cypher.
 

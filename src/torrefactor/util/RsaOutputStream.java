@@ -13,14 +13,29 @@ public class RsaOutputStream extends OutputStream {
     private static Logger LOG = new Logger();
     OutputStream realStream;
     Rsa rsa;
-    int chunkSize; // length of chunk in bytes
+    int chunkLength; // length of chunk in bytes
 
     /**
      * Create a new RsaOutputStream wrapping the stream.
      */
     public RsaOutputStream (OutputStream stream, Rsa rsa) {
+        this(stream, rsa, 0);
+    }
+
+    /**
+     * Create a new RsaOutputStream wrapping the stream using the given chunk
+     * length if possible.
+     */
+    public RsaOutputStream (OutputStream stream, Rsa rsa, int chunkLength) {
         this.realStream = stream;
         this.rsa = rsa;
+
+        int minLen = this.rsa.getModulo().length;
+        if (chunkLength < minLen) {
+            chunkLength = minLen;
+        }
+        this.chunkLength = chunkLength;
+
         LOG.info(this, "Initialized RsaOutputStream.");
     }
 
@@ -46,15 +61,14 @@ public class RsaOutputStream extends OutputStream {
      */
     public void write (int b) throws IOException {
         // Ignore the 24 higher bytes of the int since it is a byte
+        // (sometimes there's random values in those bytes)
         b &= 0xFF;
-
-        int len = this.rsa.getModulo().length;
 
         BigInteger bi = BigInteger.valueOf(b);
         bi = this.rsa.encrypt(bi);
         byte[] array = bi.toByteArray();
 
-        byte[] realArray = ByteArrays.fromBigInteger(bi, len);
+        byte[] realArray = ByteArrays.fromBigInteger(bi, this.chunkLength);
 
         this.realStream.write(realArray);
     }
@@ -65,5 +79,12 @@ public class RsaOutputStream extends OutputStream {
      */
     public OutputStream getWrappedStream () {
         return this.realStream;
+    }
+
+    /**
+     * Returns the chunkLength used by this stream.
+     */
+    public int getChunkLength () {
+        return this.chunkLength;
     }
 }
