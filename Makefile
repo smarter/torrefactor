@@ -432,3 +432,9 @@ runtest: all
 	java test.util.BDecodeTest
 	java test.util.BEncodeTest
 	java test.util.RsaTest
+	java test.util.ByteArraysTest
+	java test.util.LogTest
+	java test.util.RsaTest
+	java test.util.RsaInputOutputTest
+	java test.util.RSAStreamEncodeDecodeTest
+	java test.util.SymmetricStreamEncodeDecodeTest
