@@ -5,7 +5,7 @@ import java.security.SecureRandom;
 import java.math.BigInteger;
 
 public class Rsa {
-
+    private static Logger LOG = new Logger();
     private BigInteger privateKey = null;
     private BigInteger publicKey = null;
     private BigInteger encryptKey = null;
@@ -37,6 +37,7 @@ public class Rsa {
     throws IllegalArgumentException {
         checkBitLength(_bitLength);
         this.bitLength = _bitLength;
+        System.err.println("New Rsa with bitLength: " + bitLength);
         generateKeys();
     }
 
@@ -79,6 +80,8 @@ public class Rsa {
         if (!testKeys()) {
             generateKeys();
         }
+
+        LOG.debug("PrivateKey bitLength: " + privateKey.bitLength());
     }
 
     public boolean testKeys() {
@@ -103,14 +106,18 @@ public class Rsa {
         return encrypt(msg, this.encryptKey, this.encryptModulo);
     }
 
-    public BigInteger encrypt(BigInteger msg, BigInteger key, BigInteger modulo) {
+    public BigInteger encrypt(BigInteger msg, BigInteger key,
+                              BigInteger modulo) {
         if (key == null || modulo == null) {
-            // No encrypt key set
+            LOG.error(this, "Encrypt key is not set.");
             return null;
         }
         if (msg.compareTo(modulo) != -1) {
-            throw new IllegalArgumentException(
-                          "msg " + msg + " must be smaller than the modulo " + modulo);
+            LOG.error(this, "Message " + msg.toString()
+                            + " must be smaller than the modulo "
+                            + modulo.toString());
+            throw new IllegalArgumentException("msg " + msg 
+                                + " must be smaller than the modulo " + modulo);
         }
 
         BigInteger cypher = msg.modPow(key, modulo);
@@ -123,8 +130,11 @@ public class Rsa {
             return null;
         }
         if (cypher.compareTo(this.modulo) != -1) {
-            throw new IllegalArgumentException(
-                          "cypher must be smaller than the modulo.");
+            LOG.error(this, "Cypher " + cypher.toString()
+                            + " must be smaller than the modulo "
+                            + modulo.toString());
+            //throw new IllegalArgumentException(
+            //              "cypher must be smaller than the modulo.");
         }
 
         BigInteger msg = cypher.modPow(this.privateKey, this.modulo);
@@ -146,5 +156,7 @@ public class Rsa {
     public void setEncryptKey(byte[] key, byte[] modulo) {
         this.encryptKey = new BigInteger(key);
         this.encryptModulo = new BigInteger(modulo);
+        LOG.debug(this, "Encrypt key set to \"" + key
+                        + "\" with mod " + modulo);
     }
 }
