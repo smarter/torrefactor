@@ -106,8 +106,17 @@ public class Log {
         if ((quad.first () & enableMask & (~disableMask)) == 0) {
             return;
         }
-        this.printStream.print ("[" + (quad.second () - this.refTime) + "]" + "["
-                                + quad.third ().getClass (). getName () + "]"
+
+        String header;
+        Class headerClass = quad.third().getClass();
+        if (headerClass == String.class) {
+            header = (String) quad.third();
+        } else {
+            header = headerClass.getName();
+        }
+
+        this.printStream.print ("[" + (quad.second () - this.refTime) + "]"
+                                + "[" + header + "]"
                                 + " " + quad.fourth () + "\n");
     }
 

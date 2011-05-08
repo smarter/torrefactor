@@ -6,11 +6,19 @@ public class Logger {
     private static Log log = Log.getInstance ();
     private boolean enabled = true;
     private int localFlag = 0;
-    // Should we set the object which is registered with the log messages here?
-    // It may be convenient if we always use the same object with the same
-    // instance of this class.
+    private Object headerObject;
     
-    public Logger () {}
+    public Logger () {
+        this.headerObject = sun.reflect.Reflection.getCallerClass(2).getName();
+    }
+
+    public Logger (Object header) {
+        this.headerObject = header;
+    }
+
+    public void setHeader (Object header) {
+        this.headerObject = header;
+    }
 
     public int localFlag () {
         return localFlag;
@@ -24,10 +32,18 @@ public class Logger {
         this.enabled = false;
     }
 
+    public void error (String message) {
+        error (this.headerObject, message);
+    }
+
     public void error (Object object, String message) {
         if (this.enabled) {
             log.log (Log.ERROR | this.localFlag, object, message);
         }
+    }
+
+    public void error (Exception e) {
+        error (this.headerObject, e);
     }
 
     public void error (Object object, Exception e) {
@@ -37,16 +53,28 @@ public class Logger {
         }
     }
 
+    public void warning (String message) {
+        warning (this.headerObject, message);
+    }
+
     public void warning (Object object, String message) {
         if (this.enabled) {
             log.log (Log.WARNING, object, message);
         }
     }
 
+    public void info (String message) {
+        info (this.headerObject, message);
+    }
+
     public void info (Object object, String message) {
         if (this.enabled) {
             log.log (Log.INFO | this.localFlag, object, message);
         }
+    }
+
+    public void debug (String message) {
+        debug (this.headerObject, message);
     }
 
     public void debug (Object object, String message) {
