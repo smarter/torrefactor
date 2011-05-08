@@ -10,7 +10,6 @@ import java.io.File;
 
 public class SwingClient {
     private static final Logger LOG = new Logger ();
-    private TorrentManager torrentManager;
     private MainWindow mainWindow;
 
     public static void main(String[] args)
@@ -31,8 +30,7 @@ public class SwingClient {
     }
 
     public SwingClient () {
-        this.torrentManager = new TorrentManager("");
-        this.mainWindow = new MainWindow(this.torrentManager);
+        this.mainWindow = new MainWindow();
         this.mainWindow.setVisible(true);
 
         Runtime.getRuntime().addShutdownHook(new Thread(
@@ -44,7 +42,7 @@ public class SwingClient {
     }
 
     public void destructor() {
-        this.torrentManager.stop();
+        TorrentManager.instance().stop();
     }
 
     /**

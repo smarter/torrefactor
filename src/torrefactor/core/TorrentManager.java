@@ -10,27 +10,21 @@ import java.security.*;
 /**
  * This class manages a list of Torrent.
  * When it is instancied, it will attempt to read its state from a config
- * file. It will write to this file when it's stop()-ed
+ * file. It will write to this file when it's stop()-ed.
+ * The config file name is System.getProperty("user.home")/.torrefactor/config.bin
  */
 public class TorrentManager {
+    private static TorrentManager instance;
     private static Logger LOG = new Logger();
     private List<Torrent> torrentList;
     private transient List<Torrent> readOnlyList;
     private File configFile;
 
-    /**
-     * @param configFileName Path to the file to read and write the config too.
-     * Default value: System.getProperty("user.home")/.torrefactor/config.bin
-     */
-    public TorrentManager(String configFileName) {
-        if (configFileName.isEmpty()) {
-            File home = new File(System.getProperty("user.home"));
-            File configDir = new File(home, ".torrefactor");
-            configDir.mkdir();
-            configFile = new File(configDir, "config.bin");
-        } else {
-            configFile = new File(configFileName);
-        }
+    private TorrentManager() {
+        File home = new File(System.getProperty("user.home"));
+        File configDir = new File(home, ".torrefactor");
+        configDir.mkdir();
+        configFile = new File(configDir, "config.bin");
         if (restoreConfig()) {
             return;
         }
@@ -38,11 +32,18 @@ public class TorrentManager {
         this.readOnlyList = Collections.unmodifiableList(this.torrentList);
     }
 
+    public static synchronized TorrentManager instance() {
+        if (instance == null) {
+            instance = new TorrentManager();
+        }
+        return instance;
+    }
+
     public List<Torrent> torrentList() {
         return this.readOnlyList;
     }
 
-    public Torrent addTorrent(String fileName, String basePath)
+    public synchronized Torrent addTorrent(String fileName, String basePath)
     throws IOException, InvalidBDecodeException, NoSuchAlgorithmException {
         for (Torrent torrent: torrentList) {
             if (fileName.equals(torrent.FILE_NAME)) {
@@ -59,7 +60,7 @@ public class TorrentManager {
      * Write config to the config file specified
      * in the constructor.
      */
-    public void stop() {
+    public synchronized void stop() {
         for (Torrent torrent: torrentList) {
             torrent.stop();
         }

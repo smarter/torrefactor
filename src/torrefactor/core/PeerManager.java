@@ -1,6 +1,7 @@
 package torrefactor.core;
 
 import torrefactor.core.*;
+import torrefactor.core.dht.*;
 import torrefactor.util.*;
 
 import java.io.*;
@@ -78,6 +79,9 @@ public class PeerManager implements Runnable {
             if (this.trackerManager.canAnnounce() ||
                     peerMap.size() <= this.peersReceived / 2) {
                 try {
+                    if (NodeManager.instance() != null) {
+                        updateMapCompact(NodeManager.instance().peersForTorrent(this.torrent.infoHash));
+                    }
                     List<Pair<byte[], Integer>> peersList;
                     peersList = this.trackerManager.announce(
                                                         Tracker.Event.none);
@@ -191,11 +195,37 @@ public class PeerManager implements Runnable {
 
     private void updateMap(List<Pair<byte[], Integer>> peersList)
     throws IOException, UnknownHostException {
+        if (peersList == null) {
+            LOG.warning("Didn't get any new peer!");
+            return;
+        }
+        LOG.debug("Got " + peersList.size() + " new peers");
         Map<InetAddress, Peer> oldMap = new HashMap<InetAddress, Peer>(peerMap);
         for (Pair<byte[], Integer> p: peersList) {
-            LOG.debug(this, "Updating peerMap...");
             InetAddress addr = InetAddress.getByAddress(p.first());
             int port = (p.second());
+            updateMap(addr, port, oldMap);
+        }
+    }
+
+    /**
+     * Update peerMap using peersList.
+     * @p peersList a list of peers in "compact ip/port" format
+     */
+    private void updateMapCompact(List<byte[]> peersList)
+    throws IOException, UnknownHostException {
+        if (peersList == null) {
+            return;
+        }
+        LOG.debug("Got " + peersList.size() + " new peers from DHT");
+        Map<InetAddress, Peer> oldMap = new HashMap<InetAddress, Peer>(peerMap);
+        byte[] ip = new byte[4];
+        byte[] portArray = new byte[2];
+        for (byte[] peer: peersList) {
+            System.arraycopy(peer, 0, ip, 0, 4);
+            System.arraycopy(peer, 4, portArray, 0, 2);
+            InetAddress addr = InetAddress.getByAddress(ip);
+            int port = ByteArrays.toShortInt(portArray);
             updateMap(addr, port, oldMap);
         }
     }

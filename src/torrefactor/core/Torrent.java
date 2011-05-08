@@ -27,7 +27,7 @@ public class Torrent implements Serializable {
     private AtomicLong downloaded = new AtomicLong(0);
     private AtomicLong left;
 
-    byte[] infoHash;
+    public byte[] infoHash;
     transient PeerManager peerManager;
     PieceManager pieceManager;
     long length = 0;

@@ -17,8 +17,7 @@ public class Client {
             System.exit(1);
         }
         new Config();
-        torrentManager = new TorrentManager("");
-        Torrent torrent = torrentManager.addTorrent(args[0], args[1]);
+        Torrent torrent = TorrentManager.instance().addTorrent(args[0], args[1]);
         torrent.start();
         Runtime.getRuntime().addShutdownHook(new Thread(
             new Runnable() {

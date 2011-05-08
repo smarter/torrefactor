@@ -1,6 +1,7 @@
 package torrefactor.core;
 
 import torrefactor.core.*;
+import torrefactor.core.dht.*;
 import torrefactor.util.*;
 
 import java.io.*;
@@ -505,16 +506,7 @@ public class Peer implements Runnable, PeerConnectionListener  {
      */
     @Override
     public void onPortMessage (PortMessage msg) {
-        // FIXME: do we have to do what is commented out there or what is in
-        //        PortMessage? In any case, the right thing should be in
-        //        PortMessage.
-
-        //int lowByte = socketInput.read();
-        //int highByte = socketInput.read();
-        //int port = (highByte << 8) | lowByte;
-        //NodeManager.add(this.address, port);
-
-        //NodeManager.add(this.address, msg.port);
+        NodeManager.instance().addPeer(this.address, msg.port, this.torrent.infoHash);
     }
 
     /**

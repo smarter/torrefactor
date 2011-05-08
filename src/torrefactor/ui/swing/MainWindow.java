@@ -33,12 +33,12 @@ public class MainWindow implements ActionListener {
     private TorrentPeers torrentPeers;
     private Timer tableTimer;
 
-    public MainWindow (TorrentManager torrentManager) {
+    public MainWindow () {
         this.mainFrame = new JFrame ("Torrefactor");
         this.mainFrame.setLocationByPlatform(true);
         this.menuBar = new JMenuBar ();
         this.buildMenu ();
-        this.buildTorrentTable(torrentManager);
+        this.buildTorrentTable();
 
         // HACK: Use BorderLayout as LayoutManager for the mainFrame since I
         // didn't manage to make swing display the menubar correctly with a
@@ -116,8 +116,8 @@ public class MainWindow implements ActionListener {
         this.menuBar.add (menuFile);
     }
 
-    private void buildTorrentTable (TorrentManager torrentManager) {
-        this.torrentModel = new TorrentTableModel(torrentManager);
+    private void buildTorrentTable () {
+        this.torrentModel = new TorrentTableModel();
         this.torrentTable = new JTable(this.torrentModel);
         this.torrentTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         this.torrentTable.setRowSelectionAllowed(true);

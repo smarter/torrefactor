@@ -20,21 +20,19 @@ import java.io.IOException;
  * TorrentManager.
  */
 public class TorrentTableModel extends AbstractTableModel {
-    private TorrentManager torrentManager;
     public String[] columnNames = {"Torrent", "Progress", "Uploaded",
                                    "Downloaded"};
     public enum Column { NAME, PERCENT, UPLOADED, DOWNLOADED };
     public Column[] columns;
 
-    public TorrentTableModel (TorrentManager _torrentManager) {
-        this.torrentManager=  _torrentManager;
+    public TorrentTableModel () {
         this.columns = new Column[] {Column.NAME, Column.PERCENT,
                                      Column.UPLOADED, Column.DOWNLOADED};
         fireTableDataChanged();
     }
 
     public Torrent getTorrentAt(int row) {
-        return this.torrentManager.torrentList().get(row);
+        return TorrentManager.instance().torrentList().get(row);
     }
 
     /**
@@ -43,8 +41,8 @@ public class TorrentTableModel extends AbstractTableModel {
      */
     public Torrent addTorrent(String directory, String basePath)
     throws IOException, InvalidBDecodeException, NoSuchAlgorithmException {
-        Torrent t = this.torrentManager.addTorrent(directory, basePath);
-        int rows = this.torrentManager.torrentList().size();
+        Torrent t = TorrentManager.instance().addTorrent(directory, basePath);
+        int rows = TorrentManager.instance().torrentList().size();
         fireTableRowsInserted(rows - 1, rows - 1);
         return t;
     }
@@ -53,7 +51,7 @@ public class TorrentTableModel extends AbstractTableModel {
      * Stops the TorrentManager.
      */
     public void stop() {
-        this.torrentManager.stop();
+        TorrentManager.instance().stop();
     }
 
     /**
@@ -76,7 +74,7 @@ public class TorrentTableModel extends AbstractTableModel {
      * Returns the number of rows in the model.
      */
     public int getRowCount() {
-        return this.torrentManager.torrentList().size();
+        return TorrentManager.instance().torrentList().size();
     }
 
     /**
@@ -90,7 +88,7 @@ public class TorrentTableModel extends AbstractTableModel {
      * Returns the content of the cell at the given position.
      */
     public Object getValueAt(int row, int col) {
-        Torrent torrent = this.torrentManager.torrentList().get(row);
+        Torrent torrent = TorrentManager.instance().torrentList().get(row);
         Column column = this.columns[col];
 
         Object data;

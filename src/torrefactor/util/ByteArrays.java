@@ -59,6 +59,27 @@ public class ByteArrays {
         return b;
     }
 
+
+    /**
+     * Return the length in bits of the common prefix of
+     * arrays a and b.
+     */
+    public static int commonPrefix(byte[] a, byte[] b) {
+        byte xorByte = 0;
+        int i;
+        for (i = 0; i != 160/8 && xorByte == 0; i++) {
+            xorByte = (byte) (a[i] ^ b[i]);
+        }
+        if (i == 160/8) {
+            return 160;
+        }
+        int offset;
+        for (offset = 7; (xorByte >>> offset) == 0; offset--) {
+            ; // Do nothing
+        }
+        return 8*i + (7 - offset);
+    }
+
     public static int toShortInt(byte[] array) {
         int i = 0;
         i += ((int) array[0] & 0xFF) << 8;
