@@ -11,3 +11,5 @@ Incomplete list of stuff to do:
 - More documentation
 - Write CONCEPTION file once the conception is done.
 - find . -name "*.java"|xargs grep -E '(TODO|FIXME|HACK|PROJECT)'
+
+- Check usage of trackerid in HTTPAnnouce

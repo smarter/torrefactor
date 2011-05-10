@@ -13,7 +13,9 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class Torrent implements Serializable {
     private static Logger LOG = new Logger();
+
     public final String FILE_NAME;
+
     private File basePath;
     private int pieceLength;
     private ArrayList<Pair<File, Long>> files;
@@ -21,12 +23,13 @@ public class Torrent implements Serializable {
     private AtomicLong uploaded = new AtomicLong(0);
     private AtomicLong downloaded = new AtomicLong(0);
     private AtomicLong left;
+
     byte[] infoHash;
     transient PeerManager peerManager;
     PieceManager pieceManager;
     long length = 0;
     List<List<String>> announceList;
-    int creationDate = 0;
+    long creationDate = 0;
     String comment = "";
     String createdBy = "";
     String encoding = "";
@@ -166,6 +169,10 @@ public class Torrent implements Serializable {
         return this.files;
     }
 
+    public long getSize () {
+        return this.length;
+    }
+
     public float progress() {
         if (this.length == 0) return 0;
         // use length-left instead of downloaded since downloaded may be
@@ -196,6 +203,26 @@ public class Torrent implements Serializable {
 
     public long incrementUploaded(long value) {
         return this.uploaded.addAndGet(value);
+    }
+
+    public String getAuthor () {
+        return this.createdBy;
+    }
+
+    public long getCreationDate () {
+        return creationDate;
+    }
+
+    public String getBasePath () {
+        return basePath.getAbsolutePath();       
+    }
+
+    public int getNumPiece () {
+        return (int) ((this.length-1) / this.pieceLength) + 1;
+    }
+
+    public int getPieceSize () {
+        return this.pieceLength;
     }
 
     public void start() throws ProtocolException, InvalidBDecodeException,

@@ -2,6 +2,7 @@ package torrefactor.ui.swing;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -25,6 +26,8 @@ public class MainWindow implements ActionListener {
     private JScrollPane torrentPane;
     private TorrentTableModel torrentModel;
     private JTable torrentTable;
+    private JTabbedPane tabbedPane;
+    private TorrentDetails torrentDetails;
     private String basePath = "./data";
     private Timer tableTimer;
 
@@ -41,8 +44,24 @@ public class MainWindow implements ActionListener {
         this.mainFrame.setContentPane (new JPanel (layout));
         Container contentPane = this.mainFrame.getContentPane ();
 
+        this.tabbedPane = new JTabbedPane ();
+        this.torrentDetails = new TorrentDetails ();
+        this.tabbedPane.add (torrentDetails);
+
+        // Selection event for details pane
+        ListSelectionListener listener = new ListSelectionListener () {
+            public void valueChanged(ListSelectionEvent event) {
+                int index = event.getFirstIndex();
+                Torrent torrent = torrentModel.getTorrentAt(index);
+                onTorrentSelected(torrent);
+            }
+        };
+        this.torrentTable.getSelectionModel()
+            .addListSelectionListener(listener);
+
         contentPane.add (this.menuBar, BorderLayout.PAGE_START);
         contentPane.add (this.torrentPane, BorderLayout.CENTER);
+        contentPane.add (this.tabbedPane, BorderLayout.PAGE_END);
 
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -60,7 +79,9 @@ public class MainWindow implements ActionListener {
         JMenuItem itemOpen = new JMenuItem ("Open…");
         JMenuItem itemQuit = new JMenuItem ("Quit");
         JMenuItem itemStart = new JMenuItem("Start Downloading");
+        //itemStart.setEnabled(false);
         JMenuItem itemStop = new JMenuItem("Stop Downloading");
+        //itemStop.setEnabled(false);
         menuFile.add (itemOpen);
         menuFile.addSeparator();
         menuFile.add (itemStart);
@@ -143,6 +164,11 @@ public class MainWindow implements ActionListener {
             if(returnVal == JFileChooser.APPROVE_OPTION) {
                 openTorrent (chooser.getSelectedFile().getAbsolutePath());
             }
+    }
+
+
+    public void onTorrentSelected (Torrent torrent) {
+        this.torrentDetails.setTorrent(torrent);
     }
 
     public void openTorrent (String path) {
