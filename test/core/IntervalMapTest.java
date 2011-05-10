@@ -21,7 +21,7 @@ public class IntervalMapTest {
         return m;
     }
 
-    private void checkBounds(IntervalMap m, int begin, int end) {
+    private void checkBounds(IntervalMap m, long begin, long end) {
         //System.out.println("Expected end: " + end + " Found end: " + m.get(begin));
         assertTrue(m.get(begin) != null);
         assertTrue(m.get(begin) == end);
