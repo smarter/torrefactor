@@ -67,7 +67,7 @@ public class Peer implements Runnable {
         this.torrent = _torrent;
         this.bitfield = new byte[this.torrent.pieceManager.bitfield.length];
         Arrays.fill(this.bitfield, (byte) 0);
-        LOG.setHeader("Peer" + this.ip + ':' + this.port);
+        LOG.setHeader(this.toString());
     }
 
     public void run() {
@@ -348,7 +348,7 @@ public class Peer implements Runnable {
             return false;
         }
 
-        int RSA_KEY_BITLENGTH = 1024;
+        int RSA_KEY_BITLENGTH = 128;
         int XOR_LENGTH = 128;
 
         Rsa rsa = new Rsa (RSA_KEY_BITLENGTH);
@@ -629,8 +629,8 @@ public class Peer implements Runnable {
     }
 
     private synchronized void sendMessage(MessageType type, int[] params, byte[] data) throws IOException {
-        LOG.debug("Sending " + type.toString()
-                        + " to :" + arrayToString(this.id));
+        LOG.debug("Sending message " + type.toString()
+                  + " (" + type.ordinal() + ") ");
         int length = 1;
         if (params != null) {
             length += 4 * params.length;
@@ -685,6 +685,10 @@ public class Peer implements Runnable {
     public void stop() {
         LOG.debug("Stopping peer " + this.ip + " " + this.port);
         this.isStopped = true;
+    }
+
+    public String toString() {
+        return "Peer" + this.ip + ':' + this.port;
     }
 
     private static String arrayToString(byte[] data) {

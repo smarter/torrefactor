@@ -139,6 +139,11 @@ public class PeerManager implements Runnable {
     private void updateMap(List<Pair<byte[], Integer>> peersList)
     throws IOException, UnknownHostException {
         Map<InetAddress, Peer> oldMap = new HashMap<InetAddress, Peer>(peerMap);
+        if (peersList == null) {
+            LOG.debug("updateMap: peersList is null");
+            // HACK: Crash to avoid infinite error loop with tracker.jar
+            //return;
+        }
         for (Pair<byte[], Integer> p: peersList) {
             LOG.debug(this, "Updating peerMap...");
             InetAddress addr = InetAddress.getByAddress(p.first());
