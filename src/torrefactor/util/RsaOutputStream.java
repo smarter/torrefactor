@@ -30,13 +30,14 @@ public class RsaOutputStream extends OutputStream {
         this.realStream = stream;
         this.rsa = rsa;
 
-        int minLen = this.rsa.getModulo().length;
+        int minLen = this.rsa.getEncryptModulo().length;
         if (chunkLength < minLen) {
             chunkLength = minLen;
         }
         this.chunkLength = chunkLength;
 
-        LOG.info(this, "Initialized RsaOutputStream.");
+        LOG.info("Initialized RsaOutputStream with chunk length "
+                 + chunkLength);
     }
 
     /**

@@ -23,7 +23,7 @@ public class RsaInputStream extends InputStream {
      * exclude the sign bit.
      */
     public RsaInputStream (InputStream stream, Rsa rsa) {
-        this(stream, rsa, 0);
+        this(stream, rsa, rsa.getModulo().length);
     }
 
     /**
@@ -68,7 +68,6 @@ public class RsaInputStream extends InputStream {
         bi = this.rsa.decrypt(bi);
 
         int b = bi.intValue();
-        System.out.print(".");
         return b;
     }
 

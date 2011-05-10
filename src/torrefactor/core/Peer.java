@@ -103,6 +103,7 @@ public class Peer implements Runnable {
                 setChoked(false);
                 setInteresting(true);
             } catch (Exception e) {
+                e.printStackTrace();
                 tries++;
                 if (this.socket != null) {
                     //this.socket.close();
@@ -363,13 +364,16 @@ public class Peer implements Runnable {
             oldStreams = stupidEncryptionEnableRSAStreams(rsa, chunkSize);
             stupidEncryptionSendSymmetricKey(outKey);
             byte[] inKey = stupidEncryptionReceiveSymmetricKey();
+            LOG.debug("Recvd XOR is " + ByteArrays.toHexString(inKey));
             stupidEncryptionDisableRSAStreams(oldStreams);
             stupidEncryptionEnableSymmetricStreams(inKey, outKey);
         } catch (Exception e) {
             if (oldStreams != null) {
                 try {
                     stupidEncryptionDisableRSAStreams(oldStreams);
-                } catch (Exception f) {}
+                } catch (Exception f) {
+                    f.printStackTrace();
+                }
             }
             LOG.error(e);
             e.printStackTrace();
@@ -423,7 +427,7 @@ public class Peer implements Runnable {
         }
 
         // We read (chunk size - 1)*8 thus to chunk size = (read/8) + 1
-        int chunkSize = (this.socketInput.readInt()*8)+1;
+        int chunkSize = (this.socketInput.readInt()/8)+1;
         LOG.debug("mysteriousN: " + chunkSize);
 
         int keyLength = this.socketInput.readInt();    // in bytes
@@ -454,7 +458,7 @@ public class Peer implements Runnable {
     private void stupidEncryptionSendSymmetricKey (byte[] key)
     throws IOException {
         sendMessage(MessageType.sendSymmetricKey, null, key);
-        LOG.debug("XOR key sent.");
+        LOG.debug("XOR key sent with length " + key.length);
     }
 
     private byte[] stupidEncryptionReceiveSymmetricKey ()
@@ -487,9 +491,12 @@ public class Peer implements Runnable {
 
         this.socketInput = new DataInputStream(
                                 new RsaInputStream(
-                                    this.socketInput, rsa, chunkSize));
+                                    this.socketInput, rsa));
         this.socketOutput = new DataOutputStream(
-                                new RsaOutputStream(this.socketOutput, rsa));
+                                new RsaOutputStream(
+                                    this.socketOutput,
+                                    rsa,
+                                    chunkSize));
 
         LOG.debug("Now using Rsa streams.");
         return oldStreams;

@@ -154,6 +154,10 @@ public class Rsa {
         return this.modulo.toByteArray();
     }
 
+    public byte[] getEncryptModulo() {
+        return this.modulo.toByteArray();
+    }
+
     public void setEncryptKey(byte[] key, byte[] modulo) {
         this.encryptKey = new BigInteger(key);
         this.encryptModulo = new BigInteger(modulo);
