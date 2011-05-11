@@ -116,10 +116,8 @@ public class Torrent implements Serializable {
             this.comment = fileMap.get("comment").toString();
         }
         if (fileMap.containsKey("creation date")) {
-            //TODO: there should be a way to parse bencoded int as double
-            //      in util.BDecode since the date is coded on a long.
-            //this.creationDate = fileMap.get("creation date").toDouble();
-            LOG.debug(this, "Ignoring 'creation date' in torrent file.");
+            this.creationDate = fileMap.get("creation date").toLong();
+            LOG.debug(this, "Creation date is: " + this.creationDate);
         }
         if (fileMap.containsKey("created by")) {
             this.createdBy = fileMap.get("created by").toString();

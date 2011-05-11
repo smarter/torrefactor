@@ -36,42 +36,49 @@ class TorrentDetails extends Box {
         Dimension min = this.creationDateLabel.getPreferredSize();
 
         this.nameLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        this.nameLabel.setMinimumSize(min);
         this.nameLabel.setMaximumSize(min);
         this.columnA.add(this.nameLabel);
 
         this.columnB.add(this.name);
 
         this.authorLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        this.authorLabel.setMinimumSize(min);
         this.authorLabel.setMaximumSize(min);
         this.columnA.add(this.authorLabel);
 
         this.columnB.add(this.author);
 
         this.creationDateLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        this.creationDateLabel.setMinimumSize(min);
         this.creationDateLabel.setMaximumSize(min);
         this.columnA.add(this.creationDateLabel);
 
         this.columnB.add(this.creationDate);
 
         this.sizeLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        this.sizeLabel.setMinimumSize(min);
         this.sizeLabel.setMaximumSize(min);
         this.columnA.add(this.sizeLabel);
 
         this.columnB.add(this.size);
 
         this.pathLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        this.pathLabel.setMinimumSize(min);
         this.pathLabel.setMaximumSize(min);
         this.columnA.add(this.pathLabel);
 
         this.columnB.add(this.path);
 
         this.piecesLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        this.piecesLabel.setMinimumSize(min);
         this.piecesLabel.setMaximumSize(min);
         this.columnA.add(this.piecesLabel);
 
         this.columnB.add(this.pieces);
 
         this.pieceSizeLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        this.pieceSizeLabel.setMinimumSize(min);
         this.pieceSizeLabel.setMaximumSize(min);
         this.columnA.add(this.pieceSizeLabel);
 
@@ -88,7 +95,7 @@ class TorrentDetails extends Box {
         this.author.setText(torrent.getAuthor());
         this.creationDate.setText(
                 DateFormat.getInstance()
-                .format(new Date(torrent.getCreationDate())));
+                .format(new Date(torrent.getCreationDate() * 1000)));
         this.size.setText(Long.toString(torrent.getSize()));
         this.path.setText(torrent.getBasePath());
         this.pieces.setText(Integer.toString(torrent.getNumPiece()));

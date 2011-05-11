@@ -16,7 +16,12 @@ public class SwingClient {
     throws java.io.IOException, java.io.FileNotFoundException,
     java.net.ProtocolException, java.security.NoSuchAlgorithmException,
     torrefactor.util.InvalidBDecodeException {
+        // Explicitly enable antialiased fonts since java doesn't do it by
+        // default (on Linux at least)
+        System.setProperty("awt.useSystemAAFontSettings","on");
+
         setLookAndFeel();
+
         SwingClient swingClient = new SwingClient ();
     }
 
