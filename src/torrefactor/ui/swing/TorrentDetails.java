@@ -7,10 +7,10 @@ import java.awt.*;
 import java.util.*;
 import java.text.*;
 
-class TorrentDetails extends Container {
+class TorrentDetails extends Box {
     private Torrent torrent;
-    private Container containerA = new Container();
-    private Container containerB = new Container();
+    private Container columnA = Box.createVerticalBox();
+    private Container columnB = Box.createVerticalBox();
     private JLabel nameLabel = new JLabel("<html><b>Name:");
     private JLabel name = new JLabel();
     private JLabel authorLabel = new JLabel("<html><b>author:");
@@ -27,35 +27,55 @@ class TorrentDetails extends Container {
     private JLabel pieceSize = new JLabel();
 
     public TorrentDetails () {
-        super();
-        LayoutManager layout = new GridLayout (7, 1, 3, 3);
-        this.containerA.setLayout(layout);
-        this.containerB.setLayout(layout);
-        layout = new FlowLayout ();
-        setLayout(layout);
-        add(this.containerA);
-        add(this.containerB);
+        super(BoxLayout.X_AXIS);
+        add(this.columnA);
+        add(Box.createHorizontalStrut(5));
+        add(this.columnB);
+
+        //FIXME: we should choose the longer of all the label dynamically
+        Dimension min = this.creationDateLabel.getPreferredSize();
+
         this.nameLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-        this.containerA.add(this.nameLabel);
-        this.containerB.add(this.name);
+        this.nameLabel.setMaximumSize(min);
+        this.columnA.add(this.nameLabel);
+
+        this.columnB.add(this.name);
+
         this.authorLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-        this.containerA.add(this.authorLabel);
-        this.containerB.add(this.author);
+        this.authorLabel.setMaximumSize(min);
+        this.columnA.add(this.authorLabel);
+
+        this.columnB.add(this.author);
+
         this.creationDateLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-        this.containerA.add(this.creationDateLabel);
-        this.containerB.add(this.creationDate);
+        this.creationDateLabel.setMaximumSize(min);
+        this.columnA.add(this.creationDateLabel);
+
+        this.columnB.add(this.creationDate);
+
         this.sizeLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-        this.containerA.add(this.sizeLabel);
-        this.containerB.add(this.size);
+        this.sizeLabel.setMaximumSize(min);
+        this.columnA.add(this.sizeLabel);
+
+        this.columnB.add(this.size);
+
         this.pathLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-        this.containerA.add(this.pathLabel);
-        this.containerB.add(this.path);
+        this.pathLabel.setMaximumSize(min);
+        this.columnA.add(this.pathLabel);
+
+        this.columnB.add(this.path);
+
         this.piecesLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-        this.containerA.add(this.piecesLabel);
-        this.containerB.add(this.pieces);
+        this.piecesLabel.setMaximumSize(min);
+        this.columnA.add(this.piecesLabel);
+
+        this.columnB.add(this.pieces);
+
         this.pieceSizeLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-        this.containerA.add(this.pieceSizeLabel);
-        this.containerB.add(this.pieceSize);
+        this.pieceSizeLabel.setMaximumSize(min);
+        this.columnA.add(this.pieceSizeLabel);
+
+        this.columnB.add(this.pieceSize);
     }
 
     public void setTorrent (Torrent torrent) {
