@@ -160,4 +160,9 @@ public class PeerManager implements Runnable {
             this.peerMap.put(ip, new Peer(ip, port, this.torrent));
         }
     }
+
+    public Map<InetAddress, Peer> getPeerMap () {
+        if (this.peerMap == null) return null;
+        return Collections.unmodifiableMap(this.peerMap);
+    }
 }

@@ -238,4 +238,9 @@ public class Torrent implements Serializable {
 
         this.peerManager.stop();
     }
+
+    public Map<InetAddress, Peer> getPeerMap () {
+        if (this.peerManager == null) return null;
+        return this.peerManager.getPeerMap();
+    }
 }

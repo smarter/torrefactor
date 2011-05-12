@@ -691,6 +691,19 @@ public class Peer implements Runnable {
         return "Peer" + this.ip + ':' + this.port;
     }
 
+    public InetAddress getAddress () {
+        return this.ip;
+    }
+
+    public int getPort () {
+        return this.port;
+    }
+
+    public String getIdAsString () {
+        if (this.id == null) return "";
+        return  arrayToString(this.id);
+    }
+
     private static String arrayToString(byte[] data) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < data.length; i++) {

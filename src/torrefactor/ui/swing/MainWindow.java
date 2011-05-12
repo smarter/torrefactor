@@ -28,6 +28,7 @@ public class MainWindow implements ActionListener {
     private JTable torrentTable;
     private JTabbedPane tabbedPane;
     private TorrentDetails torrentDetails;
+    private TorrentPeers torrentPeers;
     private String basePath = "./data";
     private Timer tableTimer;
 
@@ -46,9 +47,11 @@ public class MainWindow implements ActionListener {
 
         this.tabbedPane = new JTabbedPane ();
         this.torrentDetails = new TorrentDetails ();
+        this.torrentPeers = new TorrentPeers ();
         this.tabbedPane.add (torrentDetails);
+        this.tabbedPane.add (torrentPeers);
 
-        // Selection event for details pane
+        // Selection event onTorrentSelected
         ListSelectionListener listener = new ListSelectionListener () {
             public void valueChanged(ListSelectionEvent event) {
                 int index = event.getFirstIndex();
@@ -169,6 +172,7 @@ public class MainWindow implements ActionListener {
 
     public void onTorrentSelected (Torrent torrent) {
         this.torrentDetails.setTorrent(torrent);
+        this.torrentPeers.setTorrent(torrent);
     }
 
     public void openTorrent (String path) {
