@@ -15,6 +15,10 @@ import torrefactor.util.*;
 import java.security.NoSuchAlgorithmException;
 import java.io.IOException;
 
+/**
+ * This class implements a table model to display the torrents handled by a
+ * TorrentManager.
+ */
 public class TorrentTableModel extends AbstractTableModel {
     private TorrentManager torrentManager;
     public String[] columnNames = {"Torrent", "Percentage", "Uploaded",
@@ -33,6 +37,10 @@ public class TorrentTableModel extends AbstractTableModel {
         return this.torrentManager.torrentList().get(row);
     }
 
+    /**
+     * Adds a new torrent to the TorrentManager and display it at the end of
+     * the table.
+     */
     public Torrent addTorrent(String directory, String basePath)
     throws IOException, InvalidBDecodeException, NoSuchAlgorithmException {
         Torrent t = this.torrentManager.addTorrent(directory, basePath);
@@ -41,28 +49,46 @@ public class TorrentTableModel extends AbstractTableModel {
         return t;
     }
 
+    /**
+     * Stops the TorrentManager.
+     */
     public void stop() {
         this.torrentManager.stop();
     }
 
+    /**
+     * Set the list of columns to be displayed in the table.
+     */
     public void setColumns(Column[] columns) {
         this.columns = columns;
         fireTableStructureChanged ();
     }
 
+    /**
+     * Returns the name of the column.
+     */
     public String getColumnName(int col) {
         int i = columns[col].ordinal();
         return this.columnNames[i];
     }
 
+    /**
+     * Returns the number of rows in the model.
+     */
     public int getRowCount() {
         return this.torrentManager.torrentList().size();
     }
 
+    /**
+     * Returns the number of columns in the model.
+     */
     public int getColumnCount() {
         return this.columns.length;
     }
 
+    /**
+     * Returns the content of the cell at the given position.
+     */
     public Object getValueAt(int row, int col) {
         Torrent torrent = this.torrentManager.torrentList().get(row);
         Column column = this.columns[col];
@@ -82,7 +108,9 @@ public class TorrentTableModel extends AbstractTableModel {
         return data;
     }
 
-    // FIXME: return a human readable representation of the long
+    /**
+     * Return a human readable representation of a long.
+     */
     private String humanReadable (long l) {
         long t;
         t = l / (8L * 1024L * 1024L * 1024L);
@@ -104,6 +132,9 @@ public class TorrentTableModel extends AbstractTableModel {
         return (t + "b");
     }
 
+    /**
+     * Returns whether the cell at the given position is editable or not.
+     */
     public boolean isCellEditable(int row, int col) {
         return false;
     }

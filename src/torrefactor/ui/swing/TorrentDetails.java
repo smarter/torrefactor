@@ -7,6 +7,9 @@ import java.awt.*;
 import java.util.*;
 import java.text.*;
 
+/**
+ * This container shows details about a particular torrent.
+ */
 class TorrentDetails extends Box {
     private Torrent torrent;
     private Container columnA = Box.createVerticalBox();
@@ -85,12 +88,18 @@ class TorrentDetails extends Box {
         this.columnB.add(this.pieceSize);
     }
 
+    /**
+     * Set the torrent whose details are displayed.
+     */
     public void setTorrent (Torrent torrent) {
         this.torrent = torrent;
         updateData();
     }
 
-    public void updateData() {
+    /**
+     * Updates all the components to show the information of this.torrent.
+     */
+    private void updateData() {
         this.name.setText(torrent.FILE_NAME);
         this.author.setText(torrent.getAuthor());
         this.creationDate.setText(
@@ -102,6 +111,10 @@ class TorrentDetails extends Box {
         this.pieceSize.setText(Integer.toString(torrent.getPieceSize()));
     }
 
+    /**
+     * Retuns the name of this container. (This sets the label of the tab if
+     * this container is added to a JTabbedPane.)
+     */
     public String getName() {
         return "Details";
     }
