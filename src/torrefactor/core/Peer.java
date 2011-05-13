@@ -47,8 +47,6 @@ public class Peer implements Runnable {
     private boolean isInterestedInUs = false;
     private byte[] reservedBytes;
 
-    static final int CONNECTION_TRIES = 5;
-
     // In milliseconds
     static final int CONNECT_TIMEOUT =  1000;
     static final int PEER_TIMEOUT =  2*60*1000;
@@ -71,50 +69,39 @@ public class Peer implements Runnable {
     }
 
     public void run() {
-        int tries = 0;
-        while (this.socket == null && (! this.isStopped)) {
-            try {
-                LOG.debug("Connecting: " + this.ip.toString()
-                                + ':' + this.port);
-                this.socket = new Socket();
-                this.socket.setSendBufferSize(SEND_BUFFER_SIZE);
-                this.socket.setReceiveBufferSize(RECEIVE_BUFFER_SIZE);
-                this.socket.setSoTimeout(PEER_TIMEOUT);
-                InetSocketAddress address = new InetSocketAddress(
-                                                        this.ip, this.port);
-                this.socket.connect(address, CONNECT_TIMEOUT);
+        try {
+            LOG.debug("Connecting: " + this.ip.toString()
+                      + ':' + this.port);
+            this.socket = new Socket();
+            this.socket.setSendBufferSize(SEND_BUFFER_SIZE);
+            this.socket.setReceiveBufferSize(RECEIVE_BUFFER_SIZE);
+            this.socket.setSoTimeout(PEER_TIMEOUT);
+            InetSocketAddress address = new InetSocketAddress(
+                                                              this.ip, this.port);
+            this.socket.connect(address, CONNECT_TIMEOUT);
 
-                // FIXME: Why do we need Buffered streams?
-                socketInput = new DataInputStream(
-                                  new BufferedInputStream(
-                                      this.socket.getInputStream()));
-                LOG.debug("Connected: " + this.ip.toString()
-                                + ':' + this.port);
-                socketOutput = new DataOutputStream(
-                                   new BufferedOutputStream(
-                                       this.socket.getOutputStream()));
-                if (!handshake()) {
-                    invalidate();
-                    return;
-                }
-                sendMessage(MessageType.bitfield, null,
-                            this.torrent.pieceManager.bitfield);
-                //TODO: remove, for testing only
-                setChoked(false);
-                setInteresting(true);
-            } catch (Exception e) {
-                e.printStackTrace();
-                tries++;
-                if (this.socket != null) {
-                    //this.socket.close();
-                }
-                this.socket = null;
-                if (tries == CONNECTION_TRIES) {
-                    LOG.error(e);
-                    invalidate();
-                    return;
-                }
+            // FIXME: Why do we need Buffered streams?
+            socketInput = new DataInputStream(
+                              new BufferedInputStream(
+                                  this.socket.getInputStream()));
+            LOG.debug("Connected: " + this.ip.toString()
+                      + ':' + this.port);
+            socketOutput = new DataOutputStream(
+                               new BufferedOutputStream(
+                                   this.socket.getOutputStream()));
+            if (!handshake()) {
+                invalidate();
+                return;
             }
+            sendMessage(MessageType.bitfield, null,
+                        this.torrent.pieceManager.bitfield);
+            //TODO: remove, for testing only
+            setChoked(false);
+            setInteresting(true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            invalidate();
+            return;
         }
         this.isConnected = true;
         long time = System.currentTimeMillis();
