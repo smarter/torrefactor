@@ -89,16 +89,14 @@ public class DataBlock {
     public void put(int offset, int length, byte[] block) {
         int arrayOffset = 0;
         int localOffset = offset;
+
         for (int i=0; i<buffers.length; i++) {
+            int bufferRemaining = buffers[i].limit() - localOffset;
             if (localOffset < buffers[i].limit()) {
-                buffers[i].position(localOffset);
-                do {
-                    if (arrayOffset >= length) {
-                        break;
-                    }
-                    buffers[i].put(block[arrayOffset]);
-                    arrayOffset ++;
-                } while (buffers[i].remaining()>0);
+                int cpLength;
+                cpLength = Math.min(length, bufferRemaining) ;
+                buffers[i].put(block, arrayOffset, cpLength);
+                arrayOffset += cpLength;
             }
 
             localOffset -= buffers[i].limit();
@@ -107,6 +105,7 @@ public class DataBlock {
             }
             LOG.debug(this, "%% Writing to " + offset + " length: " + length
                             + " at piece: " + this.pieceIndex);
+
         }
     }
 }
