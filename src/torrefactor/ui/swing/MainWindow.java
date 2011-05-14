@@ -85,20 +85,25 @@ public class MainWindow implements ActionListener {
         //itemStart.setEnabled(false);
         JMenuItem itemStop = new JMenuItem("Stop Downloading");
         //itemStop.setEnabled(false);
+        JMenuItem itemOptions = new JMenuItem("Options…");
         menuFile.add (itemOpen);
         menuFile.addSeparator();
         menuFile.add (itemStart);
         menuFile.add (itemStop);
+        menuFile.addSeparator();
+        menuFile.add (itemOptions);
         menuFile.addSeparator();
         menuFile.add (itemQuit);
         itemOpen.setActionCommand ("OpenTorrent");
         itemQuit.setActionCommand ("QuitClient");
         itemStart.setActionCommand ("StartDownload");
         itemStop.setActionCommand ("StopDownload");
+        itemOptions.setActionCommand ("Options…");
         itemOpen.addActionListener (this);
         itemQuit.addActionListener (this);
         itemStart.addActionListener (this);
         itemStop.addActionListener (this);
+        itemOptions.addActionListener (this);
 
         this.menuBar.add (menuFile);
     }
@@ -138,6 +143,9 @@ public class MainWindow implements ActionListener {
             this.torrentModel.fireTableRowsUpdated(
                                 0, this.torrentModel.getRowCount() - 1);
             this.torrentTable.repaint();
+        } else if (action.equals("Options…")) {
+            ConfigDialog d = new ConfigDialog(this.mainFrame);
+            d.setVisible(true);
         } else {
             LOG.error(this, "Unknown action command \"" + action + "\"");
         }
