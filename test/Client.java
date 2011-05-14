@@ -2,6 +2,7 @@ package test;
 
 import torrefactor.core.TorrentManager;
 import torrefactor.core.Torrent;
+import torrefactor.util.Config;
 
 public class Client {
     public static TorrentManager torrentManager;
@@ -15,6 +16,7 @@ public class Client {
                     "Usage: java test.Client <input.torrent> <output directory>");
             System.exit(1);
         }
+        new Config();
         torrentManager = new TorrentManager("");
         Torrent torrent = torrentManager.addTorrent(args[0], args[1]);
         torrent.start();

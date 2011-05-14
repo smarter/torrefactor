@@ -13,6 +13,7 @@ import java.security.SecureRandom;
  */
 public class Peer implements Runnable {
     private static Logger LOG = new Logger();
+    private static Config CONF = Config.getConfig();
     public enum MessageType {
         choke, unchoke, interested, not_interested, have, bitfield,
         request, piece, cancel, port,
@@ -55,6 +56,16 @@ public class Peer implements Runnable {
     // In bytes
     static final int SEND_BUFFER_SIZE = (1 << 18);
     static final int RECEIVE_BUFFER_SIZE = (1 << 18);
+
+    // StupidEncryption
+    static final int RSA_KEY_BITLENGTH = CONF.getPropertyInt(
+            "Peer.RsaKeyBitlength");
+    static final int XOR_LENGTH = CONF.getPropertyInt("Peer.XorLength");
+    static final boolean FORCE_STUPID_ENCRYPTION =
+        CONF.getPropertyBoolean("Peer.ForceStupidEncryption");
+    static final boolean USE_STUPID_ENCRYPTION =
+        CONF.getPropertyBoolean("Peer.UseStupidEncryption");;
+
 
     public Peer (InetAddress _ip, int _port, Torrent _torrent)
     throws UnknownHostException, IOException {
@@ -279,7 +290,9 @@ public class Peer implements Runnable {
         // Reserved bytes
         byte reserved[] = { 0, 0, 0, 0, 0, 0, 0, 0};
         //reserved[7] = 1; //DHT support
-        reserved[7] |= (1 << 4); // Stupid "encryption" protocol
+        if (USE_STUPID_ENCRYPTION) {
+            reserved[7] |= (1 << 4);
+        }
         socketOutput.write(reserved);
 
         socketOutput.write(torrent.infoHash);
@@ -318,8 +331,12 @@ public class Peer implements Runnable {
         LOG.debug("Handshake done: " + this.ip.toString() + ':'
                         + this.port + " id: " + arrayToString(this.id));
 
-        // Enable StupidEncryption if possible
-        stupidEncryptionSetup();
+        if (USE_STUPID_ENCRYPTION) {
+            boolean activated = stupidEncryptionSetup();
+            if ((! activated) && FORCE_STUPID_ENCRYPTION) {
+                return false;
+            }
+        }
 
         return true;
     }
@@ -334,9 +351,6 @@ public class Peer implements Runnable {
             // Peer does not support StupidEncryption
             return false;
         }
-
-        int RSA_KEY_BITLENGTH = 128;
-        int XOR_LENGTH = 128;
 
         Rsa rsa = new Rsa (RSA_KEY_BITLENGTH);
         Pair<DataInputStream, DataOutputStream> oldStreams = null;

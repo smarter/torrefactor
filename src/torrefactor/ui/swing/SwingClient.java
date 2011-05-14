@@ -3,6 +3,7 @@ package torrefactor.ui.swing;
 import torrefactor.core.TorrentManager;
 import torrefactor.core.Torrent;
 import torrefactor.util.Logger;
+import torrefactor.util.Config;
 
 import javax.swing.UIManager;
 import java.io.File;
@@ -21,6 +22,10 @@ public class SwingClient {
         System.setProperty("awt.useSystemAAFontSettings","on");
 
         setLookAndFeel();
+
+        // Initialize an instance of config using the default path for the
+        // config file.
+        new Config();
 
         SwingClient swingClient = new SwingClient ();
     }
