@@ -76,3 +76,16 @@ Semaine 8 (11/04), 9 (18/04) et 10 (vacances 25/04)
 - Travail pour implémenter DHT (http://www.bittorrent.org/beps/bep_0005.html)
 - Ajout de documentation dans diverses classes.
 - Début de l'implémentation de PEX. (http://en.wikipedia.org/wiki/Peer_exchange)
+
+Semaine 11 (2/05) et 12 (9/05)
+- Correction de problèmes avec la dernière pièce des torrents.
+- Correction de l'implémentation de l'encryption. Ne fonctionne toujours pas
+  avec client.jar (il plante avec une IndexArrayOutOfBound).
+- Ajout de détails sur le torrent séléctionné dans l'interface swing.
+- Ajout de javadoc dans quelques classes.
+- Ajout d'une classe pour gérer la configuration sous forme key=value.
+- Ajout d'un dialogue de configuration dans l'interface swing.
+- Implémentation de DHT bientôt terminée.
+- Utilisation de YourKit Java Profiler pour découvrir les méthodes à optimiser
+  http://www.yourkit.com/java/profiler/index.jsp
+- Correction d'une méthode très lente dans DataBlock.
