@@ -103,14 +103,14 @@ public class Torrent implements Serializable {
 
                 LinkedList<String> trackerList = new LinkedList<String>();
                 for (int i = 0; i < trackers.size(); i++) {
-                    trackerList.add(new String(trackers.get(i).toByteArray()));
+                    trackerList.add(trackers.get(i).toString());
                 }
                 announceList.add(trackerList);
             }
         } else {
             LOG.debug(this, "Single tracker mode");
             LinkedList<String> trackerList = new LinkedList<String>();
-            trackerList.add(new String(fileMap.get("announce").toByteArray()));
+            trackerList.add(fileMap.get("announce").toString());
             announceList.add(trackerList);
         }
         LOG.debug(this, "announceList: " + announceList);

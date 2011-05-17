@@ -1,14 +1,10 @@
 package torrefactor.util;
-import torrefactor.util.InvalidBDecodeException;
-import torrefactor.util.BValue;
 
-import java.io.InputStream;
-import java.io.PushbackInputStream;
-import java.security.DigestInputStream;
-import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.HashMap;
+import torrefactor.util.*;
+
+import java.io.*;
+import java.security.*;
+import java.util.*;
 
 public class BDecode {
     private static BValue decode(InputStream stream)
@@ -108,7 +104,7 @@ public class BDecode {
         return list;
     }
 
-    static public HashMap<String, BValue> decodeDict(InputStream stream)
+    static public Map<String, BValue> decodeDict(InputStream stream)
     throws java.io.IOException, InvalidBDecodeException {
         try {
             return decodeDict(stream, null, null);
@@ -118,7 +114,7 @@ public class BDecode {
         }
     }
 
-    static public HashMap<String, BValue>
+    static public Map<String, BValue>
     decodeDict(InputStream stream, String hashTag, byte[] hashArray)
     throws java.io.IOException, java.security.NoSuchAlgorithmException,
            InvalidBDecodeException {

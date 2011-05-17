@@ -3,15 +3,10 @@ package test.util;
 import java.io.*;
 import java.util.*;
 
-import org.junit.Test;
-import org.junit.Assert;
+import org.junit.*;
 import static org.junit.Assert.*;
 
-import torrefactor.util.BDecode;
-import torrefactor.util.BEncode;
-import torrefactor.util.BValue;
-import torrefactor.util.InvalidBDecodeException;
-
+import torrefactor.util.*;
 
 public class BEncodeTest {
     public static void main (String[] args) {
@@ -21,11 +16,11 @@ public class BEncodeTest {
     @Test public void DecodeEncodeDecode()
     throws IOException, InvalidBDecodeException {
         InputStream origStream = new FileInputStream("data/Ocarina_of_Time__Complete_Collection_-_Zelda_Reorchestrated.5241636.TPB.torrent");
-        HashMap<String, BValue> decoded1 = BDecode.decodeDict(origStream);
+        Map<String, BValue> decoded1 = BDecode.decodeDict(origStream);
         //System.out.println("XX");
         byte[] encoded = BEncode.encode(new BValue(decoded1));
         InputStream encStream = new ByteArrayInputStream(encoded);
-        HashMap<String, BValue> decoded2 = BDecode.decodeDict(encStream);
+        Map<String, BValue> decoded2 = BDecode.decodeDict(encStream);
         //System.out.println(decoded1.toString());
         //System.out.println(decoded2.toString());
         /*for (Map.Entry<String, BValue> dec1 : decoded1.entrySet()) {

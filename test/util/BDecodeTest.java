@@ -1,17 +1,12 @@
 package test.util;
 
-import java.io.InputStream;
-import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.io.*;
+import java.util.*;
 
-import org.junit.Test;
-import org.junit.Assert;
+import org.junit.*;
 import static org.junit.Assert.*;
 
-import torrefactor.util.BDecode;
-import torrefactor.util.BValue;
-import torrefactor.util.InvalidBDecodeException;
+import torrefactor.util.*;
 
 
 public class BDecodeTest {
@@ -55,7 +50,7 @@ public class BDecodeTest {
         String string = "d3:Foo3:Bar11:coffee cupsi849ee";
         InputStream stream = new ByteArrayInputStream(string.getBytes());
 
-        HashMap<String, BValue> result = BDecode.decodeDict(stream);
+        Map<String, BValue> result = BDecode.decodeDict(stream);
 
         assertTrue(new String(result.get("Foo").toByteArray()).equals("Bar"));
         assertTrue(result.get("coffee cups").toInt() == 849);

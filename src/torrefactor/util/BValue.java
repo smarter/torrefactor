@@ -26,7 +26,7 @@ public class BValue {
         this.value = list;
     }
 
-    public BValue(HashMap<String, BValue> map) {
+    public BValue(Map<String, BValue> map) {
         this.value = map;
     }
 
