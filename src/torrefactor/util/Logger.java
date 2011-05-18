@@ -42,6 +42,18 @@ public class Logger {
         }
     }
 
+    public void error (Object obj) {
+        if (this.enabled) {
+            error (this.headerObject, obj);
+        }
+    }
+
+    public void error (Object object, Object obj) {
+        if (this.enabled) {
+            log.log (Log.ERROR | this.localFlag, object, String.valueOf(obj));
+        }
+    }
+
     public void error (Exception e) {
         error (this.headerObject, e);
     }
@@ -63,6 +75,18 @@ public class Logger {
         }
     }
 
+    public void warning (Object obj) {
+        if (this.enabled) {
+            warning (this.headerObject, obj);
+        }
+    }
+
+    public void warning (Object object, Object obj) {
+        if (this.enabled) {
+            log.log (Log.WARNING | this.localFlag, object, String.valueOf(obj));
+        }
+    }
+
     public void info (String message) {
         info (this.headerObject, message);
     }
@@ -73,6 +97,18 @@ public class Logger {
         }
     }
 
+    public void info (Object obj) {
+        if (this.enabled) {
+            info (this.headerObject, obj);
+        }
+    }
+
+    public void info (Object object, Object obj) {
+        if (this.enabled) {
+            log.log (Log.INFO | this.localFlag, object, String.valueOf(obj));
+        }
+    }
+
     public void debug (String message) {
         debug (this.headerObject, message);
     }
@@ -80,6 +116,18 @@ public class Logger {
     public void debug (Object object, String message) {
         if (this.enabled) {
             log.log (Log.DEBUG | this.localFlag, object, message);
+        }
+    }
+
+    public void debug (Object obj) {
+        if (this.enabled) {
+            debug (this.headerObject, obj);
+        }
+    }
+
+    public void debug (Object object, Object obj) {
+        if (this.enabled) {
+            log.log (Log.DEBUG | this.localFlag, object, String.valueOf(obj));
         }
     }
 }
