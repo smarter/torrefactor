@@ -24,6 +24,7 @@ public class MainWindow implements ActionListener {
 
     private JFrame mainFrame;
     private JMenuBar menuBar;
+    private JSplitPane splitPane;
     private JScrollPane torrentPane;
     private TorrentTableModel torrentModel;
     private JTable torrentTable;
@@ -62,9 +63,15 @@ public class MainWindow implements ActionListener {
         this.torrentTable.getSelectionModel()
             .addListSelectionListener(listener);
 
+        this.splitPane = new JSplitPane(
+                JSplitPane.VERTICAL_SPLIT,
+                this.torrentPane,
+                this.tabbedPane);
+        this.splitPane.setContinuousLayout(true);
+        this.splitPane.setResizeWeight(1);
+
         contentPane.add (this.menuBar, BorderLayout.PAGE_START);
-        contentPane.add (this.torrentPane, BorderLayout.CENTER);
-        contentPane.add (this.tabbedPane, BorderLayout.PAGE_END);
+        contentPane.add (this.splitPane, BorderLayout.CENTER);
 
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
