@@ -2,38 +2,54 @@
 ...
 
 * IO synchrone vs asynchrone:
-  Choix de java.io et du modèle "une connexion par thread" plutôt que
-de java.nio et d'un seul thread dispatchant les messages car l'API de
-java.nio est bien plus complexe[0] et semble être moins performante
-que java.io[1], contrairement à ce qu'on pourraît croire.
+  Choix de java.io et du modèle "une connexion par thread" plutôt que de
+  java.nio et d'un seul thread dispatchant les messages car l'API de java.nio
+  est bien plus complexe[0] et semble être moins performante que java.io[1],
+  contrairement à ce qu'on pourraît croire.
 
 * Écriture sur le disque:
-  Utilisation de MappedByteBuffer qui équivaut à la fonction "mmap" en
-C qui permet d'utiliser de la mémoire virtuelle pour écrire dans des
-fichiers. Ceci laisse au système d'exploitation le choix du moment ou
-l'écriture sur le disque doit être réellement faite. Par rapport à la
-méthode de l'implémentation proposée, cette méthode présente
-l'avantage de ne pas à avoir atteindre qu'une pièce soit totalement
-réceptionnée avant de l'écrire sur le disque. Ceci permet d'éviter des
-pertes importantes de données lors de la fermeture, étant donné que
-beaucoup de blocs risquent de n'être que partiellement téléchargés.
-  La seule contrainte est la taille maximale de mémoire virtuelle
-allouée en même temps qui est limité à 4 Go sur les systèmes 32 bits.
+  Utilisation de MappedByteBuffer qui équivaut à la fonction "mmap" en C qui
+  permet d'utiliser de la mémoire virtuelle pour écrire dans des fichiers. Ceci
+  laisse au système d'exploitation le choix du moment ou l'écriture sur le
+  disque doit être réellement faite. Par rapport à la méthode de
+  l'implémentation proposée, cette méthode présente l'avantage de ne pas à
+  avoir attendre qu'une pièce soit totalement réceptionnée avant de l'écrire
+  sur le disque. Ceci permet d'éviter des pertes importantes de données lors de
+  la fermeture, étant donné que beaucoup de blocs risquent de n'être que
+  partiellement téléchargés.
+  La seule contrainte est la taille maximale de mémoire virtuelle allouée en
+  même temps par process qui est limité à:
+	- 3Go (linux x86-32 with default configuration)
+	- 2Go (NT 32-bit and 64-bit executable linked without LARGEADDRESSAWARE:YES
+	  on NT 64-bit)
+	- 4Go(32-bit executable linked with LARGEADDRESSAWARE:YES on NT 64-bit)
+	- At least 8To (64-bit executable on linux x86-64, 64-bit executable linked
+	  with LARGEADDRESSAWARE:YES on NT 64-bit)
+
+  Mais comme java map la mémoire avec des integers et que ceux-ci sont
+  obligatoirement signés, on est en fait limité à 2Go de mémoire virtuelle par
+  bloc puisque les adresses supérieures ne peuvent pas être adressées…
+
+  Cependant on ne map pas les fichiers en entier en mémoire mais seulement les
+  parties qu'on est en train d'utiliser (1 DataBlock correspond à un bout de
+  torrent mapé en mémoire. Mais comme java ne permet pas de maper de manière
+  contiguë plusieus bout de fichier, 1 DataBlock peut donc correspondre à
+  plusieurs bouts de fichier mapé de manière aléatoire en mémoire
+  virtuelle.
 
 * Gestion des blocks dans les pièces.
-  IntervalMap est une classe créée pour gérer l'ajout, la suppression
-et permettant de trouver l'intervale dans laquelle un point est. Elle
-est implémentée à l'aide de java.util.TreeMap qui est un arbre
-rouge-noir[2] dont les clés sont les débuts d'intervales et les
-valeurs les fins d'intervales. Ceci permet l'ajout et la suppression
-d'intervales en O(n*log(n)) et la recherche de l'intervale
-correspondant dans laquelle un point est en O(log(n)).
-  SawToothIntervalMap est utilisée pour gérer les blocks dont l'ajout
-est temporaire, c'est à dire les requêtes "piece", qui peuvent ne pas
-réussir(on ne peut les ignorer sans risquer de demander les même
-blocks à différentes pièces). On ne peut simplement utiliser
-IntervalMap car la suppression d'intervale est en O(n*log(n)) et donc
-coûteuse à réaliser à chaque requête.
+  IntervalMap est une classe créée pour gérer l'ajout, la suppression et
+  permettant de trouver l'intervale dans laquelle un point est. Elle est
+  implémentée à l'aide de java.util.TreeMap qui est un arbre rouge-noir[2] dont
+  les clés sont les débuts d'intervales et les valeurs les fins d'intervales.
+  Ceci permet l'ajout et la suppression d'intervales en O(n*log(n)) et la
+  recherche de l'intervale correspondant dans laquelle un point est en
+  O(log(n)).
+  SawToothIntervalMap est utilisée pour gérer les blocks dont l'ajout est
+  temporaire, c'est à dire les requêtes "piece", qui peuvent ne pas réussir(on
+  ne peut les ignorer sans risquer de demander les même blocks à différentes
+  pièces). On ne peut simplement utiliser IntervalMap car la suppression
+  d'intervale est en O(n*log(n)) et donc coûteuse à réaliser à chaque requête.
 
 * Tracker UDP:
   Implémentation de la BEP 15[3] dans la classe UdpTracker.
@@ -42,22 +58,21 @@ coûteuse à réaliser à chaque requête.
   Comme décrit dans la BEP 3[4] et sur wiki.theory.org[5]
 
 * Support DHT:
-  DHT(pour Distributed Hash Table) est une extension du protocole
-BitTorrent. Elle permet l'échanges de nouveaux peers entre peers sans
-passer par un tracker, rendant ainsi le protocole totalement
-peer-to-peer. Elle est spécifiée dans la BEP 5[6] et est basée sur
-Kademlia[7][8].
+  DHT(pour Distributed Hash Table) est une extension du protocole BitTorrent.
+  Elle permet l'échanges de nouveaux peers entre peers sans passer par un
+  tracker, rendant ainsi le protocole totalement peer-to-peer. Elle est
+  spécifiée dans la BEP 5[6] et est basée sur Kademlia[7][8].
   Dans notre client, elle est implémentée de la manière suivante:
-- Node représente un "node" DHT, c'est à dire un peer auquel on peut
-envoyer des requêtes DHT sur un port spécifique.
-- Bucket contient 8 nodes DHT et supprime les anciens lorsque de
-nouveaux sont ajoutés si les anciens sont inaccessibles.
-- NodeConnector gère la réception et l'envoi de messages DHT.
-- NodeManager est un singleton qui gère la Map <info_hash, info du
-peer> de notre node DHT, contient les Buckets de node(le bucket dans
-lequel un node va dépend de son préfixe comment avec notre id) et
-implémente les algorithmes de recherche de noeuds décrit dans [8].
-- KRPCMessage représente un message du protocole DHT.
+   - Node représente un "node" DHT, c'est à dire un peer auquel on peut envoyer
+	 des requêtes DHT sur un port spécifique.
+   - Bucket contient 8 nodes DHT et supprime les anciens lorsque de nouveaux
+	 sont ajoutés si les anciens sont inaccessibles.
+   - NodeConnector gère la réception et l'envoi de messages DHT.
+   - NodeManager est un singleton qui gère la Map <info_hash, info du peer> de
+	 notre node DHT, contient les Buckets de node(le bucket dans lequel un node
+	 va dépend de son préfixe comment avec notre id) et implémente les
+	 algorithmes de recherche de noeuds décrit dans [8].
+   - KRPCMessage représente un message du protocole DHT.
 
 [0]: http://tutorials.jenkov.com/java-nio/index.html
 [1]: http://paultyma.blogspot.com/2008/03/writing-java-multithreaded-servers.html
