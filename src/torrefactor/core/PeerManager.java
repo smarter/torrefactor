@@ -1,4 +1,5 @@
 package torrefactor.core;
+
 import torrefactor.core.*;
 import torrefactor.util.*;
 
@@ -33,7 +34,9 @@ public class PeerManager implements Runnable {
     static final int ANNOUNCE_DELAY = 30*60*1000;
     static final int SLEEP_DELAY = 10;
     // Number of blocks requested at the same time per peer
-    static final int BLOCKS_PER_REQUEST = 10;
+    static final int MAX_QUEUED_REQUESTS = 10;
+    // Time to sleep before retrying annouce when no tracker responded
+    static final int TRACKER_RETRY_SLEEP = 5000;
 
     public PeerManager(Torrent _torrent) {
         this.stopped = true;
@@ -55,7 +58,11 @@ public class PeerManager implements Runnable {
         long time = System.currentTimeMillis();
         try {
             List<Pair<byte[], Integer>> peersList;
-            peersList = this.trackerManager.announce(Tracker.Event.started);
+            peersList = null;
+            while (peersList == null) {
+                peersList = this.trackerManager.announce(Tracker.Event.started);
+                Thread.sleep(TRACKER_RETRY_SLEEP);
+            }
             this.peersReceived = peersList.size();
             updateMap(peersList);
         } catch (Exception e) {
@@ -64,7 +71,9 @@ public class PeerManager implements Runnable {
         }
         stopped = false;
         while (!stopped) {
-            if (System.currentTimeMillis() - time > ANNOUNCE_DELAY || peerMap.size() <= this.peersReceived / 2) {
+
+            if (System.currentTimeMillis() - time > ANNOUNCE_DELAY ||
+                    peerMap.size() <= this.peersReceived / 2) {
                 try {
                     List<Pair<byte[], Integer>> peersList;
                     peersList = this.trackerManager.announce(
@@ -76,6 +85,7 @@ public class PeerManager implements Runnable {
                 }
                 time = System.currentTimeMillis();
             }
+
             int i = MAX_PEERS - activeMap.size();
             for (Map.Entry<InetAddress, Peer> peerEntry : peerMap.entrySet()) {
                 if (activeMap.containsKey(peerEntry.getKey())) continue;
@@ -84,35 +94,64 @@ public class PeerManager implements Runnable {
                 i--;
                 if (i == 0) break;
             }
-            Iterator<Map.Entry<InetAddress, Peer>> it = activeMap.entrySet().iterator();
+
+            ArrayList<Integer> newPieces =
+                this.torrent.pieceManager.popToAnnounce();
+            Iterator<Map.Entry<InetAddress, Peer>> it =
+                activeMap.entrySet().iterator();
             while (it.hasNext()) {
+
                 Map.Entry<InetAddress, Peer> peerEntry = it.next();
-                if (!peerEntry.getValue().isValid()) {
+                Peer peer = peerEntry.getValue();
+                InetAddress peerAddress = peerEntry.getKey();
+                if (!peer.isValid()) {
                     it.remove();
-                    this.peerMap.remove(peerEntry.getKey());
+                    this.peerMap.remove(peerAddress);
                     continue;
                 }
-                if (!peerEntry.getValue().isConnected() || peerEntry.getValue().isChokingUs()
-                    || peerEntry.getValue().isQueueFull()) {
-                    //LOG.debug(this, ".");
+
+                for (int piece: newPieces) {
+                    peer.sendHave(piece);
+
+                    if (ByteArrays.isComplete(
+                                this.torrent.pieceManager.bitfield)) {
+                        LOG.debug("Torrent is complete");
+                        if (ByteArrays.isComplete(peer.bitfield)) {
+                            peer.invalidate();
+                            it.remove();
+                            this.peerMap.remove(peerAddress);
+                            continue;
+                        }
+                    }
+                }
+
+                if (!peer.canRequest()) {
+                    //LOG.debug("Cannot request to: " + peer);
                     continue;
                 }
+
                 this.torrent.incrementDownloaded(
-                                        peerEntry.getValue().popDownloaded());
+                        peer.popDownloaded());
                 this.torrent.incrementUploaded(
-                                        peerEntry.getValue().popUploaded());
+                        peer.popUploaded());
+
                 try {
-                    List<DataBlockInfo> infoList = this.torrent.pieceManager.getFreeBlocks(peerEntry.getValue().bitfield(), BLOCKS_PER_REQUEST);
+                    List<DataBlockInfo> infoList =
+                        this.torrent.pieceManager.getFreeBlocks(
+                                peer.bitfield,
+                                MAX_QUEUED_REQUESTS);
+
                     Iterator<DataBlockInfo> iter = infoList.iterator();
                     while (iter.hasNext()) {
-                        peerEntry.getValue().queueRequest(iter.next());
+                        peer.sendRequest(iter.next());
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
-                    peerEntry.getValue().invalidate();
+                    peer.invalidate();
                     //removeBlock
                 }
             }
+
             try {
                 Thread.currentThread().sleep(SLEEP_DELAY);
             } catch (InterruptedException e) {
@@ -121,9 +160,9 @@ public class PeerManager implements Runnable {
             }
         }
 
-        // peerManager is now stopped
+       // peerManager is now stopped
        for (Map.Entry<InetAddress, Peer> entry : this.peerMap.entrySet()) {
-            entry.getValue().stop();
+            entry.getValue().invalidate();
        }
 
     }
@@ -139,11 +178,6 @@ public class PeerManager implements Runnable {
     private void updateMap(List<Pair<byte[], Integer>> peersList)
     throws IOException, UnknownHostException {
         Map<InetAddress, Peer> oldMap = new HashMap<InetAddress, Peer>(peerMap);
-        if (peersList == null) {
-            LOG.debug("updateMap: peersList is null");
-            // HACK: Crash to avoid infinite error loop with tracker.jar
-            //return;
-        }
         for (Pair<byte[], Integer> p: peersList) {
             LOG.debug(this, "Updating peerMap...");
             InetAddress addr = InetAddress.getByAddress(p.first());

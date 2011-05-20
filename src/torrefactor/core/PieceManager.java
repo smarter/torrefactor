@@ -19,11 +19,16 @@ public class PieceManager implements Serializable {
     //Map of the downloaded blocks
     public IntervalMap intervalMap;
     //map of the requested but not yet downloaded blocks
-    private SawToothIntervalMap requestedMap;
+    private transient SawToothIntervalMap requestedMap;
 
     DataManager dataManager;
     public byte[] bitfield;
     byte[] digestArray;
+
+
+    // List of pieces for which we should send have messages.
+    transient Object pieceToAnnounceLock = new Object();
+    ArrayList<Integer> pieceToAnnounce = new ArrayList<Integer>();
 
     //Recommended by http://wiki.theory.org/BitTorrentSpecification#request:_.3Clen.3D0013.3E.3Cid.3D6.3E.3Cindex.3E.3Cbegin.3E.3Clength.3E
     static final int BLOCK_SIZE = (1 << 14); // in bytes
@@ -87,7 +92,7 @@ public class PieceManager implements Serializable {
      * in either the map of downloaded or the map of requested blocks
      */
     private long nextFreeByte(long offset) {
-        long reqOffset;
+        long reqOffset = 0;
         do {
             reqOffset = this.requestedMap.nextFreePoint(offset);
             offset = this.intervalMap.nextFreePoint(reqOffset);
@@ -136,9 +141,12 @@ public class PieceManager implements Serializable {
     throws IOException, NoSuchAlgorithmException {
         long pieceBegin = piece * this.dataManager.pieceLength();
         int pieceLength = this.dataManager.pieceLength();
+
+        // Last piece has different size
         if (piece == this.dataManager.pieceNumber() - 1) {
             pieceLength = (int) (this.dataManager.totalSize() - pieceBegin);
         }
+
         if (!this.intervalMap.containsInterval(pieceBegin, pieceLength)) {
             return false;
         }
@@ -155,12 +163,27 @@ public class PieceManager implements Serializable {
         int byteIndex = piece / 8;
         this.bitfield[byteIndex] |= 1 << (7 - (piece % 8));
         LOG.debug(this, "~~ Valid piece " + piece);
-        //TODO: send "have" message to peers
+
+        synchronized (this.pieceToAnnounceLock) {
+            this.pieceToAnnounce.add(piece);
+        }
+        
         return true;
+    }
+
+    public ArrayList<Integer> popToAnnounce () {
+        ArrayList<Integer> list;
+        synchronized (this.pieceToAnnounceLock) {
+            list = this.pieceToAnnounce;
+            this.pieceToAnnounce = new ArrayList<Integer>();
+        }
+        return list;
     }
 
     private void readObject(ObjectInputStream in)
     throws IOException, ClassNotFoundException {
         in.defaultReadObject();
+        this.requestedMap = new SawToothIntervalMap(50);
+        this.pieceToAnnounceLock = new Object();
     }
 }

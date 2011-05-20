@@ -11,534 +11,190 @@ import java.security.SecureRandom;
 /**
  * A Bittorent peer with the ability to read and write messages to.
  */
-public class Peer implements Runnable {
+public class Peer implements Runnable, PeerConnectionListener  {
     private static Logger LOG = new Logger();
     private static Config CONF = Config.getConfig();
-    public enum MessageType {
-        choke, unchoke, interested, not_interested, have, bitfield,
-        request, piece, cancel, port,
-        sendRSAKey, sendSymmetricKey,
-        keepalive, invalid
-    } // keepalive and invalid MUST be the last two elements of the enum
 
-    private Queue<DataBlockInfo> outQueue;
+    static final int PEER_TIMEOUT =  2*60*1000; // in ms
+    static final int SLEEP_DELAY = 10; // in ms
 
-    // Numbers of answers we're waiting for
-    private volatile int requested;
+    private LinkedList<Message> msgOutQueue;
+    private LinkedList<DataBlockInfo> peerRequestQueue;
+    private LinkedList<DataBlockInfo> ownRequestQueue;
 
     private volatile boolean isValid = true;
     private volatile boolean isStopped = false;
-    private boolean isConnected = false;
 
     byte[] id;
-    private InetAddress ip;
+    private byte[] reservedBytes;
+    private InetAddress address;
     private int port;
     private Torrent torrent;
-    private Socket socket;
-    private DataInputStream socketInput;
-    private DataOutputStream socketOutput;
+    private PeerConnection connection;
+
     //FIXME we likely should use AtomicLong for downloaded and uploaded
     private long downloaded = 0;
     private long uploaded = 0;
 
-    private byte[] bitfield;
-    private boolean isChoked = true;
-    private boolean isChokingUs = true;
-    private boolean isInteresting = false;
-    private boolean isInterestedInUs = false;
-    private byte[] reservedBytes;
-
-    // In milliseconds
-    static final int CONNECT_TIMEOUT =  1000;
-    static final int PEER_TIMEOUT =  2*60*1000;
-    static final int SLEEP_DELAY = 10;
-
-    // In bytes
-    static final int SEND_BUFFER_SIZE = (1 << 18);
-    static final int RECEIVE_BUFFER_SIZE = (1 << 18);
-
-    // StupidEncryption
-    static final int RSA_KEY_BITLENGTH = CONF.getPropertyInt(
-            "Peer.RsaKeyBitlength");
-    static final int XOR_LENGTH = CONF.getPropertyInt("Peer.XorLength");
-    static final boolean FORCE_STUPID_ENCRYPTION =
-        CONF.getPropertyBoolean("Peer.ForceStupidEncryption");
-    static final boolean USE_STUPID_ENCRYPTION =
-        CONF.getPropertyBoolean("Peer.UseStupidEncryption");;
+    public byte[] bitfield;
+    private byte[] reserved;
+    private volatile boolean isChoked = true;
+    private volatile boolean isChokingUs = true;
+    private volatile boolean isInteresting = false;
+    private volatile boolean isInterestedInUs = false;
 
 
-    public Peer (InetAddress _ip, int _port, Torrent _torrent)
+
+    public Peer (InetAddress address, int port, Torrent torrent)
     throws UnknownHostException, IOException {
-        this.outQueue = new LinkedList<DataBlockInfo>();
-        this.id = null;
-        this.ip = _ip;
-        this.port = _port;
-        this.torrent = _torrent;
+        this.msgOutQueue = new LinkedList<Message>();
+        this.peerRequestQueue = new LinkedList<DataBlockInfo>();
+        this.ownRequestQueue = new LinkedList<DataBlockInfo>();
+        this.address = address;
+        this.port = port;
+        this.torrent = torrent;
         this.bitfield = new byte[this.torrent.pieceManager.bitfield.length];
         Arrays.fill(this.bitfield, (byte) 0);
         LOG.setHeader(this.toString());
+
+        this.connection = new PeerConnection (address, port, this);
     }
+
 
     public void run() {
         try {
-            LOG.debug("Connecting: " + this.ip.toString()
-                      + ':' + this.port);
-            this.socket = new Socket();
-            this.socket.setSendBufferSize(SEND_BUFFER_SIZE);
-            this.socket.setReceiveBufferSize(RECEIVE_BUFFER_SIZE);
-            this.socket.setSoTimeout(PEER_TIMEOUT);
-            InetSocketAddress address = new InetSocketAddress(
-                                                              this.ip, this.port);
-            this.socket.connect(address, CONNECT_TIMEOUT);
+            this.connection.connect();
+            
+            byte reserved[] = { 0, 0, 0, 0, 0, 0, 0, 0};
+            //reserved[7] = 1; //DHT support
+            if (CONF.getPropertyBoolean("Peer.UseStupidEncryption")) {
+                reserved[7] |= (1 << 4);
+            }
 
-            // FIXME: Why do we need Buffered streams?
-            socketInput = new DataInputStream(
-                              new BufferedInputStream(
-                                  this.socket.getInputStream()));
-            LOG.debug("Connected: " + this.ip.toString()
-                      + ':' + this.port);
-            socketOutput = new DataOutputStream(
-                               new BufferedOutputStream(
-                                   this.socket.getOutputStream()));
-            if (!handshake()) {
+            boolean handshake = this.connection.handshake (
+                    this.torrent.infoHash,
+                    reserved,
+                    this.torrent.peerManager.peerId); 
+            if (!handshake) {
                 invalidate();
                 return;
             }
-            sendMessage(MessageType.bitfield, null,
-                        this.torrent.pieceManager.bitfield);
+            LOG.debug("Handshake done");
+            
+            Message bitfield = new BitfieldMessage(
+                    this.torrent.pieceManager.bitfield);
+            this.connection.send(bitfield);
+        } catch (Exception e) {
+            invalidate();
+            e.printStackTrace();
+        }
+
             //TODO: remove, for testing only
             setChoked(false);
             setInteresting(true);
-        } catch (Exception e) {
-            e.printStackTrace();
-            invalidate();
-            return;
-        }
-        this.isConnected = true;
-        long time = System.currentTimeMillis();
-        while (this.isValid && (! this.isStopped)) {
-            try {
-                readMessage();
+
+        try {
+            long time = System.currentTimeMillis();
+            while (this.connection.isConnected() && this.isValid) {
+                Message r = null;
+                int count = 0;
+                while (r == null && count < 10) {
+                    r = this.connection.receive();
+                    try {
+                        Thread.currentThread().sleep(SLEEP_DELAY);
+                    } catch (InterruptedException e) {
+                        LOG.debug("Got InterruptedException while sleeping.");
+                        Thread.currentThread().interrupt();
+                        invalidate();
+                    }
+                    count++;
+                }
+
+                while (this.msgOutQueue.size() > 0) {
+                    Message msg = this.msgOutQueue.poll();
+                    this.connection.send(msg);
+                }
+
+                if (this.ownRequestQueue.size() > 0) {
+                    DataBlockInfo info = this.ownRequestQueue.poll();
+                    Message msg = new RequestMessage(info);
+                    this.connection.send(msg);
+                }
+
+                if (this.peerRequestQueue.size() > 0) {
+                    DataBlockInfo info = this.peerRequestQueue.poll();
+                    sendBlock(info);
+                }
+
                 if (System.currentTimeMillis() - time > PEER_TIMEOUT / 2) {
                     keepAlive();
                     time = System.currentTimeMillis();
                 }
-                if (socketInput.available() != 0) {
-                    continue;
-                }
-            } catch (IOException e) {
-                LOG.error(e);
-                invalidate();
-                return;
+                
             }
-            try {
-                Thread.currentThread().sleep(SLEEP_DELAY);
-            } catch (InterruptedException e) {
-                LOG.debug("Got InterruptedException while sleeping.");
-                Thread.currentThread().interrupt();
-                invalidate();
-                return;
-            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            invalidate();
         }
-        if ( (this.socket != null) && (! this.socket.isClosed())) {
-            try {
-                this.socket.close();
-            } catch (IOException e) {
-                LOG.error ("While closing socket of "
-                                 + this.ip + " " + this.port + ":");
-                LOG.error (e.getMessage());
-            }
+    }
+
+    private void sendBlock(DataBlockInfo info)
+    throws IOException {
+        byte[] block = null;
+        try {
+            block = this.torrent.pieceManager.getBlock(
+                    info.pieceIndex, info.offset, info.length);
+        } catch (Exception e) {
+            LOG.error("Exception while getting block:");
+            e.printStackTrace();
         }
+
+        if (block == null) {
+            LOG.debug("Block is null " +  info);
+        }
+        Message msg = new PieceMessage(
+                info.pieceIndex, info.offset, block);
+        this.connection.send(msg);
+    }
+
+    private void keepAlive() throws IOException {
+        Message msg = new KeepAliveMessage();
+        this.msgOutQueue.offer(msg);
     }
     
-    /**
-     * Reads the header of the message and return the MessageType and the
-     * length of the message.
-     */
-    private Pair<MessageType, Integer> getMessage() throws IOException {
-        int length = socketInput.readInt();
-        LOG.debug("getMessage: length = " + length);
-        if (length == 0) {
-            return new Pair<MessageType, Integer>(MessageType.keepalive,
-                                                  length);
-        }
-        int typeByte = socketInput.read();
-        length--;
-        int lastTypeByte = MessageType.values()[MessageType.values().length-3]
-                                                                    .ordinal();
-        if (typeByte < 0 || typeByte > lastTypeByte) {
-            LOG.warning("Got unknown message " + typeByte
-                              + " with length: " + length + " "
-                              + arrayToString(this.id));
-            return new Pair<MessageType, Integer>(MessageType.invalid, length);
-        }
-        MessageType type = MessageType.values()[typeByte];
-        LOG.debug("getMessage: type = " + type.toString());
-        
-        return new Pair<MessageType, Integer>(type, length);
-    }
-
-    private void readMessage() throws IOException {
-        Pair<MessageType, Integer> pair = getMessage();
-        MessageType type = pair.first();
-        int length = pair.second();
-
-        readMessage(type, length);
-    }
-
-    private void readMessage(MessageType type, int length)
-    throws IOException {
-        LOG.debug("Got message " + type.toString() + " "
-                        + arrayToString(this.id) + " " + length);
-        switch (type) {
-        case choke: {
-            this.isChokingUs = true;
-            break;
-        }
-        case unchoke: {
-            this.isChokingUs = false;
-            break;
-        }
-        case interested: {
-            this.isInterestedInUs = true;
-            break;
-        }
-        case not_interested: {
-            this.isInterestedInUs = false;
-            break;
-        }
-        case have: {
-            int index = socketInput.readInt();
-            int byteIndex = index / 8;
-            this.bitfield[byteIndex] |= 1 << 7 - (index % 8);
-            break;
-        }
-        case bitfield: {
-            if (length != this.bitfield.length) {
-                LOG.debug("Wrong bitfield length, got: " + length
-                                + " expected: " + this.bitfield.length);
-            }
-            socketInput.readFully(this.bitfield);
-            break;
-        }
-        case request: {
-            int index = socketInput.readInt();
-            int offset = socketInput.readInt();
-            int blockLength = socketInput.readInt();
-            LOG.debug("Request, index: " + index
-                            + " offset: " + offset
-                            + " blockLength : " + blockLength);
-            byte[] block = this.torrent.pieceManager.getBlock(index, offset,
-                                                              blockLength);
-            if (block == null) return;
-            sendBlock(index, offset, block);
-            break;
-        }
-        case piece: {
-            int index = socketInput.readInt();
-            int offset = socketInput.readInt();
-            byte[] block = new byte[length - 2*4];
-            socketInput.readFully(block);
-            downloaded += block.length;
-            this.torrent.pieceManager.putBlock(index, offset, block);
-            if (requested > 0) {
-                requested--;
-            }
-            DataBlockInfo queuedInfo = outQueue.poll();
-            if (queuedInfo != null
-                && requested < this.torrent.peerManager.BLOCKS_PER_REQUEST){
-                LOG.debug("Got block, sending new request");
-                sendRequest(queuedInfo);
-            }
-            break;
-        }
-        //TODO
-        case cancel: {
-            break;
-        }
-        //DHT node port, see BEP 0005
-        case port: {
-            int lowByte = socketInput.read();
-            int highByte = socketInput.read();
-            int port = (highByte << 8) | lowByte;
-            //NodeManager.add(this.ip, port);
-            break;
-        }
-        case sendRSAKey: {
-            LOG.warning("Got unexpected sendRSAKey message");
-            break;
-        }
-        case sendSymmetricKey: {
-            LOG.warning("Got unexpected sendSymmetricKey message");
-            break;
-        }
-        default:
-            break;
-        }
-    }
-
-    private boolean handshake() throws IOException {
-        LOG.debug("Handshake start: "
-                        + this.ip.toString() + ':' + this.port);
-
-        // 19BitTorrent protocol
-        socketOutput.writeByte(19);
-        byte header[] = "BitTorrent protocol".getBytes();
-        socketOutput.write(header);
-        socketOutput.flush();
-
-        // Reserved bytes
-        byte reserved[] = { 0, 0, 0, 0, 0, 0, 0, 0};
-        //reserved[7] = 1; //DHT support
-        if (USE_STUPID_ENCRYPTION) {
-            reserved[7] |= (1 << 4);
-        }
-        socketOutput.write(reserved);
-
-        socketOutput.write(torrent.infoHash);
-        socketOutput.write(torrent.peerManager.peerId);
-        socketOutput.flush();
-
-        int inLength = socketInput.read();
-        if (inLength == -1) {
-            return false;
-        }
-
-        // 19BitTorrent protocol
-        byte[] inHeader = new byte[inLength];
-        socketInput.readFully(inHeader);
-        if (!Arrays.equals(header, inHeader)) {
-            LOG.debug("Unsupported protocol header: "
-                            + new String(inHeader));
-            return false;
-        }
-
-        // Reserved bytes
-        byte[] inReserved = new byte[reserved.length];
-        socketInput.readFully(inReserved);
-        this.reservedBytes = inReserved;
-
-        byte[] inInfoHash = new byte[20];
-        socketInput.readFully(inInfoHash);
-        if (!Arrays.equals(torrent.infoHash, inInfoHash)) {
-            LOG.warning("Wrong info_hash");
-            return false;
-        }
-
-        this.id = new byte[20];
-        socketInput.readFully(this.id);
-
-        LOG.debug("Handshake done: " + this.ip.toString() + ':'
-                        + this.port + " id: " + arrayToString(this.id));
-
-        if (USE_STUPID_ENCRYPTION) {
-            boolean activated = stupidEncryptionSetup();
-            if ((! activated) && FORCE_STUPID_ENCRYPTION) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * Setups the StupidEncryption.
-     * Returns true if the encryption streams where successfully created, false
-     * otherwise.
-     */ 
-    private boolean stupidEncryptionSetup () {
-        if ((this.reservedBytes[7] & (1 << 4)) == 0) {
-            // Peer does not support StupidEncryption
-            return false;
-        }
-
-        Rsa rsa = new Rsa (RSA_KEY_BITLENGTH);
-        Pair<DataInputStream, DataOutputStream> oldStreams = null;
-
-        SecureRandom srandom = new SecureRandom();
-        byte[] outKey = new byte[XOR_LENGTH];
-        srandom.nextBytes(outKey);
-
-        try {
-            stupidEncryptionSendRSAKey(rsa);
-            int chunkSize = stupidEncryptionReceiveRSAKey(rsa);
-            oldStreams = stupidEncryptionEnableRSAStreams(rsa, chunkSize);
-            stupidEncryptionSendSymmetricKey(outKey);
-            byte[] inKey = stupidEncryptionReceiveSymmetricKey();
-            LOG.debug("Recvd XOR is " + ByteArrays.toHexString(inKey));
-            stupidEncryptionDisableRSAStreams(oldStreams);
-            stupidEncryptionEnableSymmetricStreams(inKey, outKey);
-        } catch (Exception e) {
-            if (oldStreams != null) {
-                try {
-                    stupidEncryptionDisableRSAStreams(oldStreams);
-                } catch (Exception f) {
-                    f.printStackTrace();
-                }
-            }
-            LOG.error(e);
-            e.printStackTrace();
-            LOG.debug("Failed to enable StupidEncryption, continuing with the"
-                      + " standard protocol.");
-            return false;
-        }
-
-        LOG.info("Stupid encryption enabled.");
-        return true;
-    }
-
-    private void stupidEncryptionSendRSAKey(Rsa rsa)
-    throws IOException {
-        byte[] key = rsa.getPublicKey();
-        byte[] modulo = rsa.getModulo();
-        byte[] data = new byte[4 + 4 + 4 + key.length + modulo.length];
-        byte[] array;
-
-        // 4 bytes - (chunk size-1)*8
-        array = ByteArrays.fromInt((modulo.length-1)*8);
-        System.arraycopy(array, 0, data, 0, 4);
-
-        // 4 bytes - length of key in byte
-        array = ByteArrays.fromInt(key.length);
-        System.arraycopy(array, 0, data, 4, 4);
-
-        // key
-        System.arraycopy(key, 0, data, 8, key.length);
-
-        // 4 bytes - length of modulo in bytes
-        array = ByteArrays.fromInt(modulo.length);
-        System.arraycopy(array, 0, data, 8 + key.length, 4);
-
-        // modulo
-        System.arraycopy(modulo, 0, data, 12 + key.length, modulo.length);
-
-        sendMessage(MessageType.sendRSAKey, null, data);
-        LOG.debug("RSA key sent.");
-    }
-
-    private int stupidEncryptionReceiveRSAKey (Rsa rsa)
-    throws IOException {
-        Pair<MessageType, Integer> header = getMessage();
-        MessageType messageType = header.first();
-        int messageLength = header.second();
-
-        if (messageType != MessageType.sendRSAKey) {
-            LOG.warning("Unexpected MessageType: got " + messageType
-                        + " while expecting " + MessageType.sendRSAKey);
-        }
-
-        // We read (chunk size - 1)*8 thus to chunk size = (read/8) + 1
-        int chunkSize = (this.socketInput.readInt()/8)+1;
-        LOG.debug("mysteriousN: " + chunkSize);
-
-        int keyLength = this.socketInput.readInt();    // in bytes
-        LOG.debug("keyLength: " + keyLength);
-        byte[] key = new byte[keyLength];
-        socketInput.readFully(key);
-
-        int moduloLength = this.socketInput.readInt(); // in bytes
-        LOG.debug("moduloLength: " + moduloLength);
-        byte[] modulo = new byte[moduloLength];
-        socketInput.readFully(modulo);
-
-        if (! ByteArrays.isPositiveBigInteger(key)) {
-            LOG.warning("Received non positive RSA key: \n"
-                              + ByteArrays.toHexString(key));
-        }
-        if (! ByteArrays.isPositiveBigInteger(modulo)) {
-            LOG.warning("Received non positive modulo: \n"
-                              + ByteArrays.toHexString(key));
-        }
-
-        rsa.setEncryptKey(key, modulo);
-        LOG.debug("RSA key received.");
-
-        return chunkSize;
-    }
-
-    private void stupidEncryptionSendSymmetricKey (byte[] key)
-    throws IOException {
-        sendMessage(MessageType.sendSymmetricKey, null, key);
-        LOG.debug("XOR key sent with length " + key.length);
-    }
-
-    private byte[] stupidEncryptionReceiveSymmetricKey ()
-    throws IOException {
-        LOG.debug("ReceiveSymmetricKey: now calling getMessage()");
-        Pair<MessageType, Integer> header = getMessage();
-        LOG.debug("ReceiveSymmetricKey: getMessage() returned");
-        MessageType messageType = header.first();
-        int messageLength = header.second();
-
-        if (messageType != MessageType.sendSymmetricKey) {
-            LOG.warning("Unexpected MessageType: got " + messageType
-                        + " while expecting " + MessageType.sendSymmetricKey);
-        }
-
-        int keyLength = messageLength;
-        LOG.debug("XOR key length is " + keyLength);
-        byte[] key = new byte[keyLength];
-        socketInput.readFully(key);
-
-        LOG.debug("XOR key received.");
-        return key;
-    }
-
-    private Pair <DataInputStream, DataOutputStream> 
-    stupidEncryptionEnableRSAStreams (Rsa rsa, int chunkSize) {
-        Pair<DataInputStream, DataOutputStream> oldStreams;
-        oldStreams = new Pair<DataInputStream, DataOutputStream>
-                         (this.socketInput, this.socketOutput);
-
-        this.socketInput = new DataInputStream(
-                                new RsaInputStream(
-                                    this.socketInput, rsa));
-        this.socketOutput = new DataOutputStream(
-                                new RsaOutputStream(
-                                    this.socketOutput,
-                                    rsa,
-                                    chunkSize));
-
-        LOG.debug("Now using Rsa streams.");
-        return oldStreams;
-    }
-
-    private void stupidEncryptionEnableSymmetricStreams(byte[] in, byte[] out) {
-        this.socketInput = new DataInputStream(
-                              new XorInputStream(
-                                  this.socketInput,
-                                  in,
-                                  in.length));
-        this.socketOutput = new DataOutputStream(
-                              new XorOutputStream(
-                                  this.socketOutput,
-                                  out,
-                                  out.length));
-        LOG.debug("Now using XOR encryption.");
-    }
-
-    private void stupidEncryptionDisableRSAStreams 
-        (Pair<DataInputStream, DataOutputStream> oldStreams) {
-        this.socketInput = oldStreams.first();
-        this.socketOutput = oldStreams.second();
-        LOG.debug("Rsa streams are disabled");
-    }
-
-    public synchronized void setChoked(boolean b) throws IOException {
+    public void setChoked(boolean b) {
         if (this.isChoked != b) {
             this.isChoked = b;
         }
-        MessageType type = b ? MessageType.choke : MessageType.unchoke;
-        sendMessage(type, null, null);
+        Message msg;
+        if (b) {
+            msg = new ChokeMessage();
+        } else {
+            msg = new UnchokeMessage();
+        }
+        this.msgOutQueue.offer(msg);
     }
 
-    public synchronized void setInteresting(boolean b) throws IOException {
-        MessageType type = b ? MessageType.interested : MessageType.not_interested;
-        sendMessage(type, null, null);
+    public void setInteresting(boolean b) {
+        this.isInteresting = b;
+        Message msg;
+        if (b) {
+            msg = new InterestedMessage();
+        } else {
+            msg = new NotInterestedMessage();
+        }
+        this.msgOutQueue.offer(msg);
     }
 
-    public byte[] bitfield() {
-        return this.bitfield;
+    /**
+     * Returns whether requests can be made to this peer.
+     */
+    public boolean canRequest() {
+        boolean b = this.isValid && this.connection.isConnected() &&
+            !this.isChokingUs && this.ownRequestQueue.size() <
+            this.torrent.peerManager.MAX_QUEUED_REQUESTS;
+        return b;
     }
 
     public boolean isChoked() {
@@ -557,8 +213,9 @@ public class Peer implements Runnable {
         return this.isInterestedInUs;
     }
 
-    public boolean isQueueFull() {
-        return this.outQueue.size() >= this.torrent.peerManager.BLOCKS_PER_REQUEST;
+    public boolean isRequestQueueFull() {
+        return this.ownRequestQueue.size() >= 
+            this.torrent.peerManager.MAX_QUEUED_REQUESTS;
     }
 
     public long downloaded() {
@@ -586,21 +243,18 @@ public class Peer implements Runnable {
     }
 
     public void invalidate() {
-        if (this.id != null) {
-            LOG.debug("## " + arrayToString(this.id) + " invalidated");
-        } else {
-            LOG.debug("## " + this.ip.toString() + " invalidated");
-        }
+        LOG.warning("Invalidate");
         this.isValid = false;
         try {
-            this.socketInput.close();
-            this.socketOutput.close();
-            this.socket.close();
-        } catch (Exception ignored) {}
+            this.connection.close();
+        } catch (IOException e) {
+            LOG.error ("Exception while closing connection:");
+            LOG.error (e.getMessage());
+        }
     }
 
     public boolean isConnected() {
-        return this.isValid && this.isConnected;
+        return this.isValid && this.connection.isConnected();
     }
 
     public int firstPiece() {
@@ -623,77 +277,23 @@ public class Peer implements Runnable {
         return (((this.bitfield[byteIndex] >>> offset) & 1) == 1);
     }
 
-    private synchronized void keepAlive() throws IOException {
-        LOG.debug("KeepAlive :" + arrayToString(this.id));
-        socketOutput.writeInt(0);
-        socketOutput.flush();
+    public void sendRequest(DataBlockInfo info) {
+        LOG.debug("Sending request: pieceIndex: " + info.pieceIndex()
+                  + " offset: " + info.offset() + " ");
+        this.ownRequestQueue.offer(info);
     }
 
-    private synchronized void sendMessage(MessageType type, int[] params, byte[] data) throws IOException {
-        LOG.debug("Sending message " + type.toString()
-                  + " (" + type.ordinal() + ") ");
-        int length = 1;
-        if (params != null) {
-            length += 4 * params.length;
-        }
-        if (data != null) {
-            length += data.length;
-        }
-        socketOutput.writeInt(length);
-        socketOutput.writeByte((byte) type.ordinal());
-        if (params != null) {
-            for (int param : params) {
-                socketOutput.writeInt(param);
-            }
-        }
-        if (data != null) {
-            socketOutput.write(data);
-        }
-        socketOutput.flush();
-
-        //Increment uploaded counter if we've sent some data
-        if (type == MessageType.piece) {
-            uploaded += data.length;
-        }
-
-    }
-
-    public void queueRequest(DataBlockInfo info) throws IOException {
-        LOG.debug("Queued!");
-        if (requested == 0) {
-            sendRequest(info);
-        } else {
-            outQueue.add(info);
-        }
-    }
-
-    //TODO: make asynchronous
-    public void sendRequest(DataBlockInfo info)
-    throws IOException {
-        if (!isConnected()) return;
-        int[] params = { info.pieceIndex(), info.offset(), info.length() };
-        LOG.debug("pieceIndex: " + info.pieceIndex()
-                        + " offset: " + info.offset() + " ");
-        sendMessage(MessageType.request, params, null);
-    }
-
-    public void sendBlock(int index, int offset, byte[] block)
-    throws IOException {
-        int[] params = { index, offset };
-        sendMessage(MessageType.piece, params, block);
-    }
-
-    public void stop() {
-        LOG.debug("Stopping peer " + this.ip + " " + this.port);
-        this.isStopped = true;
+    public void sendHave(int piece) {
+        Message msg = new HaveMessage(piece);
+        this.msgOutQueue.offer(msg);
     }
 
     public String toString() {
-        return "Peer" + this.ip + ':' + this.port;
+        return "Peer" + this.address + ':' + this.port;
     }
 
     public InetAddress getAddress () {
-        return this.ip;
+        return this.address;
     }
 
     public int getPort () {
@@ -714,5 +314,99 @@ public class Peer implements Runnable {
         }
         return sb.toString();
     }
+
+    public void onChokeMessage (ChokeMessage msg) {
+        this.isChokingUs = true;
+    }
+
+    public void onUnchokeMessage (UnchokeMessage  msg) {
+        this.isChokingUs = false;
+    }
+
+    public void onInterestedMessage (InterestedMessage msg) {
+        this.isInterestedInUs = true;
+    }
+
+    public void onNotInterestedMessage (NotInterestedMessage msg) {
+        this.isInterestedInUs = false;
+    }
+
+    public void onHaveMessage (HaveMessage msg) {
+        int byteIndex = msg.index / 8;
+        this.bitfield[byteIndex] |= 1 << 7 - (msg.index % 8);
+    }
+
+    public void onBitfieldMessage (BitfieldMessage msg) {
+        if (msg.bitfield.length != this.bitfield.length) {
+            LOG.error("Wrong bitfield length, got: " + msg.bitfield.length
+                      + " expected: " + this.bitfield.length);
+            invalidate();
+        }
+        this.bitfield = msg.bitfield;
+        LOG.debug("Bitfield: " + ByteArrays.toHexString(msg.bitfield));
+    }
+
+    public void onRequestMessage (RequestMessage msg) {
+        LOG.debug("Request, index: " + msg.index
+                        + " offset: " + msg.offset
+                        + " blockLength : " + msg.length);
+
+        DataBlockInfo info = new DataBlockInfo(
+                msg.index, msg.offset, msg.length);
+        if (! this.peerRequestQueue.offer(info)) {
+            LOG.debug("Ignoring request because queue is full");
+        }
+    }
+
+    public void onPieceMessage (PieceMessage msg) {
+        try {
+            this.torrent.pieceManager.putBlock(
+                    msg.index, msg.offset, msg.block);
+            downloaded += msg.block.length;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public void onCancelMessage (CancelMessage msg) {
+        ListIterator<DataBlockInfo> iter =
+            this.peerRequestQueue.listIterator(0);
+        while (iter.hasNext()) {
+            DataBlockInfo info = iter.next();
+            if (msg.index == info.pieceIndex && msg.offset == info.offset &&
+                    msg.length == info.length) {
+                iter.remove();
+            }
+        }
+    }
+
+    public void onPortMessage (PortMessage msg) {
+        // FIXME: do we have to do what is commented out there or what is in
+        //        PortMessage? In any case, the right thing should be in
+        //        PortMessage.
+
+        //int lowByte = socketInput.read();
+        //int highByte = socketInput.read();
+        //int port = (highByte << 8) | lowByte;
+        //NodeManager.add(this.address, port);
+
+        //NodeManager.add(this.address, msg.port);
+    }
+
+    public void onUnknownMessage (UnknownMessage msg) {
+        LOG.warning("Ignoring unknown message");
+    }
+
+    public void onKeepAliveMessage () {};
+
+    public void onHandshake(byte[] peerId, byte[] reserved) {
+        this.id = peerId;
+        this.reserved = reserved;
+    }
+
+    public void onConnectionClosed () {
+    }
+
 }
 
