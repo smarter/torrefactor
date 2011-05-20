@@ -46,7 +46,7 @@ package torrefactor.core;
  *   imagination and is in any case not a feature of SawtoothIntervalMap ;) )
  * </pre>
  */
-class SawToothIntervalMap implements java.io.Serializable {
+class SawToothIntervalMap {
     private IntervalMap[] maps;
 
     private int halvingThresold;
@@ -92,5 +92,9 @@ class SawToothIntervalMap implements java.io.Serializable {
     public boolean containsInterval(long begin, int length) {
         return (this.maps[0].containsInterval(begin, length)
                || this.maps[1].containsInterval(begin, length));
+    }
+
+    public String toString() {
+        return this.maps[0].toString() + this.maps[1].toString();
     }
 }
