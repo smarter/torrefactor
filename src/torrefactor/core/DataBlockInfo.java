@@ -26,4 +26,9 @@ public class DataBlockInfo {
     public int length() {
         return this.length;
     }
+
+    public String toString() {
+        return "DataBlockInfo: index=" + pieceIndex + " offset=" + offset
+               + " length=" + length;
+    }
 }
