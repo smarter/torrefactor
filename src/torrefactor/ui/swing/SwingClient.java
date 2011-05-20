@@ -65,20 +65,15 @@ public class SwingClient {
         }
 
         // HACK: Java doesn't detect GTK as system look and feel on some
-        // configuration so we try to be smarter.
+        // configurations thus if he choosed metal, we try to use GTK.
         if (lookAndFeel.equals(
                     UIManager.getCrossPlatformLookAndFeelClassName())) {
-            File home = new File(System.getProperty("user.home"));
-            File gtkrc = new File(home, ".gtkrc");
-            File gtkrc2 = new File(home, ".gtkrc-2.0");
-            if (gtkrc.exists() || gtkrc2.exists()) {
-                try {
-                    lookAndFeel = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
-                    UIManager.setLookAndFeel(lookAndFeel);
-                } catch (Exception e) {
-                    LOG.info("Couldn't use GTK look and fell: "
-                             + e.getMessage());
-                }
+            try {
+                lookAndFeel = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
+                UIManager.setLookAndFeel(lookAndFeel);
+            } catch (Exception e) {
+                LOG.info("Couldn't use GTK look and fell: "
+                         + e.getMessage());
             }
         }
 
