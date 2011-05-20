@@ -33,6 +33,32 @@ public class ByteArrays {
         return ret;
     }
 
+    /**
+     * Returns true if all bits of bitfield are set to 1.
+     */
+    public static boolean isComplete(byte[] bitfield) {
+        for (int i=0; i<bitfield.length; i++) {
+            if (bitfield[i] != (byte) 0xFF) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static byte[] concat(byte[][] arrays) {
+        int size = 0;
+        for (int i=0; i<arrays.length; i++) {
+            size += arrays[i].length;
+        }
+        byte[] b = new byte[size];
+        int offset = 0;
+        for (int i=0; i<arrays.length; i++) {
+            System.arraycopy(arrays[i], 0, b, offset, arrays[i].length);
+            offset += arrays[i].length;
+        }
+        return b;
+    }
+
     public static int toShortInt(byte[] array) {
         int i = 0;
         i += ((int) array[0] & 0xFF) << 8;
@@ -47,6 +73,16 @@ public class ByteArrays {
         i += ((int) array[2] & 0xFF) << 8;
         i += ((int) array[3] & 0xFF);
         return i;
+    }
+
+    public static int toInt(byte[] array, int offset) {
+        // FIXME: It may be better to do as in toInt(byte[]) but with offsets.
+        //        But since I absolutly don't know what the compiler and the
+        //        jvm will do of this code, it sounds like premature
+        //        optimisation. Thus I'll leave it as it for now.
+        byte[] i = new byte[4];
+        System.arraycopy(array, offset, i, 0, 4);
+        return toInt(i);
     }
 
     public static long toLong(byte[] array) {
@@ -72,6 +108,16 @@ public class ByteArrays {
                             (byte)(i >>> 16),
                             (byte)(i >>> 8),
                             (byte) i };
+    }
+
+    public static byte[] fromInts(int[] array) {
+        byte[] b = new byte[array.length * 4];
+        int offset = 0;
+        for (int i=0; i<array.length; i++) {
+            System.arraycopy(fromInt(array[i]), 0, b, offset, 4);
+            offset += 4;
+        }
+        return b;
     }
 
     public static byte[] fromLong(long l) {
