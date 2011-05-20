@@ -122,6 +122,9 @@ public class MainWindow implements ActionListener {
         this.torrentTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         this.torrentTable.setRowSelectionAllowed(true);
         this.torrentPane = new JScrollPane(torrentTable);
+
+        this.torrentTable.getColumnModel().getColumn(1)
+            .setCellRenderer(new ProgressBarTableCellRenderer());
     }
 
     public void setVisible (Boolean bool) {

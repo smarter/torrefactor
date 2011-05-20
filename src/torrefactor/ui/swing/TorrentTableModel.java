@@ -21,7 +21,7 @@ import java.io.IOException;
  */
 public class TorrentTableModel extends AbstractTableModel {
     private TorrentManager torrentManager;
-    public String[] columnNames = {"Torrent", "Percentage", "Uploaded",
+    public String[] columnNames = {"Torrent", "Progress", "Uploaded",
                                    "Downloaded"};
     public enum Column { NAME, PERCENT, UPLOADED, DOWNLOADED };
     public Column[] columns;
@@ -97,7 +97,7 @@ public class TorrentTableModel extends AbstractTableModel {
         if (column == Column.NAME) {
             data = torrent.FILE_NAME;
         } else if (column == Column.PERCENT) {
-            data = Float.valueOf(torrent.progress());
+            data = torrent.getBoundedRangeModel();
         } else if (column == Column.UPLOADED) {
             data = humanReadable (torrent.uploaded());
         } else if (column == Column.DOWNLOADED) {

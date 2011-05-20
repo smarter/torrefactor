@@ -1,4 +1,5 @@
 package torrefactor.core;
+
 import torrefactor.core.*;
 import torrefactor.util.*;
 
@@ -7,6 +8,8 @@ import java.net.*;
 import java.security.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.swing.BoundedRangeModel;
+import javax.swing.DefaultBoundedRangeModel;
 
 /**
  * A Torrent object represents a torrent currently being downloaded.
@@ -171,6 +174,10 @@ public class Torrent implements Serializable {
         return this.length;
     }
 
+    public boolean completed () {
+        return this.left.longValue() == 0;
+    }
+
     public float progress() {
         if (this.length == 0) return 0;
         // use length-left instead of downloaded since downloaded may be
@@ -242,5 +249,15 @@ public class Torrent implements Serializable {
     public Map<InetAddress, Peer> getPeerMap () {
         if (this.peerManager == null) return null;
         return this.peerManager.getPeerMap();
+    }
+
+    public BoundedRangeModel getBoundedRangeModel () {
+        if (this.length <= Integer.MAX_VALUE) {
+            return new DefaultBoundedRangeModel(
+                    (int)(this.length - this.left.longValue()),
+                    0, 0, (int)getSize());
+        } else {
+            return null;
+       }
     }
 }
