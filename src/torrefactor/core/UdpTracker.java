@@ -198,15 +198,17 @@ public class UdpTracker extends Tracker {
         int seeders = ByteArrays.toInt(b);
 
         // Parse peer-port segments
-        ArrayList<Pair<byte[], Integer>> peerList = new ArrayList<Pair<byte[], Integer>>();
+        ArrayList<Pair<byte[], Integer>> peerList =
+            new ArrayList<Pair<byte[], Integer>>();
         int i = 20;
-        while (i <= packet.getLength()) {
+        while (i < packet.getLength()) {
             byte[] peerAddress = new byte[4];
             System.arraycopy(packet.getData(), i, peerAddress, 0, 4);
             byte[] portArray = new byte[2];
             System.arraycopy(packet.getData(), i+4, portArray, 0, 2);
             int peerPort = ByteArrays.toShortInt(portArray);
-            Pair<byte[], Integer> peer = new Pair<byte[], Integer>(peerAddress, peerPort);
+            Pair<byte[], Integer> peer =
+                new Pair<byte[], Integer>(peerAddress, peerPort);
             peerList.add(peer);
             i += 6;
         }
