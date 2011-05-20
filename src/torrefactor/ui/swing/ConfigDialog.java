@@ -1,6 +1,7 @@
 package torrefactor.ui.swing;
 
 import torrefactor.util.Config;
+import torrefactor.util.Logger;
 
 import javax.swing.*;
 import java.awt.*;
@@ -11,6 +12,7 @@ import java.awt.event.*;
  */
 public class ConfigDialog implements ItemListener {
     private static final Config CONF = Config.getConfig();
+    private static final Logger LOG = new Logger();
     private JDialog dialog;
     private Frame parent;
     private Container contentPane;
@@ -30,6 +32,7 @@ public class ConfigDialog implements ItemListener {
         this.parent = parent;
         this.dialog = new JDialog(parent, "Configuration", true);
         this.contentPane = this.dialog.getContentPane();
+        this.contentPane.setBackground(Color.GREEN);
 
         layout = new BoxLayout(this.contentPane, BoxLayout.Y_AXIS);
         this.contentPane.setLayout(layout);
@@ -43,6 +46,12 @@ public class ConfigDialog implements ItemListener {
                 "Use encryption",
                 CONF.getPropertyBoolean("Peer.UseStupidEncryption"));
         this.useStupidEncryption.addItemListener(this);
+        this.useStupidEncryption.setOpaque(true);
+        this.useStupidEncryption.setBackground(Color.YELLOW);
+        Dimension dima = this.useStupidEncryption.getPreferredSize();
+        dima = new Dimension(Integer.MAX_VALUE, dima.height);
+        this.useStupidEncryption.setMaximumSize(dima);
+
         this.contentPane.add(this.useStupidEncryption);
 
         this.forceStupidEncryption = new JCheckBox(
@@ -52,13 +61,24 @@ public class ConfigDialog implements ItemListener {
 			this.forceStupidEncryption.setSelected(false);
 			this.forceStupidEncryption.setEnabled(false);
 		}
+        this.forceStupidEncryption.setBackground(Color.RED);
         this.forceStupidEncryption.addItemListener(this);
         this.contentPane.add(this.forceStupidEncryption);
 
 		this.basePathContainer = new JPanel ();
+        this.basePathContainer.setBackground(Color.CYAN);
 		layout = new BoxLayout(this.basePathContainer, BoxLayout.X_AXIS);
 		this.basePathContainer.setLayout(layout);
 		this.basePathLabel = new JLabel("Download directory:");
+        this.basePathLabel.setOpaque(true);
+        this.basePathLabel.setBackground(Color.YELLOW);
+        LOG.debug("Yellow label alignement: "
+                  + this.basePathLabel.getAlignmentX());
+
+        Dimension dim = this.basePathLabel.getPreferredSize();
+        dim = new Dimension(Integer.MAX_VALUE, dim.height);
+        this.basePathLabel.setMaximumSize(dim);
+
 		this.basePathField = new JTextField(
 				CONF.getProperty("Ui.Swing.BasePath"));
 		this.basePathField.setEditable(false);
@@ -71,13 +91,15 @@ public class ConfigDialog implements ItemListener {
 				CONF.setProperty("Ui.Swing.BasePath", directory);
 			}
 		});
-		this.basePathContainer.add(this.basePathLabel);
+	//	this.basePathContainer.add(this.basePathLabel);
 		this.basePathContainer.add(this.basePathField);
 		this.basePathContainer.add(this.basePathButton);
+		this.contentPane.add(this.basePathLabel);
 		this.contentPane.add(this.basePathContainer);
 
         layout = new FlowLayout (FlowLayout.RIGHT);
         this.contentPaneBottom = new JPanel (layout);
+        this.contentPaneBottom.setBackground(Color.MAGENTA);
 
         JButton closeButton = new JButton ("Close");
         closeButton.addActionListener(new ActionListener () {
@@ -94,6 +116,7 @@ public class ConfigDialog implements ItemListener {
         this.contentPane.add (contentPaneBottom);
 
         this.dialog.pack ();
+        this.dialog.setLocationRelativeTo(this.parent);
     }
 
     /**
