@@ -35,6 +35,7 @@ public class MainWindow implements ActionListener {
 
     public MainWindow (TorrentManager torrentManager) {
         this.mainFrame = new JFrame ("Torrefactor");
+        this.mainFrame.setLocationByPlatform(true);
         this.menuBar = new JMenuBar ();
         this.buildMenu ();
         this.buildTorrentTable(torrentManager);
