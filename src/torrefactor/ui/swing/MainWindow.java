@@ -20,7 +20,7 @@ import java.util.List;
 
 public class MainWindow implements ActionListener {
     private static Logger LOG = new Logger();
-	private static Config CONF = Config.getConfig();
+    private static Config CONF = Config.getConfig();
 
     private JFrame mainFrame;
     private JMenuBar menuBar;
@@ -197,7 +197,7 @@ public class MainWindow implements ActionListener {
     public void openTorrent (String path) {
         try {
             Torrent torrent = this.torrentModel.addTorrent(
-					path, CONF.getProperty("Ui.SWing.BasePath"));
+                    path, CONF.getProperty("Ui.SWing.BasePath"));
             torrent.start ();
         } catch (IOException e) {
             e.printStackTrace();

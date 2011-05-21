@@ -6,18 +6,18 @@ package torrefactor.core;
 public class KeepAliveMessage extends Message {
     final static byte id = 1;
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public byte id () {
         return KeepAliveMessage.id;
     }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public byte[] toByteArray () {
         return new byte[] {0, 0, 0, 0};
     }

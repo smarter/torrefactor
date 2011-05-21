@@ -17,8 +17,8 @@ package torrefactor.core;
  * normal operation of this class:
  * <pre>
  *                skier
- *  			    |
- *  			    v
+ *                  |
+ *                  v
  * elements in map
  *    ↑——————————————————————————————————————————————————  ← halving threshold
  *    │                   /|                 _/|

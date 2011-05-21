@@ -6,10 +6,10 @@ package torrefactor.core;
 public class NotInterestedMessage extends Message {
     final static byte id = 3;
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public byte id () {
         return NotInterestedMessage.id;
     }

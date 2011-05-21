@@ -6,10 +6,10 @@ package torrefactor.core;
 public class UnchokeMessage extends Message {
     final static byte id = 1;
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public byte id () {
         return UnchokeMessage.id;
     }

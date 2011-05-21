@@ -31,7 +31,7 @@ public class Config extends Properties {
         p.setProperty("Peer.RsaKeyBitlength", "128");
         p.setProperty("Peer.XorLength", "128");
 
-		p.setProperty("Ui.Swing.BasePath", System.getProperty("user.home"));
+        p.setProperty("Ui.Swing.BasePath", System.getProperty("user.home"));
     }
 
     /**
@@ -48,9 +48,9 @@ public class Config extends Properties {
         if (! validateInt("Peer.RsaKeyBitlength", defaults)) r = false;
         if (! validateInt("Peer.XorLength", defaults)) r = false;
 
-		if (! validateDirectory("Ui.Swing.BasePath", defaults)) r = false;
+        if (! validateDirectory("Ui.Swing.BasePath", defaults)) r = false;
 
-		return r;
+        return r;
     }
 
     /**
@@ -261,18 +261,18 @@ public class Config extends Properties {
      * Otherwise set the property to the default value in defaults and return
      * false. The value of the properties in defaults are not validated.
      */
-	private boolean validateDirectory (String key, Properties defaults) {
-		String value = getProperty(key);
-		File file = new File(value);
-		if (! file.isDirectory()) {
-			String dvalue = defaults.getProperty(key);
-			LOG.warning("Property " + key + "=\"" + value + "\" is not a "
-					    + "directory. Using default value \"" + dvalue
-						+ "\" instead.");
-			setProperty(key, dvalue);
-			return false;
-		}
-		return true;
-	}
+    private boolean validateDirectory (String key, Properties defaults) {
+        String value = getProperty(key);
+        File file = new File(value);
+        if (! file.isDirectory()) {
+            String dvalue = defaults.getProperty(key);
+            LOG.warning("Property " + key + "=\"" + value + "\" is not a "
+                        + "directory. Using default value \"" + dvalue
+                        + "\" instead.");
+            setProperty(key, dvalue);
+            return false;
+        }
+        return true;
+    }
 }
 

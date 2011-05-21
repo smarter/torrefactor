@@ -14,23 +14,23 @@ public class UnknownMessage extends Message {
     private static  byte id = -2;
     final byte[] data;
 
-	/**
-	 * Construct a new UnknownMessage with the given id and no data.
-	 *
-	 * @param	id		id of the message
-	 */
+    /**
+     * Construct a new UnknownMessage with the given id and no data.
+     *
+     * @param    id        id of the message
+     */
     public UnknownMessage (byte id) {
         this.id = id;
         this.data = null;
         LOG.warning("Unknown message with id " + id);
     }
 
-	/**
-	 * Construct a new UnknownMessage with the given id and the given data.
-	 *
-	 * @param	id		id of the message
-	 * @param	data	the data contained in this message
-	 */
+    /**
+     * Construct a new UnknownMessage with the given id and the given data.
+     *
+     * @param    id        id of the message
+     * @param    data    the data contained in this message
+     */
     public UnknownMessage (byte id, byte[] data) {
         this.id = id;
         this.data = data;
@@ -39,18 +39,18 @@ public class UnknownMessage extends Message {
                     + ByteArrays.toHexString(data));
     }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public byte id () {
         return UnknownMessage.id;
     }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public byte[] toByteArray () {
         return ByteArrays.concat(new byte[][] {super.toByteArray(), this.data});
     }

@@ -11,44 +11,44 @@ public class PortMessage extends Message {
     final static byte id = 9;
     final int port;
 
-	/**
-	 * Creates a new PortMessage from the given port.
-	 *
-	 * @param port	the port to put in the PortMessage.
-	 */
+    /**
+     * Creates a new PortMessage from the given port.
+     *
+     * @param port    the port to put in the PortMessage.
+     */
     public PortMessage (int port) {
         this.port = port;
     }
 
-	/**
-	 * Creates a new PortMessage from the given byte array representation.
-	 *
-	 * @param msg	the byte array representation
-	 */
+    /**
+     * Creates a new PortMessage from the given byte array representation.
+     *
+     * @param msg    the byte array representation
+     */
     public PortMessage (byte[] msg) {
         this.port = ByteArrays.toShortInt(msg);
     }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public byte id () {
         return PortMessage.id;
     }
 
-	// Java does not override static method thus we cannot use @inheritDoc
-	/**
-	 * @{link torrefactor.core.Message#isValid(byte[]) Message}
-	 */
+    // Java does not override static method thus we cannot use @inheritDoc
+    /**
+     * @{link torrefactor.core.Message#isValid(byte[]) Message}
+     */
     public static boolean isValid (byte[] msg) {
         return msg.length == 2;
     }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public byte[] toByteArray () {
         byte[] t = super.toByteArray();
         byte[] p = ByteArrays.fromShortInt(port);

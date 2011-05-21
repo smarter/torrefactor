@@ -19,10 +19,10 @@ public class ConfigDialog implements ItemListener {
     private Container contentPaneBottom;
     private JCheckBox useStupidEncryption;
     private JCheckBox forceStupidEncryption;
-	private JLabel basePathLabel;
-	private JTextField basePathField;
-	private JButton basePathButton;
-	private Container basePathContainer;
+    private JLabel basePathLabel;
+    private JTextField basePathField;
+    private JButton basePathButton;
+    private Container basePathContainer;
 
     /**
      * Create a new config dialog with parent as parent frame.
@@ -57,19 +57,19 @@ public class ConfigDialog implements ItemListener {
         this.forceStupidEncryption = new JCheckBox(
                 "Force encryption",
                 CONF.getPropertyBoolean("Peer.ForceStupidEncryption"));
-		if (! CONF.getPropertyBoolean("Peer.UseStupidEncryption")) {
-			this.forceStupidEncryption.setSelected(false);
-			this.forceStupidEncryption.setEnabled(false);
-		}
+        if (! CONF.getPropertyBoolean("Peer.UseStupidEncryption")) {
+            this.forceStupidEncryption.setSelected(false);
+            this.forceStupidEncryption.setEnabled(false);
+        }
         this.forceStupidEncryption.setBackground(Color.RED);
         this.forceStupidEncryption.addItemListener(this);
         this.contentPane.add(this.forceStupidEncryption);
 
-		this.basePathContainer = new JPanel ();
+        this.basePathContainer = new JPanel ();
         this.basePathContainer.setBackground(Color.CYAN);
-		layout = new BoxLayout(this.basePathContainer, BoxLayout.X_AXIS);
-		this.basePathContainer.setLayout(layout);
-		this.basePathLabel = new JLabel("Download directory:");
+        layout = new BoxLayout(this.basePathContainer, BoxLayout.X_AXIS);
+        this.basePathContainer.setLayout(layout);
+        this.basePathLabel = new JLabel("Download directory:");
         this.basePathLabel.setOpaque(true);
         this.basePathLabel.setBackground(Color.YELLOW);
         LOG.debug("Yellow label alignement: "
@@ -79,23 +79,23 @@ public class ConfigDialog implements ItemListener {
         dim = new Dimension(Integer.MAX_VALUE, dim.height);
         this.basePathLabel.setMaximumSize(dim);
 
-		this.basePathField = new JTextField(
-				CONF.getProperty("Ui.Swing.BasePath"));
-		this.basePathField.setEditable(false);
-		this.basePathButton = new JButton("Change…");
-		this.basePathButton.addActionListener(new ActionListener() {
-			public void actionPerformed (ActionEvent event) {
-				String directory = chooseDirectory();
-				if (directory == null) return;
-				basePathField.setText(directory);
-				CONF.setProperty("Ui.Swing.BasePath", directory);
-			}
-		});
-	//	this.basePathContainer.add(this.basePathLabel);
-		this.basePathContainer.add(this.basePathField);
-		this.basePathContainer.add(this.basePathButton);
-		this.contentPane.add(this.basePathLabel);
-		this.contentPane.add(this.basePathContainer);
+        this.basePathField = new JTextField(
+                CONF.getProperty("Ui.Swing.BasePath"));
+        this.basePathField.setEditable(false);
+        this.basePathButton = new JButton("Change…");
+        this.basePathButton.addActionListener(new ActionListener() {
+            public void actionPerformed (ActionEvent event) {
+                String directory = chooseDirectory();
+                if (directory == null) return;
+                basePathField.setText(directory);
+                CONF.setProperty("Ui.Swing.BasePath", directory);
+            }
+        });
+    //    this.basePathContainer.add(this.basePathLabel);
+        this.basePathContainer.add(this.basePathField);
+        this.basePathContainer.add(this.basePathButton);
+        this.contentPane.add(this.basePathLabel);
+        this.contentPane.add(this.basePathContainer);
 
         layout = new FlowLayout (FlowLayout.RIGHT);
         this.contentPaneBottom = new JPanel (layout);
@@ -136,33 +136,33 @@ public class ConfigDialog implements ItemListener {
 
         if (source == this.useStupidEncryption) {
             CONF.setPropertyBoolean("Peer.UseStupidEncryption", selected);
-			if (selected) {
-				this.forceStupidEncryption.setEnabled(true);
-			} else {
-				this.forceStupidEncryption.setEnabled(false);
-				this.forceStupidEncryption.setSelected(false);
-			}
+            if (selected) {
+                this.forceStupidEncryption.setEnabled(true);
+            } else {
+                this.forceStupidEncryption.setEnabled(false);
+                this.forceStupidEncryption.setSelected(false);
+            }
         } else if (source == this.forceStupidEncryption) {
             CONF.setPropertyBoolean("Peer.ForceStupidEncryption", selected);
         }
     }
 
-	/**
-	 * This method open a FileChooser to choose a directory and return the path
-	 * of the selected directory. Returns null if nothing as been selected.
-	 */
-	private String chooseDirectory () {
-		JFileChooser chooser = new JFileChooser (
-				System.getProperty("user.dir"));
-		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-		chooser.setAcceptAllFileFilterUsed(false);
+    /**
+     * This method open a FileChooser to choose a directory and return the path
+     * of the selected directory. Returns null if nothing as been selected.
+     */
+    private String chooseDirectory () {
+        JFileChooser chooser = new JFileChooser (
+                System.getProperty("user.dir"));
+        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        chooser.setAcceptAllFileFilterUsed(false);
 
-		int returnVal = chooser.showOpenDialog(this.dialog);
-		if (returnVal == JFileChooser.APPROVE_OPTION) {
-			String directory = chooser.getSelectedFile().getAbsolutePath();
-			return directory;
-		}
+        int returnVal = chooser.showOpenDialog(this.dialog);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            String directory = chooser.getSelectedFile().getAbsolutePath();
+            return directory;
+        }
 
-		return null;
-	}
+        return null;
+    }
 }
