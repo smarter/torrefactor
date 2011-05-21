@@ -25,6 +25,8 @@ public class Torrent implements Serializable {
     private byte[] pieceHash;
     private AtomicLong uploaded = new AtomicLong(0);
     private AtomicLong downloaded = new AtomicLong(0);
+    private SpeedMeter uploadedSpeed = new SpeedMeter(0);
+    private SpeedMeter downloadedSpeed = new SpeedMeter(0);
     private AtomicLong left;
 
     public byte[] infoHash;
@@ -174,8 +176,24 @@ public class Torrent implements Serializable {
         return this.length;
     }
 
-    public boolean completed () {
-        return this.left.longValue() == 0;
+    public boolean isComplete() {
+        return this.pieceManager.isComplete();
+    }
+
+    public String state() {
+        if (isComplete()) {
+           if (this.peerManager.isStopped()) {
+               return "Complete";
+           } else {
+               return "Seeding";
+           }
+        } else {
+            if (this.peerManager.isStopped()) {
+                return "Stopped";
+            } else {
+                return "Downloading";
+            }
+        }
     }
 
     public float progress() {
@@ -198,12 +216,20 @@ public class Torrent implements Serializable {
         return this.downloaded.longValue();
     }
 
+    public double downloadSpeed () {
+        return this.downloadedSpeed.getSpeed(this.downloaded.longValue());
+    }
+
     public long incrementDownloaded(long value) {
         return this.downloaded.addAndGet(value);
     }
 
     public long uploaded() {
         return this.uploaded.longValue();
+    }
+
+    public double uploadSpeed () {
+        return this.uploadedSpeed.getSpeed(this.uploaded.longValue());
     }
 
     public long incrementUploaded(long value) {

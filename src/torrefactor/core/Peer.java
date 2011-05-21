@@ -8,6 +8,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 import java.security.SecureRandom;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Represents a Bittorrent peer.
@@ -50,9 +51,10 @@ public class Peer implements Runnable, PeerConnectionListener  {
     private Torrent torrent;
     private PeerConnection connection;
 
-    //FIXME we likely should use AtomicLong for downloaded and uploaded
-    private long downloaded = 0;
-    private long uploaded = 0;
+    private AtomicLong downloaded = new AtomicLong(0);
+    private AtomicLong uploaded = new AtomicLong(0);
+    private SpeedMeter downloadedSpeed = new SpeedMeter(0);
+    private SpeedMeter uploadedSpeed = new SpeedMeter(0);
 
     private byte[] reserved;
     private volatile boolean isChoked = true;
@@ -179,7 +181,8 @@ public class Peer implements Runnable, PeerConnectionListener  {
     /**
      * Sends a block of data to the peer.
      *
-     * @param info    The DataBlockInfo identifying the block to send to the peer
+     * @param info    The DataBlockInfo identifying the block to send to the
+     *                peer
      * @throws IOException if PeerConnetion.send(Message) throws it
      */
     private void sendBlock(DataBlockInfo info)
@@ -199,6 +202,9 @@ public class Peer implements Runnable, PeerConnectionListener  {
         Message msg = new PieceMessage(
                 info.pieceIndex, info.offset, block);
         this.connection.send(msg);
+
+        this.uploaded.addAndGet(block.length);
+        this.torrent.incrementUploaded(block.length);
     }
 
     /**
@@ -274,23 +280,19 @@ public class Peer implements Runnable, PeerConnectionListener  {
     }
 
     public long downloaded() {
-        return this.downloaded;
+        return this.downloaded.longValue();
+    }
+
+    public double downloadSpeed() {
+        return this.downloadedSpeed.getSpeed(this.downloaded.longValue());
     }
 
     public long uploaded() {
-        return this.uploaded;
+        return this.uploaded.longValue();
     }
 
-    public long popDownloaded() {
-        long poped = this.downloaded;
-        this.downloaded = 0;
-        return poped;
-    }
-
-    public long popUploaded() {
-        long poped = this.uploaded;
-        this.uploaded = 0;
-        return poped;
+    public double uploadedSpeed() {
+        return this.uploadedSpeed.getSpeed(this.uploaded.longValue());
     }
 
     public boolean isValid() {
@@ -478,7 +480,8 @@ public class Peer implements Runnable, PeerConnectionListener  {
         try {
             this.torrent.pieceManager.putBlock(
                     msg.index, msg.offset, msg.block);
-            downloaded += msg.block.length;
+            this.downloaded.addAndGet(msg.block.length);
+            this.torrent.incrementDownloaded(msg.block.length);
         } catch (Exception e) {
             e.printStackTrace();
         }

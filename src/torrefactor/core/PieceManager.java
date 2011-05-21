@@ -171,6 +171,13 @@ public class PieceManager implements Serializable {
         return true;
     }
 
+    /**
+     * Returns true if we got all the pieces
+     */
+    public boolean isComplete() {
+        return ByteArrays.isComplete(this.bitfield);
+    }
+
     public ArrayList<Integer> popToAnnounce () {
         ArrayList<Integer> list;
         synchronized (this.pieceToAnnounceLock) {

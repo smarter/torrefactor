@@ -120,10 +120,11 @@ public class PeerManager implements Runnable {
                 for (int piece: newPieces) {
                     peer.sendHave(piece);
 
-                    if (ByteArrays.isComplete(
-                                this.torrent.pieceManager.bitfield)) {
+                    if (this.torrent.isComplete()) {
                         LOG.debug("Torrent is complete");
                         if (ByteArrays.isComplete(peer.bitfield)) {
+                            // the peer and us got all the pieces, close the
+                            // connection
                             peer.invalidate();
                             it.remove();
                             this.peerMap.remove(peerAddress);
@@ -136,11 +137,6 @@ public class PeerManager implements Runnable {
                     //LOG.debug("Cannot request to: " + peer);
                     continue;
                 }
-
-                this.torrent.incrementDownloaded(
-                        peer.popDownloaded());
-                this.torrent.incrementUploaded(
-                        peer.popUploaded());
 
                 try {
                     List<DataBlockInfo> infoList =
@@ -161,7 +157,7 @@ public class PeerManager implements Runnable {
 
             // Announce complete if we got the last piece
             if (newPieces.size() > 0) {
-                if (ByteArrays.isComplete(this.torrent.pieceManager.bitfield)) {
+                if (this.torrent.isComplete()) {
                     this.trackerManager.announce(Tracker.Event.completed);
                 }
             }

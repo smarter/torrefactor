@@ -196,8 +196,10 @@ public class MainWindow implements ActionListener {
 
     public void openTorrent (String path) {
         try {
+            String basePath = CONF.getProperty("Ui.SWing.BasePath");
             Torrent torrent = this.torrentModel.addTorrent(
-                    path, CONF.getProperty("Ui.SWing.BasePath"));
+                    path, basePath);
+            LOG.debug("Add torrent: " + path + " basePath: " + basePath);
             torrent.start ();
         } catch (IOException e) {
             e.printStackTrace();
