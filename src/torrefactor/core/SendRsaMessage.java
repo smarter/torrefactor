@@ -55,7 +55,7 @@ public class SendRsaMessage extends Message {
 
     // Java does not override static method thus we cannot use @inheritDoc
     /**
-     * @{link torrefactor.core.Message#isValid(byte[]) Message}
+     * {@link torrefactor.core.Message#isValid(byte[])}
      */
     public static boolean isValid (byte[] msg) {
         return msg.length >= 15;
