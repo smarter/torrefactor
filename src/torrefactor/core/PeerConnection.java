@@ -99,8 +99,12 @@ public class PeerConnection {
      */
     public void close ()
     throws IOException {
-        this.inputStream.close();
-        this.outputStream.close();
+        if (this.inputStream != null) {
+            this.inputStream.close();
+        }
+        if (this.outputStream != null) {
+            this.outputStream.close();
+        }
         this.socket.close();
     }
 
