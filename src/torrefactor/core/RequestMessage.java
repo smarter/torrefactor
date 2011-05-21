@@ -16,26 +16,48 @@ public class RequestMessage extends Message {
     final int offset;
     final int length;
 
+	/**
+	 * Create a new RequestMessage for a block.
+	 *
+	 * @param info the DataBlockInfo identifying the block
+	 */
     public RequestMessage (DataBlockInfo info) {
         index = info.pieceIndex();
         offset = info.offset();
         length = info.length();
     }
 
+	/**
+	 * Create a new RequestMessage for the given byte array representation.
+	 *
+	 * @param msg	the byte array representation
+	 */
     public RequestMessage (byte[] msg) {
         index = ByteArrays.toInt(msg);
         offset = ByteArrays.toInt(msg, 4);
         length = ByteArrays.toInt(msg, 8);
     }
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
     public byte id () {
         return RequestMessage.id;
     }
 
+	// Java does not override static method thus we cannot use @inheritDoc
+	/**
+	 * @{link torrefactor.core.Message#isValid(byte[]) Message}
+	 */
     public static boolean isValid (byte[] msg) {
         return msg.length == 13;
     }
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
     public byte[] toByteArray () {
         byte[] t = super.toByteArray();
         byte[] i = ByteArrays.fromInts(new int[] {index, offset, length});

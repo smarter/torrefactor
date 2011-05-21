@@ -13,14 +13,19 @@ public abstract class Message {
     // wrong.
     //final static byte id = -42;
 
-    // Workaround to emulate overiding class variable. This methods must return
-    // the class variable id.
+    /**
+	 * Workaround to emulate overiding class variable: this methods must return
+     * the class variable id.
+	 */
     abstract byte id();
     
     /**
-     * Returns true if the given byte array can be interpreted as a valid
-     * Message.
-     */
+	 * Check if the given byte array can be interpreted as a valid Message.
+	 *
+	 * @param	msg		the byte array on which the check is made
+	 * @return	true if msg can be interpreted as a valid message for this
+	 *			class
+	 */
     public static boolean isValid (byte[] msg) {
         return msg.length == 0;
     }
@@ -28,6 +33,8 @@ public abstract class Message {
     /**
      * Returns the byte array representation of this message as it should be
      * sent on the wire.
+	 *
+	 * @return the byte array representation of this message
      */
     public byte[] toByteArray () {
         return new byte[] {id()};
