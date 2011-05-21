@@ -10,12 +10,14 @@ public class TorrentMaker {
 
     /**
      * Write a Torrent file.
-     * @p torrentFile The file which will be written.
-     * @p inputfile The file to be shared in the torrent.
-     * @p pieceLength The length of a piece in the torrent.
-     * @p announce The URL(including port) to a tracker containing peers for the torrent.
-     * @p comment A comment(optional, can be null)
-     * @p createdBy The name of the author of the torrent (optional, can be null)
+     * @param torrentFile  The file which will be written.
+     * @param inputFile    The file to be shared in the torrent.
+     * @param pieceLength  The length of a piece in the torrent.
+     * @param announce     The URL(including port) to a tracker containing
+	 *                     peers for the torrent.
+     * @param comment      A comment(optional, can be null)
+     * @param createdBy    The name of the author of the torrent (optional,
+	 *                     can be null)
      */
     public static void write(File torrentFile, File inputFile, int pieceLength,
         String announce, String comment, String createdBy)
@@ -28,8 +30,8 @@ public class TorrentMaker {
     }
 
     /**
-     * Create and return the bencoded dictionary of a Torrent file, excluding the
-     * "info" entry.
+	 * Create and return the bencoded dictionary of a Torrent file, excluding
+	 * the "info" entry.
      */
     private static Map<String, BValue>
         makeFileMap(String announce, String comment, String createdBy)
@@ -49,7 +51,8 @@ public class TorrentMaker {
     }
 
     /**
-     * Create and return the bencoded dictionary of the "info" entry of a Torrent file.
+	 * Create and return the bencoded dictionary of the "info" entry of a
+	 * Torrent file.
      */
     private static Map<String, BValue> makeInfoMap(File file, int pieceLength)
         throws FileNotFoundException, IOException, NoSuchAlgorithmException {
