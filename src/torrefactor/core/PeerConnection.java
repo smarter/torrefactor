@@ -9,8 +9,8 @@ import java.security.SecureRandom;
 
 
 /**
- * This class represents a connection with a peer. It handles the IO streams
- * and provides methods to send and receive messages.
+ * This class represents a connection with a peer.
+ * It handles the IO streams and provides methods to send and receive messages.
  */
 public class PeerConnection {
     private static final Logger LOG = new Logger();
@@ -37,6 +37,9 @@ public class PeerConnection {
 
     /**
      * Creates a new PeerConnection to address at port.
+	 *
+	 * @param address	the InetAddress of the peer
+	 * @param port		the port where the peer is listening
      */
     public PeerConnection (InetAddress address, int port,
             PeerConnectionListener listener) {
@@ -67,6 +70,8 @@ public class PeerConnection {
 
     /**
      * Establish the connection.
+	 *
+	 * @throws IOException	when an IOException is thrown by connect()
      */
     public void connect ()
     throws IOException {
@@ -89,6 +94,8 @@ public class PeerConnection {
 
     /**
      * Close the connection.
+	 *
+	 * @throws IOException when an IOException is thrown by close()
      */
     public void close ()
     throws IOException {
@@ -99,6 +106,8 @@ public class PeerConnection {
 
     /**
      * Returns wether the connection is established or not.
+	 *
+	 * @return true if the connection is established
      */
     public boolean isConnected () {
         return this.socket.isConnected();
@@ -106,6 +115,8 @@ public class PeerConnection {
 
     /**
      * Sends the given message to the peer.
+	 *
+	 * @throws IOException	if an IOException was thrown by write() or flush()
      */
     public void send (Message msg) 
     throws IOException {
@@ -118,6 +129,15 @@ public class PeerConnection {
                   + ' ' + ByteArrays.toHexString(msg.toByteArray()));
     }
 
+	/**
+	 * Receive the next message and dispatch events to the
+	 * PeerConnectionListener.
+	 * This method does not block and returns null if no message was available.
+	 *
+	 * @return	the received Message or null if no message was available
+	 * @throws IOException when an IOException is thrown by available() or
+	 *					   blockingReceive()
+	 */
     public Message receive () 
     throws IOException {
         if (this.inputStream.available() == 0) return null;
@@ -126,7 +146,13 @@ public class PeerConnection {
     }
 
     /**
-     * Reads the next message sent by the peer and dispatch events.
+     * Reads the next message and dispatch events to the
+	 * PeerConnectionListener.
+	 * This method block until a message is received.
+	 *
+	 * @return the received Message
+	 * @throws IOException when in IOException occured while reading on the
+	 *					   socket.
      */
     public Message blockingReceive ()
     throws IOException {
@@ -253,7 +279,13 @@ public class PeerConnection {
 
     /**
      * This method handles the handshake with the peer. 
-     * Returns true if the handshake was successful.
+     * 
+	 * @param ownInfoHash	our info hash
+	 * @param ownReserved	our reserved bytes
+	 * @param ownPeerId		our peer id
+	 * @return true if the handshake was successful.
+	 * @throws IOException when it occured while reading or writing on the
+	 *                     socket
      */
     public boolean handshake (byte[] ownInfoHash, byte[] ownReserved,
         byte[] ownPeerId)
@@ -308,9 +340,9 @@ public class PeerConnection {
     }
 
     /**
-     * Setups the StupidEncryption.
-     * Returns true if the encryption streams where successfully created, false
-     * otherwise.
+     * Setup the StupidEncryption streams.
+     * 
+	 * @return true if the encryption streams where successfully created.
      */ 
     private boolean stupidEncryptionSetup (byte[] reserved) {
         if ((reserved[7] & (1 << 4)) == 0) {
@@ -357,8 +389,12 @@ public class PeerConnection {
                     f.printStackTrace();
                 }
             }
-            LOG.error("Failed to enable StupidEncryption, continuing with the"
-                      + " standard protocol.");
+            LOG.error("Failed to enable StupidEncryption aborting connection");
+			try {
+				close();
+			} catch (Exception f) {
+				f.printStackTrace();
+			}
             return false;
         }
 
@@ -366,6 +402,12 @@ public class PeerConnection {
         return true;
     }
 
+	/**
+	 * Send the public rsa key
+	 *
+	 * @param rsa	The rsa object from which to get the public key
+	 * @throws IOException when send(msg) throws it
+	 */
     private void stupidEncryptionSendRSAKey(Rsa rsa)
     throws IOException {
         byte[] key = rsa.getPublicKey();
@@ -377,7 +419,15 @@ public class PeerConnection {
         LOG.debug("RSA key sent.");
     }
 
-    private SendRsaMessage stupidEncryptionReceiveRSAKey (Rsa rsa)
+	/**
+	 * Receive the rsa key of the peer.
+	 *
+	 * @param rsa	The Rsa object which will have its decrypt key set
+	 * @return null when something wrong happened and the connection should be
+	 *		   closed.
+	 * @throws IOException when blockingReceive() throws it
+	 */
+	private SendRsaMessage stupidEncryptionReceiveRSAKey (Rsa rsa)
     throws IOException {
         Message msg = blockingReceive();
         if (msg.id() != SendRsaMessage.id) {
@@ -403,6 +453,12 @@ public class PeerConnection {
         return rmsg;
     }
 
+	/**
+	 * Send the xor key
+	 *
+	 * @param key	the key
+	 * @throws IOException when send(msg) throws it
+	 */
     private void stupidEncryptionSendSymmetricKey (byte[] key)
     throws IOException {
         Message msg = new SendSymmetricMessage(key);
@@ -410,6 +466,12 @@ public class PeerConnection {
         LOG.debug("XOR key sent with length " + key.length);
     }
 
+	/**
+	 * Receive the xor key of the peer.
+	 *
+	 * @return the xor key
+	 * @throws IOException when blockingReceive() throws it
+	 */
     private byte[] stupidEncryptionReceiveSymmetricKey ()
     throws IOException {
         Message msg = blockingReceive();
@@ -425,6 +487,13 @@ public class PeerConnection {
         return smsg.key;
     }
 
+	/**
+	 * Enable the Rsa stream for the StupidEncryption
+	 *
+	 * @param rsa		the Rsa object to be used by the streams
+	 * @param chunkSize	the chunk size to be used by the output stream
+	 * @return a pair containing the old DataInputStream and DataOutputStream
+	 */
     private Pair <DataInputStream, DataOutputStream> 
     stupidEncryptionEnableRSAStreams (Rsa rsa, int chunkSize) {
         Pair<DataInputStream, DataOutputStream> oldStreams;
@@ -444,6 +513,12 @@ public class PeerConnection {
         return oldStreams;
     }
 
+	/**
+	 * Enable the symmetric streams
+	 *
+	 * @param in	the input stream's xor key
+	 * @param out	the output stream's xor key
+	 */
     private void stupidEncryptionEnableSymmetricStreams(byte[] in, byte[] out) {
         this.inputStream = new DataInputStream(
                               new XorInputStream(
@@ -458,7 +533,14 @@ public class PeerConnection {
         LOG.debug("Now using XOR encryption.");
     }
 
-    private void stupidEncryptionDisableRSAStreams 
+	/**
+	 * Disable the rsa streams.
+	 *
+	 * @param oldStreams the pair of DataInputStream, DataOutputStream to use
+	 *                   to replace the rsa streams (as returned by
+	 *                   stupidEncryptionEnableRSAStreams)
+	 */
+	private void stupidEncryptionDisableRSAStreams 
         (Pair<DataInputStream, DataOutputStream> oldStreams) {
         this.inputStream = oldStreams.first();
         this.outputStream = oldStreams.second();
