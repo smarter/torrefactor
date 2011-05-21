@@ -24,6 +24,12 @@ public class HttpTracker extends Tracker {
     private String trackerId; //TODO: what's this thing?
     private static final int CONNECT_TIMEOUT = 5*1000; //in milliseconds
 
+    /**
+     * Create a new tracker for the given uri and use a uniqKey
+     *
+     * @param _uri        the uri of the tracker
+     * @param uniqKey    our own uniqKey
+     */
     public HttpTracker (String _uri, int uniqKey)
     throws UnsupportedOperationException, IllegalArgumentException,
            UnknownHostException, URISyntaxException {
@@ -31,6 +37,11 @@ public class HttpTracker extends Tracker {
         this.uniqKey = uniqKey;
     }
 
+    /**
+     * Create a new tracker for the given uri
+     *
+     * @param _uri    the uri of the tracker
+     */
     public HttpTracker (String _uri)
     throws UnsupportedOperationException, IllegalArgumentException,
            UnknownHostException, URISyntaxException {
@@ -62,8 +73,9 @@ public class HttpTracker extends Tracker {
         LOG.debug(this, "path: " + this.path);
     }
 
-    /* Announce an event for the torrent to the tracker. Returns a peer list
-     * or null */
+    /**
+     * {@inheritDoc}
+     */
     public ArrayList<Pair<byte[], Integer>>
     announce(Torrent torrent, Event event)
     throws ProtocolException, InvalidBDecodeException, IOException {
@@ -166,7 +178,9 @@ public class HttpTracker extends Tracker {
         return peersList;
     }
 
-    /* Makes the actual http announce to the tracker. Returns the answer map. */
+    /**
+     * Makes the actual http announce to the tracker, returns the answer map.
+     */
     private Map<String, BValue> httpAnnounce(String path, String params)
     throws IOException, InvalidBDecodeException {
         //PROJECT: we really should use URLConnection here, but for the project
@@ -238,7 +252,9 @@ public class HttpTracker extends Tracker {
         return answerMap;
     }
 
-    // Encode a byte array into url format
+    /**
+     * Encode a byte array into url format.
+     */
     private static String urlEncode(byte[] array) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < array.length; i++) {

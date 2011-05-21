@@ -31,7 +31,6 @@ public class PeerManager implements Runnable {
 
     static final int MAX_PEERS = 25;
     // In milliseconds
-    static final int ANNOUNCE_DELAY = 30*60*1000;
     static final int SLEEP_DELAY = 10;
     // Number of blocks requested at the same time per peer
     static final int MAX_QUEUED_REQUESTS = 10;
@@ -41,9 +40,11 @@ public class PeerManager implements Runnable {
     public PeerManager(Torrent _torrent) {
         this.stopped = true;
         if (this.peerId == null) {
-            // Azureus style, see http://wiki.theory.org/BitTorrentSpecification#peer_id
+            // Azureus style, see
+            // http://wiki.theory.org/BitTorrentSpecification#peer_id
             Random rand = new Random();
-            String idRand = UUID.randomUUID().toString().substring(0, 20 - idInfo.length());
+            String idRand = UUID.randomUUID().toString().substring(
+                    0, 20 - idInfo.length());
             LOG.debug(this, idRand);
             this.peerId = (idInfo + idRand).getBytes();
         }
@@ -55,14 +56,16 @@ public class PeerManager implements Runnable {
     }
 
     public void run() {
-        long time = System.currentTimeMillis();
         try {
             List<Pair<byte[], Integer>> peersList;
             peersList = null;
+
+            // Announce until a tracker respond
             while (peersList == null) {
                 peersList = this.trackerManager.announce(Tracker.Event.started);
                 Thread.sleep(TRACKER_RETRY_SLEEP);
             }
+
             this.peersReceived = peersList.size();
             updateMap(peersList);
         } catch (Exception e) {
@@ -72,7 +75,7 @@ public class PeerManager implements Runnable {
         stopped = false;
         while (!stopped) {
 
-            if (System.currentTimeMillis() - time > ANNOUNCE_DELAY ||
+            if (this.trackerManager.canAnnounce() ||
                     peerMap.size() <= this.peersReceived / 2) {
                 try {
                     List<Pair<byte[], Integer>> peersList;
@@ -83,7 +86,6 @@ public class PeerManager implements Runnable {
                     e.printStackTrace();
                     return;
                 }
-                time = System.currentTimeMillis();
             }
 
             int i = MAX_PEERS - activeMap.size();
@@ -97,6 +99,7 @@ public class PeerManager implements Runnable {
 
             ArrayList<Integer> newPieces =
                 this.torrent.pieceManager.popToAnnounce();
+
             Iterator<Map.Entry<InetAddress, Peer>> it =
                 activeMap.entrySet().iterator();
             while (it.hasNext()) {
@@ -152,6 +155,13 @@ public class PeerManager implements Runnable {
                 }
             }
 
+            // Announce complete if we got the last piece
+            if (newPieces.size() > 0) {
+                if (ByteArrays.isComplete(this.torrent.pieceManager.bitfield)) {
+                    this.trackerManager.announce(Tracker.Event.completed);
+                }
+            }
+
             try {
                 Thread.currentThread().sleep(SLEEP_DELAY);
             } catch (InterruptedException e) {
@@ -164,6 +174,10 @@ public class PeerManager implements Runnable {
        for (Map.Entry<InetAddress, Peer> entry : this.peerMap.entrySet()) {
             entry.getValue().invalidate();
        }
+
+       LOG.debug("Announcing \"stopped\" to trackers (this may take a while "
+                 + "if they don't respond promptly)");
+       this.trackerManager.announce(Tracker.Event.stopped);
 
     }
 

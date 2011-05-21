@@ -9,6 +9,9 @@ import java.net.*;
 import java.util.*;
 
 
+/**
+ * Manage a list of trackers and provide convenient mothods to make announces.
+ */
 public class TrackerManager {
     private static Logger LOG = new Logger();
     private List<List<String>> tiers;
@@ -50,7 +53,13 @@ public class TrackerManager {
         }
     }
 
-    /* Announce the specified event and return a peer list or null. */
+    /**
+     * Announce an event to the tracker.
+     *
+     * @param event the event to announce
+     * @return a List of Pair (address ip as byte[], port) returned by the
+     *         trackers. (Can be null)
+     */
     public List<Pair<byte[], Integer>> announce (Event event) {
         List<Pair<byte[], Integer>> peersList = null;
         LOG.info(this, "Announcing...");
@@ -64,8 +73,15 @@ public class TrackerManager {
         return peersList;
     }
 
-    /* Make an announce as per bittorent multitracker specification for the
-     * given tier. */
+    /**
+     * Make an announce as per Bittorrent multitracker specification for the
+     * given tier.
+     *
+     * @param event        the event to announce
+     * @param tier        the tier to announce
+     * @return a List of Pair (address ip as byte[], port) returned by the
+     *         trackers. (Can be null)
+     */
     private List<Pair<byte[], Integer>>
     announceTier (Event event, List<String> tier) {
         ArrayList<Pair<byte[], Integer>> peersList = null;
@@ -86,16 +102,30 @@ public class TrackerManager {
             tier.remove(uri);
             tier.add(0, uri);
             this.nextAnnounceTime = tracker.getNextAnnounceTime();
+            LOG.debug("Next announce at: " + this.nextAnnounceTime);
         }
         return peersList;
     }
 
-    /* Return the time when we are allowed to do the next annouce. */
+    /**
+     * Return the time when we are allowed to do the next annouce.
+     */
     public long nextAnnounceTime () {
         return this.nextAnnounceTime;
     }
 
-    /* Returns a new Tracker object for the given URI */
+    /**
+     * Return true if we should do an announce.
+     */
+    public boolean canAnnounce () {
+        return System.currentTimeMillis() > this.nextAnnounceTime;
+    }
+
+    /**
+     * Create a Tracker object for the given uri.
+     *
+     * @param uri    the uri of the tracker
+     */
     public Tracker getTracker (String uri) {
         Tracker tracker = null;
         LOG.debug(this, "Get tracker: " + uri);

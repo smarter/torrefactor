@@ -27,6 +27,12 @@ public class UdpTracker extends Tracker {
     private final static int UDP_ACTION_ANNOUNCE = 1;
     private final static int UDP_ACTION_ERROR = 3;
 
+    /**
+     * Create a new tracker for the given uri and use a uniqKey
+     *
+     * @param _uri        the uri of the tracker
+     * @param uniqKey    our own uniqKey
+     */
     public UdpTracker (String _uri, int uniqKey)
     throws UnsupportedOperationException, IllegalArgumentException,
            UnknownHostException {
@@ -34,6 +40,11 @@ public class UdpTracker extends Tracker {
         this.uniqKey = uniqKey;
     }
 
+    /**
+     * Create a new tracker for the given uri
+     *
+     * @param _uri    the uri of the tracker
+     */
     public UdpTracker (String _uri)
     throws UnsupportedOperationException, IllegalArgumentException,
            UnknownHostException {
@@ -60,8 +71,9 @@ public class UdpTracker extends Tracker {
         LOG.debug(this, "Port: " + this.port);
     }
 
-    /* Announce an event for the torrent to the tracke. Returns a peer list or
-     * null. */
+    /**
+     * {@inheritDoc}
+     */
     public ArrayList<Pair<byte[], Integer>>
     announce (Torrent torrent, Event event) {
         ArrayList<Pair<byte[], Integer>> peers = null;
@@ -78,8 +90,10 @@ public class UdpTracker extends Tracker {
         return peers;
     }
 
-    /* Send a packet to the tracker and return the response of the specified
-     * length. */
+    /**
+     * Send a packet to the tracker and return the response of the specified
+     * length.
+     */
     private DatagramPacket
     sendReceive (DatagramPacket packet, int recvlen, byte[] transactionId)
     throws IOException, SocketException {
@@ -113,8 +127,10 @@ public class UdpTracker extends Tracker {
     }
 
 
-    /* Makes the actual udp announce to the tracker. Returns a peer list or
-     * null*/
+    /**
+     * Makes the actual udp announce to the tracker, returns a peer list or
+     * null
+     */
     public ArrayList<Pair<byte[],Integer>>
     udpAnnounce (Torrent torrent, Event event)
     throws IOException, SocketException {
@@ -216,13 +232,17 @@ public class UdpTracker extends Tracker {
         return peerList;
     }
 
-    /* Returns true if the packet matches the transaction id. */
+    /**
+     * Returns true if the packet matches the transaction id.
+     */
     private static boolean udpCheckTransactionId (DatagramPacket packet,
                                                   byte[] id) {
         return arraycmp(packet.getData(), 4, id, 0, 4);
     }
 
-    /* Returns the error string sent by the tracker in the packet. */
+    /**
+     * Returns the error string sent by the tracker in the packet.
+     */
     private static String udpGetErrorMessage (DatagramPacket packet) {
         byte[] data = packet.getData();
         byte[] array = new byte[data.length];
@@ -230,9 +250,11 @@ public class UdpTracker extends Tracker {
         return new String(array);
     }
 
-    /* Returns true if array1 starting at offset1 equals array2 starting at
-     * offset2 for the given size. 'size' data must be available at the given
-     * offsets, no check is done to verify this. */
+    /**
+     * Returns true if array1 starting at offset1 equals array2 starting at
+     * offset2 for the given size; 'size' data must be available at the given
+     * offsets, no check is done to verify this.
+     */
     private static boolean arraycmp(byte[] array1, int offset1,
                                     byte[] array2, int offset2, int size) {
         for (int i=0; i<size; i++) {
