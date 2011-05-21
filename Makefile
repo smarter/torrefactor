@@ -131,7 +131,7 @@ JAVADOC_PACKAGES = \
 	torrefactor.core \
 	torrefactor.util \
 	torrefactor.ui.swing\
-	torrefactor.ui.qt
+#	torrefactor.ui.qt
                 
 
 # Resource packages
