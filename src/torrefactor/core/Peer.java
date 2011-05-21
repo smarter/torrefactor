@@ -9,7 +9,7 @@ import java.util.*;
 import java.security.SecureRandom;
 
 /**
- * A Bittorent peer with the ability to read and write messages to.
+ * Represents a Bittorrent peer.
  */
 public class Peer implements Runnable, PeerConnectionListener  {
     private static Logger LOG = new Logger();
@@ -18,14 +18,31 @@ public class Peer implements Runnable, PeerConnectionListener  {
     static final int PEER_TIMEOUT =  2*60*1000; // in ms
     static final int SLEEP_DELAY = 10; // in ms
 
-    private LinkedList<Message> msgOutQueue;
+	/** The bitfield of this peer*/
+    byte[] bitfield;
+
+	/** The peer id of this peer*/
+    byte[] id;
+
+	/** 
+	 * This LinkedList contains message which should be send as soon as
+	 * possible to the peer.
+	 * */
+	private LinkedList<Message> msgOutQueue;
+
+	/**
+	 * This LinkedList contains the requests made by the peer.
+	 */
     private LinkedList<DataBlockInfo> peerRequestQueue;
+
+	/**
+	 * This Linkedlist contains our request to send to the peer.
+	 */
     private LinkedList<DataBlockInfo> ownRequestQueue;
 
     private volatile boolean isValid = true;
     private volatile boolean isStopped = false;
 
-    byte[] id;
     private byte[] reservedBytes;
     private InetAddress address;
     private int port;
@@ -36,7 +53,6 @@ public class Peer implements Runnable, PeerConnectionListener  {
     private long downloaded = 0;
     private long uploaded = 0;
 
-    public byte[] bitfield;
     private byte[] reserved;
     private volatile boolean isChoked = true;
     private volatile boolean isChokingUs = true;
@@ -45,8 +61,14 @@ public class Peer implements Runnable, PeerConnectionListener  {
 
 
 
-    public Peer (InetAddress address, int port, Torrent torrent)
-    throws UnknownHostException, IOException {
+	/**
+	 * Create a new peer.
+	 *
+	 * @param address	the InetAddress of the peer
+	 * @param port		the port where the peer is listening
+	 * @param torrent	the torrent to use with this connection
+	 */
+    public Peer (InetAddress address, int port, Torrent torrent) {
         this.msgOutQueue = new LinkedList<Message>();
         this.peerRequestQueue = new LinkedList<DataBlockInfo>();
         this.ownRequestQueue = new LinkedList<DataBlockInfo>();
@@ -61,6 +83,11 @@ public class Peer implements Runnable, PeerConnectionListener  {
     }
 
 
+	/**
+	 * The main loop of the peer.
+	 * The main loop is responsible to send and receive the messages to/from
+	 * the peer. It exit when the connection is closed.
+	 */
     public void run() {
         try {
             this.connection.connect();
@@ -89,14 +116,17 @@ public class Peer implements Runnable, PeerConnectionListener  {
             e.printStackTrace();
         }
 
-            //TODO: remove, for testing only
+            //TODO: remove, when peerManager has an algorithm to handle this
             setChoked(false);
             setInteresting(true);
 
         try {
             long time = System.currentTimeMillis();
             while (this.connection.isConnected() && this.isValid) {
-                Message r = null;
+
+				// Wait a bit for a message but not to much. (It doesn't wait
+				// more than necessary
+				Message r = null;
                 int count = 0;
                 while (r == null && count < 10) {
                     r = this.connection.receive();
@@ -110,22 +140,26 @@ public class Peer implements Runnable, PeerConnectionListener  {
                     count++;
                 }
 
+				// Send all the messages frow msgOutQueue
                 while (this.msgOutQueue.size() > 0) {
                     Message msg = this.msgOutQueue.poll();
                     this.connection.send(msg);
                 }
 
+				// Send one of our request
                 if (this.ownRequestQueue.size() > 0) {
                     DataBlockInfo info = this.ownRequestQueue.poll();
                     Message msg = new RequestMessage(info);
                     this.connection.send(msg);
                 }
 
+				// Respond to a request of the peer
                 if (this.peerRequestQueue.size() > 0) {
                     DataBlockInfo info = this.peerRequestQueue.poll();
                     sendBlock(info);
                 }
 
+				// Send keep-alive according to Bittorrent specificiations
                 if (System.currentTimeMillis() - time > PEER_TIMEOUT / 2) {
                     keepAlive();
                     time = System.currentTimeMillis();
@@ -137,8 +171,16 @@ public class Peer implements Runnable, PeerConnectionListener  {
             e.printStackTrace();
             invalidate();
         }
+
+		if (this.isValid) invalidate();
     }
 
+	/**
+	 * Sends a block of data to the peer.
+	 *
+	 * @param info	The DataBlockInfo identifying the block to send to the peer
+	 * @throws IOException if PeerConnetion.send(Message) throws it
+	 */
     private void sendBlock(DataBlockInfo info)
     throws IOException {
         byte[] block = null;
@@ -158,11 +200,21 @@ public class Peer implements Runnable, PeerConnectionListener  {
         this.connection.send(msg);
     }
 
+	/**
+	 * Send a keep-alive to the peer.
+	 *
+	 * @throws IOException if PeerConnection.send(Message) throws it
+	 */
     private void keepAlive() throws IOException {
         Message msg = new KeepAliveMessage();
         this.msgOutQueue.offer(msg);
     }
     
+	/**
+	 * Set the choked status of this peer.
+	 *
+	 * @param b true to choke the peer, false to unchoke it
+	 */
     public void setChoked(boolean b) {
         if (this.isChoked != b) {
             this.isChoked = b;
@@ -176,6 +228,11 @@ public class Peer implements Runnable, PeerConnectionListener  {
         this.msgOutQueue.offer(msg);
     }
 
+	/**
+	 * Set the interesting status of this peer.
+	 *
+	 * @param b true if this peer is interesting
+	 */
     public void setInteresting(boolean b) {
         this.isInteresting = b;
         Message msg;
@@ -189,6 +246,8 @@ public class Peer implements Runnable, PeerConnectionListener  {
 
     /**
      * Returns whether requests can be made to this peer.
+	 *
+	 * @return true if a request can be made to this peer
      */
     public boolean canRequest() {
         boolean b = this.isValid && this.connection.isConnected() &&
@@ -211,11 +270,6 @@ public class Peer implements Runnable, PeerConnectionListener  {
 
     public boolean isInterestedInUs() {
         return this.isInterestedInUs;
-    }
-
-    public boolean isRequestQueueFull() {
-        return this.ownRequestQueue.size() >= 
-            this.torrent.peerManager.MAX_QUEUED_REQUESTS;
     }
 
     public long downloaded() {
@@ -257,6 +311,7 @@ public class Peer implements Runnable, PeerConnectionListener  {
         return this.isValid && this.connection.isConnected();
     }
 
+	@Deprecated
     public int firstPiece() {
         if (this.bitfield == null) return -1;
         for (int i = 0; i < this.bitfield.length; i++) {
@@ -271,23 +326,44 @@ public class Peer implements Runnable, PeerConnectionListener  {
         return -1;
     }
 
+	/**
+	 * Check whether this peer has a particular piece or not.
+	 *
+	 * @param index the index of the piece
+	 * @return true if this piece has the piece at the given index
+	 */
     public boolean hasPiece(int index) {
         int byteIndex = index / 8;
         int offset = 7 - index % 8;
         return (((this.bitfield[byteIndex] >>> offset) & 1) == 1);
     }
 
+	/**
+	 * Send a request to the peer.
+	 *
+	 * @param info the DataBlockInfo indentifying the block to request
+	 */
     public void sendRequest(DataBlockInfo info) {
         LOG.debug("Sending request: pieceIndex: " + info.pieceIndex()
                   + " offset: " + info.offset() + " ");
         this.ownRequestQueue.offer(info);
     }
 
+	/**
+	 * Send a have message to the peer.
+	 *
+	 * @param piece the index of the piece
+	 */
     public void sendHave(int piece) {
         Message msg = new HaveMessage(piece);
         this.msgOutQueue.offer(msg);
     }
-
+	
+	/**
+	 * Return the string representation of this peer.
+	 * It is of the form: "Peer/0.0.0.0:9999"
+	 */
+	@Override
     public String toString() {
         return "Peer" + this.address + ':' + this.port;
     }
@@ -305,7 +381,14 @@ public class Peer implements Runnable, PeerConnectionListener  {
         return  arrayToString(this.id);
     }
 
-    private static String arrayToString(byte[] data) {
+	/**
+	 * Return a byte array as string. Each byte is considered as a char and
+	 * byte corresponding to control chars are ignored.
+	 *
+	 * @param data the byte array
+	 * @return the string representation
+	 */
+	private static String arrayToString(byte[] data) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < data.length; i++) {
             if (!Character.isISOControl((char) data[i])) {
@@ -315,27 +398,51 @@ public class Peer implements Runnable, PeerConnectionListener  {
         return sb.toString();
     }
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
     public void onChokeMessage (ChokeMessage msg) {
         this.isChokingUs = true;
     }
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
     public void onUnchokeMessage (UnchokeMessage  msg) {
         this.isChokingUs = false;
     }
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
     public void onInterestedMessage (InterestedMessage msg) {
         this.isInterestedInUs = true;
     }
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
     public void onNotInterestedMessage (NotInterestedMessage msg) {
         this.isInterestedInUs = false;
     }
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
     public void onHaveMessage (HaveMessage msg) {
         int byteIndex = msg.index / 8;
         this.bitfield[byteIndex] |= 1 << 7 - (msg.index % 8);
     }
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
     public void onBitfieldMessage (BitfieldMessage msg) {
         if (msg.bitfield.length != this.bitfield.length) {
             LOG.error("Wrong bitfield length, got: " + msg.bitfield.length
@@ -346,6 +453,10 @@ public class Peer implements Runnable, PeerConnectionListener  {
         LOG.debug("Bitfield: " + ByteArrays.toHexString(msg.bitfield));
     }
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
     public void onRequestMessage (RequestMessage msg) {
         LOG.debug("Request, index: " + msg.index
                         + " offset: " + msg.offset
@@ -358,6 +469,10 @@ public class Peer implements Runnable, PeerConnectionListener  {
         }
     }
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
     public void onPieceMessage (PieceMessage msg) {
         try {
             this.torrent.pieceManager.putBlock(
@@ -369,6 +484,10 @@ public class Peer implements Runnable, PeerConnectionListener  {
 
     }
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
     public void onCancelMessage (CancelMessage msg) {
         ListIterator<DataBlockInfo> iter =
             this.peerRequestQueue.listIterator(0);
@@ -381,6 +500,10 @@ public class Peer implements Runnable, PeerConnectionListener  {
         }
     }
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
     public void onPortMessage (PortMessage msg) {
         // FIXME: do we have to do what is commented out there or what is in
         //        PortMessage? In any case, the right thing should be in
@@ -394,18 +517,27 @@ public class Peer implements Runnable, PeerConnectionListener  {
         //NodeManager.add(this.address, msg.port);
     }
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
     public void onUnknownMessage (UnknownMessage msg) {
         LOG.warning("Ignoring unknown message");
     }
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
     public void onKeepAliveMessage () {};
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
     public void onHandshake(byte[] peerId, byte[] reserved) {
         this.id = peerId;
         this.reserved = reserved;
-    }
-
-    public void onConnectionClosed () {
     }
 
 }
