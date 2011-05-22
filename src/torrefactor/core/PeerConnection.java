@@ -440,7 +440,7 @@ public class PeerConnection {
                 if (inKey != null) {
                     LOG.debug("Recvd XOR is " + ByteArrays.toHexString(inKey));
                     stupidEncryptionDisableRSAStreams(oldStreams);
-                    stupidEncryptionEnableSymmetricStreams(inKey, outKey);
+                    stupidEncryptionEnableSymmetricStreams(outKey, inKey);
                 } else {
                     // It's stupid to throws those two exceptions but it
                     // simplifies the code a lot because we're forced
