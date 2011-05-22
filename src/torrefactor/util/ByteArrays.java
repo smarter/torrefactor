@@ -65,7 +65,7 @@ public class ByteArrays {
     /**
      * Returns an array of byte that is the concatenation
      * of all the arrays in arrays.
-     * @p arrays Array of arrays of bytes to concatenate
+     * @param arrays Array of arrays of bytes to concatenate
      */
     public static byte[] concat(byte[][] arrays) {
         int size = 0;

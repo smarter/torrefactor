@@ -17,10 +17,11 @@ public class DataBlock {
 
     /**
      * Constructs a DataBlock object corresponding to a block in a piece of the torrent.
-     * @p _buffers List of MappedByteBuffer mapped in order to each file in the torrent
-     * @p _length Length of the block
-     * @p _pieceIndex Index of the piece this block is in
-     * @p _offset Offset of this block within the piece.
+     * @param _buffers      List of MappedByteBuffer mapped in order to each
+     *                      file in the torrent
+     * @param _length       Length of the block
+     * @param _pieceIndex   Index of the piece this block is in
+     * @param _offset       Offset of this block within the piece.
      */
     public DataBlock (MappedByteBuffer[] _buffers, int _length, int _pieceIndex, int _offset) {
         this.buffers = _buffers;

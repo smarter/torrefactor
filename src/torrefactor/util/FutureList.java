@@ -40,8 +40,12 @@ public class FutureList<E> {
      * Block until a future is done, then remove it from the list
      * and return it. If cancelled tasks are found during the execution of
      * this function, they will be removed from the list.
-     * @p timeout Number of milliseconds to wait before throwing TimeoutException
-     * @return The result of a computation or null if the list of Future is empty
+     *
+     * @param timeout   Number of milliseconds to wait before throwing
+     *                  TimeoutException
+     *
+     * @return          The result of a computation or null if the list
+     *                  of Future is empty
      */
     public E removeAny(int timeout) throws TimeoutException, ExecutionException {
         if (list.isEmpty()) {
@@ -78,8 +82,12 @@ public class FutureList<E> {
     /**
      * Block until the first future added to the list is done or cancelled.
      * Then remove it from the list and return its result.
-     * @p timeout Number of milliseconds to wait before throwing TimeoutException
-     * @return The result of a computation or null if the list of Future is empty
+     *
+     * @param timeout Number of milliseconds to wait before throwing
+     *                TimeoutException
+     *
+     * @return        The result of a computation or null if the list of Future
+     *                is empty
      */
     public E removeFirst(int timeout)
     throws TimeoutException, ExecutionException, InterruptedException {

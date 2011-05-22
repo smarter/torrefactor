@@ -149,7 +149,7 @@ public class MainWindow implements ActionListener {
     /**
      * Set the visibility of the window.
      *
-     * @param setVisible    if true show the window
+     * @param bool  if true show the window
      */
     public void setVisible (Boolean bool) {
         this.mainFrame.pack ();

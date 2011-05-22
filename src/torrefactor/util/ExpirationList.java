@@ -12,8 +12,8 @@ public class ExpirationList<E> {
     private List<Timestamped<E>> list;
 
     /**
-     * @p expireAfter Time after which an element is considered expired.
-     * @p unit The time unit of the expireAfter argument.
+     * @param expireAfter Time after which an element is considered expired.
+     * @param unit        The time unit of the expireAfter argument.
      */
     public ExpirationList(int expireAfter, TimeUnit unit) {
         this.expireAfter = TimeUnit.MILLISECONDS.convert(expireAfter, unit);
@@ -22,7 +22,7 @@ public class ExpirationList<E> {
 
     /**
      * Adds the specified element to the end of this list.
-     * @p e Element to be added to the list.
+     * @param e Element to be added to the list.
      */
     public synchronized boolean add(E e) {
             return this.list.add(new Timestamped<E>(e));
@@ -32,7 +32,7 @@ public class ExpirationList<E> {
      * Appends all of the elements in the specified collection to the end of this
      * list, in the order that they are returned by the specified collection's
      * iterator (optional operation).
-     * @p c Collection containing elements to be added to this list 
+     * @param c Collection containing elements to be added to this list 
      */
     public synchronized boolean addAll(Collection<? extends E> c) {
             for (E elem : c) {

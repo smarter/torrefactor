@@ -11,9 +11,9 @@ public class DataBlockInfo {
 
     /**
      * Constructs an immutable object to store info about a block.
-     * @p _pieceIndex Index of the piece this block is in
-     * @p _offset Offset of this block within the piece
-     * @p _length Length of this block in bytes
+     * @param _pieceIndex Index of the piece this block is in
+     * @param _offset     Offset of this block within the piece
+     * @param _length     Length of this block in bytes
      */
     public DataBlockInfo(int _pieceIndex, int _offset, int _length) {
         this.pieceIndex = _pieceIndex;

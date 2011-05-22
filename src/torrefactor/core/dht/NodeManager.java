@@ -152,8 +152,9 @@ public class NodeManager {
         List<Node> closeList = new ArrayList<Node>(Bucket.CAPACITY);
         closeList.addAll(bucket.nodes());
         for (int i = 0; i < 160 && closeList.size() < Bucket.CAPACITY; i++) {
-            //Didn't find enough nodes. Try in buckets closer to our own id first,
-            //since they have the same prefix than the id we're looking for.
+            //Didn't find enough nodes. Try in buckets closer to our own id
+            //first, since they have the same prefix than the id we're looking
+            //for.
             if ((index + i) < buckets.size()) {
                     closeList.addAll(buckets.get(index + i).nodes());
             } else if ((index - i) > 0) {
@@ -181,9 +182,10 @@ public class NodeManager {
 
     /**
      * Add a new peer to the infoHashMap
-     * @p ip IP of the peer
-     * @p port TCP port for connecting to the peer
-     * @p infoHash info hash of the torrent this peer is on
+     *
+     * @param ip        IP of the peer
+     * @param port      TCP port for connecting to the peer
+     * @param infoHash  info hash of the torrent this peer is on
      */
     public boolean addPeer(InetAddress ip, int port, byte[] infoHash) {
         byte[] peer = ByteArrays.compact(ip, port);
@@ -198,7 +200,7 @@ public class NodeManager {
     /**
      * As described in
      * http://xlattice.sourceforge.net/components/protocol/kademlia/specs.html#lookup
-     * @p type Type of the query. Must be find_node or get_peers
+     * @param type  Type of the query. Must be find_node or get_peers
      */
     private List<Node> iterativeFindNode(byte[] id) {
         KRPCMessage query = KRPCMessage.findNode(id);
@@ -262,9 +264,11 @@ public class NodeManager {
 
     /**
      * Send queries of the specified type to each node of the list.
-     * @p list The list of nodes to query
-     * @p type Must be find_node or get_peers
-     * @return A FutureList with the responses to each query.
+     *
+     * @param list  The list of nodes to query
+     * @param type  Must be find_node or get_peers
+     *
+     * @return      A FutureList with the responses to each query.
      */
     FutureList<KRPCMessage> queryList(List<Node> list, KRPCMessage.QueryType type) {
         FutureList<KRPCMessage> futureNodes = new FutureList<KRPCMessage>();
