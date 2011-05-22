@@ -112,6 +112,7 @@ public class PeerManager implements Runnable {
 
             Iterator<Map.Entry<InetAddress, Peer>> it =
                 activeMap.entrySet().iterator();
+            activeMapIteration:
             while (it.hasNext()) {
 
                 Map.Entry<InetAddress, Peer> peerEntry = it.next();
@@ -134,7 +135,12 @@ public class PeerManager implements Runnable {
                             peer.invalidate();
                             it.remove();
                             this.peerMap.remove(peerAddress);
-                            continue;
+
+                            // This has been well tested and won't end up like 
+                            // xkcd commic: http://xkcd.com/292/
+                            // Yeah, I promise you no dinosaur will comme from
+                            // your left ;)
+                            break activeMapIteration;
                         }
                     }
                 }
