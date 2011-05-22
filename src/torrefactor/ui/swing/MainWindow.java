@@ -18,6 +18,10 @@ import torrefactor.util.*;
 import javax.swing.Timer;
 import java.util.List;
 
+
+/**
+ * This class handles the main window of the Swing interface.
+ */
 public class MainWindow implements ActionListener {
     private static Logger LOG = new Logger();
     private static Config CONF = Config.getConfig();
@@ -33,6 +37,11 @@ public class MainWindow implements ActionListener {
     private TorrentPeers torrentPeers;
     private Timer tableTimer;
 
+    /**
+     * Create a new MainWindow. This is not a singleton because we have no use
+     * of it. This class is not meant to be instanciated more than
+     * once neverless.
+     */
     public MainWindow () {
         this.mainFrame = new JFrame ("Torrefactor");
         this.mainFrame.setLocationByPlatform(true);
@@ -89,6 +98,9 @@ public class MainWindow implements ActionListener {
         this.tableTimer.start();
     }
 
+    /**
+     * This method handles the initial construction of the menus.
+     */
     private void buildMenu () {
         JMenu menuFile = new JMenu ("File");
         JMenuItem itemOpen = new JMenuItem ("Open…");
@@ -120,6 +132,9 @@ public class MainWindow implements ActionListener {
         this.menuBar.add (menuFile);
     }
 
+    /**
+     * This method handles the initial construction of the torrent table.
+     */
     private void buildTorrentTable () {
         this.torrentModel = new TorrentTableModel();
         this.torrentTable = new JTable(this.torrentModel);
@@ -131,6 +146,11 @@ public class MainWindow implements ActionListener {
             .setCellRenderer(new ProgressBarTableCellRenderer());
     }
 
+    /**
+     * Set the visibility of the window.
+     *
+     * @param setVisible    if true show the window
+     */
     public void setVisible (Boolean bool) {
         this.mainFrame.pack ();
         this.mainFrame.setVisible (bool);
@@ -167,16 +187,26 @@ public class MainWindow implements ActionListener {
         }
     }
 
+    /**
+     * This is must be called when the application is supposed to quit
+     * gracefully.
+     */
     public void quit () {
             this.tableTimer.stop ();
             stopAll ();
             this.mainFrame.dispose ();
     }
 
+    /**
+     * Stops all torrents.
+     */
     public void stopAll () {
        this.torrentModel.stop();
     }
 
+    /**
+     * Show a dialog to open a new torrent.
+     */
     public void openTorrent () {
             JFileChooser chooser = new JFileChooser(
                                                 System.getProperty("user.dir"));
@@ -194,11 +224,19 @@ public class MainWindow implements ActionListener {
     }
 
 
+    /**
+     * Is called when the selection on the JTable changes.
+     */
     public void onTorrentSelected (Torrent torrent) {
         this.torrentDetails.setTorrent(torrent);
         this.torrentPeers.setTorrent(torrent);
     }
 
+    /**
+     * Is called to start a new torrent.
+     *
+     * @param path  path to the torrent file
+     */
     public void openTorrent (String path) {
         try {
             String basePath = CONF.getProperty("Ui.Swing.BasePath");
