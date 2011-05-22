@@ -7,6 +7,7 @@ import torrefactor.util.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * The PeerManager thread keeps track of the known and the active
@@ -22,9 +23,11 @@ public class PeerManager implements Runnable {
     private Map<InetAddress, Peer> peerMap;
     private Map<InetAddress, Peer> activeMap;
     private TrackerManager trackerManager;
+    private LinkedBlockingQueue<Peer> newPeers =
+        new LinkedBlockingQueue<Peer>();
 
     //Volatile since several PeerManager could be instantiated at the same time
-    static volatile byte[] peerId;
+    private static volatile byte[] peerId;
 
     static final String idInfo = "-TF0010-";
 
@@ -39,16 +42,10 @@ public class PeerManager implements Runnable {
     static final int TRACKER_RETRY_SLEEP = 5000;
 
     public PeerManager(Torrent _torrent) {
+        // Make sure we have a peerId
+        PeerManager.peerId();
+
         this.stopped = true;
-        if (this.peerId == null) {
-            // Azureus style, see
-            // http://wiki.theory.org/BitTorrentSpecification#peer_id
-            Random rand = new Random();
-            String idRand = UUID.randomUUID().toString().substring(
-                    0, 20 - idInfo.length());
-            LOG.debug(this, idRand);
-            this.peerId = (idInfo + idRand).getBytes();
-        }
         this.peersReceived = 0;
         this.torrent = _torrent;
         this.peerMap = new HashMap<InetAddress, Peer>();
@@ -76,6 +73,15 @@ public class PeerManager implements Runnable {
         stopped = false;
         while (!stopped) {
 
+            // Add peer which have been added via addPeer(Peer)
+            while (this.newPeers.size() > 0) {
+                Peer peer = this.newPeers.poll();
+                if (peer == null) continue;
+
+                this.peerMap.put(peer.getAddress(), peer);
+                this.activeMap.put(peer.getAddress(), peer);
+            }
+
             if (this.trackerManager.canAnnounce() ||
                     peerMap.size() <= this.peersReceived / 2) {
                 try {
@@ -98,7 +104,7 @@ public class PeerManager implements Runnable {
                 new Thread(peerEntry.getValue()).start();
                 activeMap.put(peerEntry.getKey(), peerEntry.getValue());
                 i--;
-                if (i == 0) break;
+                if (i <= 0) break;
             }
 
             ArrayList<Integer> newPieces =
@@ -162,6 +168,8 @@ public class PeerManager implements Runnable {
                 }
             }
 
+            // Sleep a bit to spare CPU and leave time to send messages to
+            // peers
             try {
                 Thread.currentThread().sleep(SLEEP_DELAY);
             } catch (InterruptedException e) {
@@ -206,7 +214,7 @@ public class PeerManager implements Runnable {
 
     /**
      * Update peerMap using peersList.
-     * @p peersList a list of peers in "compact ip/port" format
+     * @param peersList a list of peers in "compact ip/port" format
      */
     private void updateMapCompact(List<byte[]> peersList)
     throws IOException, UnknownHostException {
@@ -238,5 +246,25 @@ public class PeerManager implements Runnable {
     public Map<InetAddress, Peer> getPeerMap () {
         if (this.peerMap == null) return null;
         return Collections.unmodifiableMap(this.peerMap);
+    }
+
+    public void addPeer (Peer peer) {
+        this.newPeers.offer(peer);
+    }
+
+    /**
+     * Return our peerId
+     */
+    public static byte[] peerId() {
+        if (peerId == null) {
+            // Azureus style, see
+            // http://wiki.theory.org/BitTorrentSpecification#peer_id
+            Random rand = new Random();
+            String idRand = UUID.randomUUID().toString().substring(
+                    0, 20 - idInfo.length());
+            LOG.debug(idRand);
+            peerId = (idInfo + idRand).getBytes();
+        }
+        return peerId;
     }
 }

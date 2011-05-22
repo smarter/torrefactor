@@ -18,6 +18,7 @@ import java.util.*;
  */
 public class HttpTracker extends Tracker {
     private static Logger LOG = new Logger();
+    private static Config CONF = Config.getConfig();
     private String host;
     private int port;
     private String path;
@@ -81,12 +82,12 @@ public class HttpTracker extends Tracker {
     throws ProtocolException, InvalidBDecodeException, IOException {
         // Construct request
         String infoHash = urlEncode(torrent.infoHash);
-        String peerId = urlEncode(torrent.peerManager.peerId);
+        String peerId = urlEncode(torrent.peerManager.peerId());
         StringBuilder sb = new StringBuilder(200);
         sb.append("?info_hash=");
         sb.append(infoHash);
         sb.append("&port=");
-        sb.append(this.port); //FIXME: should be PeerManager.port
+        sb.append(CONF.getPropertyInt("ListenPort"));
         sb.append("&numwant=200");
         sb.append("&peer_id=");
         sb.append(peerId);

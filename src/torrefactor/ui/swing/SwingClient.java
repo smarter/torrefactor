@@ -2,6 +2,7 @@ package torrefactor.ui.swing;
 
 import torrefactor.core.TorrentManager;
 import torrefactor.core.Torrent;
+import torrefactor.core.PeerListener;
 import torrefactor.util.Logger;
 import torrefactor.util.Config;
 
@@ -10,7 +11,9 @@ import java.io.File;
 
 public class SwingClient {
     private static final Logger LOG = new Logger ();
+    private static Config CONF;
     private MainWindow mainWindow;
+    private PeerListener peerListener;
 
     public static void main(String[] args)
     throws java.io.IOException, java.io.FileNotFoundException,
@@ -30,6 +33,7 @@ public class SwingClient {
     }
 
     public SwingClient () {
+        CONF = Config.getConfig();
         this.mainWindow = new MainWindow();
         this.mainWindow.setVisible(true);
 
@@ -39,6 +43,11 @@ public class SwingClient {
                     destructor();
                 }
             }));
+
+        this.peerListener = new PeerListener(CONF.getPropertyInt("ListenPort"));
+        Thread t = new Thread(this.peerListener);
+        t.setDaemon(true);
+        t.start();
     }
 
     public void destructor() {

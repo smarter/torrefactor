@@ -31,6 +31,8 @@ public class Config extends Properties {
         p.setProperty("Peer.RsaKeyBitlength", "128");
         p.setProperty("Peer.XorLength", "128");
 
+        p.setProperty("ListenPort", "7979");
+
         p.setProperty("Ui.Swing.BasePath", System.getProperty("user.home"));
     }
 
@@ -47,6 +49,8 @@ public class Config extends Properties {
         if (! validateBoolean("Peer.ForceStupidEncryption", defaults)) r=false;
         if (! validateInt("Peer.RsaKeyBitlength", defaults)) r = false;
         if (! validateInt("Peer.XorLength", defaults)) r = false;
+
+        if (! validateInt("ListenPort", defaults)) r = false;
 
         if (! validateDirectory("Ui.Swing.BasePath", defaults)) r = false;
 

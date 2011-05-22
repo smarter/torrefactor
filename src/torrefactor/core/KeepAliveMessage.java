@@ -19,6 +19,6 @@ public class KeepAliveMessage extends Message {
      */
     @Override
     public byte[] toByteArray () {
-        return new byte[] {0, 0, 0, 0};
+        return new byte[] {};
     }
 }

@@ -13,6 +13,7 @@ import java.util.*;
  */
 public class UdpTracker extends Tracker {
     private static Logger LOG = new Logger();
+    private static Config CONF = Config.getConfig();
     private long connection_id;
     private byte[] info_hash;
     private byte[] peer_id;
@@ -143,7 +144,7 @@ public class UdpTracker extends Tracker {
         // Get socket
         this.socket = DatagramSockets.getDatagramSocket(this.port);
         if (this.socket == null) return null;
-        int lport = this.socket.getPort();
+        int lport = CONF.getPropertyInt("ListenPort");
 
         // Connect
         buffer = new byte[16];
@@ -178,7 +179,7 @@ public class UdpTracker extends Tracker {
         transactionId = ByteArrays.fromInt(random.nextInt());
         System.arraycopy(transactionId, 0, buffer, 12, 4);
         System.arraycopy(torrent.infoHash, 0, buffer, 16, 20);
-        System.arraycopy(torrent.peerManager.peerId, 0, buffer, 36, 20);
+        System.arraycopy(torrent.peerManager.peerId(), 0, buffer, 36, 20);
         System.arraycopy(ByteArrays.fromLong(torrent.downloaded()), 0,
                          buffer, 56, 8);
         System.arraycopy(ByteArrays.fromLong(torrent.left()), 0,

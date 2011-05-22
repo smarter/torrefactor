@@ -16,6 +16,7 @@ public class PeerConnection {
     private static final Logger LOG = new Logger();
     private static final Config CONF = Config.getConfig();
 
+    static final byte BITTORRENT_HEADER[] = "BitTorrent protocol".getBytes();
     static final int SEND_BUFFER_SIZE = (1 << 18); // in bytes
     static final int RECEIVE_BUFFER_SIZE = (1 << 18); // in bytes
     static final int CONNECT_TIMEOUT =  5000; // in ms
@@ -36,15 +37,47 @@ public class PeerConnection {
     private DataOutputStream outputStream;
 
     /**
-     * Creates a new PeerConnection to address at port.
+     * Create a new PeerConnection to address at port.
      *
      * @param address    the InetAddress of the peer
-     * @param port        the port where the peer is listening
+     * @param port       the port where the peer is listening
+     * @param listener   the PeerConnectionListener for this connection
      */
     public PeerConnection (InetAddress address, int port,
             PeerConnectionListener listener) {
         this.listener = listener;
         this.socket = new Socket();
+        setupSocket();
+        this.address = address;
+        this.port = port;
+        LOG.setHeader("PeerConnection" + address + ':' + port);
+    }
+
+    /**
+     * Create a new PeerConnection from socket.
+     *
+     * @param socket    the socket connected to the peer
+     * @param listener  the PeerConnectionListener for this connection
+     */
+    public PeerConnection (Socket socket, PeerConnectionListener listener) {
+        this.listener = listener;
+        this.socket = socket;
+        this.address = this.socket.getInetAddress();
+        this.port = this.socket.getPort();
+
+        if (this.socket.isConnected()) {
+            try {
+                setupStreams();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    /**
+     * Set various parameters of the socket.
+     */
+    private void setupSocket () {
         try {
             this.socket.setSendBufferSize(SEND_BUFFER_SIZE);
         } catch (SocketException e) {
@@ -63,9 +96,6 @@ public class PeerConnection {
             LOG.warning("Couldn't set socket's SO_TIMOUT to " + SO_TIMEOUT
                         + ": " + e.getMessage());
         }
-        this.address = address;
-        this.port = port;
-        LOG.setHeader("PeerConnection" + address + ':' + port);
     }
 
     /**
@@ -81,7 +111,17 @@ public class PeerConnection {
             CONNECT_TIMEOUT);
         LOG.debug("Connected.");
 
-        
+        setupStreams();
+    }
+
+    /**
+     * Setup streams
+     *
+     * @throws IOException  when getInputStream() or getOutputStream() throws
+     *                      it
+     */
+    private void setupStreams ()
+    throws IOException {
         // FIXME: Why do we need Buffered streams?
         inputStream = new DataInputStream(
                           new BufferedInputStream(
@@ -89,7 +129,6 @@ public class PeerConnection {
         outputStream = new DataOutputStream(
                            new BufferedOutputStream(
                                this.socket.getOutputStream()));
-
     }
 
     /**
@@ -129,8 +168,16 @@ public class PeerConnection {
         this.outputStream.write(len);
         this.outputStream.write(a);
         this.outputStream.flush();
+        
+        if (a.length > 12) {
         LOG.debug("Sent message: " + msg
-                  + ' ' + ByteArrays.toHexString(msg.toByteArray()));
+                  + ' ' + "with len: "
+                  + ByteArrays.toHexString(len) + " (" + a.length + ")");
+        } else {
+        LOG.debug("Sent message: " + msg
+                  + ' ' + ByteArrays.toHexString(a) + "with len: "
+                  + ByteArrays.toHexString(len) + " (" + a.length + ")");
+        }
     }
 
     /**
@@ -278,6 +325,7 @@ public class PeerConnection {
             this.listener.onUnknownMessage((UnknownMessage) msg);
         }
 
+        LOG.debug("Message is " + msg);
         return msg;
     }
 
@@ -292,20 +340,41 @@ public class PeerConnection {
      *                     socket
      */
     public boolean handshake (byte[] ownInfoHash, byte[] ownReserved,
-        byte[] ownPeerId)
+            byte[] ownPeerId)
     throws IOException {
 
-        // Send handshake
-        outputStream.writeByte(19);
-        byte header[] = "BitTorrent protocol".getBytes();
-        outputStream.write(header);
+        if (ownInfoHash != null) {
+            sendHandshake(ownInfoHash, ownReserved, ownPeerId);
+            if (!receiveHandshake(ownReserved.length)) return false;
+        }
+
+        else {
+            if (!receiveHandshake(ownReserved.length)) return false;
+            sendHandshake(this.listener.ownInfoHash(), ownReserved, ownPeerId);
+        }
+
+        return true;
+    }
+    
+    private void sendHandshake (byte[] ownInfoHash, byte[] ownReserved,
+            byte[] ownPeerId) 
+    throws IOException {
+        outputStream.writeByte(BITTORRENT_HEADER.length);
+        outputStream.write(BITTORRENT_HEADER);
 
         outputStream.write(ownReserved);
         outputStream.write(ownInfoHash);
         outputStream.write(ownPeerId);
         outputStream.flush();
+    }
 
-        // Receive handshake
+    /**
+     * Receive the handshake.
+     *
+     * @return Triplet resereved bytes, peer id, info hash
+     */
+    private boolean receiveHandshake (int reservedLength)
+    throws IOException {
         int inLength = inputStream.read();
         if (inLength == -1) {
             return false;
@@ -313,24 +382,24 @@ public class PeerConnection {
 
         byte[] inHeader = new byte[inLength];
         inputStream.readFully(inHeader);
-        if (!Arrays.equals(header, inHeader)) {
+        if (!Arrays.equals(BITTORRENT_HEADER, inHeader)) {
             LOG.debug("Unsupported protocol header: "
                             + new String(inHeader));
             return false;
         }
 
-        byte[] inReserved = new byte[ownReserved.length];
+        byte[] inReserved = new byte[reservedLength];
         inputStream.readFully(inReserved);
 
         byte[] inInfoHash = new byte[20];
         inputStream.readFully(inInfoHash);
-        if (!Arrays.equals(ownInfoHash, inInfoHash)) {
-            LOG.warning("Wrong info_hash");
-            return false;
-        }
 
         byte[] inPeerId = new byte[20];
         inputStream.readFully(inPeerId);
+
+        if (!this.listener.onHandshake(inPeerId, inReserved, inInfoHash)) {
+            return false;
+        }
 
         if (USE_STUPID_ENCRYPTION) {
             boolean activated = stupidEncryptionSetup(inReserved);
@@ -339,7 +408,6 @@ public class PeerConnection {
             }
         }
 
-        this.listener.onHandshake(inPeerId, inReserved);
         return true;
     }
 

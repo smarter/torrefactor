@@ -30,17 +30,19 @@ public class Peer implements Runnable, PeerConnectionListener  {
      * This LinkedList contains message which should be send as soon as
      * possible to the peer.
      * */
-    private LinkedList<Message> msgOutQueue;
+    private LinkedList<Message> msgOutQueue = new LinkedList<Message>();
 
     /**
      * This LinkedList contains the requests made by the peer.
      */
-    private LinkedList<DataBlockInfo> peerRequestQueue;
+    private LinkedList<DataBlockInfo> peerRequestQueue =
+        new LinkedList<DataBlockInfo>();
 
     /**
      * This Linkedlist contains our request to send to the peer.
      */
-    private LinkedList<DataBlockInfo> ownRequestQueue;
+    private LinkedList<DataBlockInfo> ownRequestQueue =
+        new LinkedList<DataBlockInfo>();
 
     private volatile boolean isValid = true;
     private volatile boolean isStopped = false;
@@ -68,21 +70,33 @@ public class Peer implements Runnable, PeerConnectionListener  {
      * Create a new peer.
      *
      * @param address    the InetAddress of the peer
-     * @param port        the port where the peer is listening
+     * @param port       the port where the peer is listening
      * @param torrent    the torrent to use with this connection
      */
     public Peer (InetAddress address, int port, Torrent torrent) {
-        this.msgOutQueue = new LinkedList<Message>();
-        this.peerRequestQueue = new LinkedList<DataBlockInfo>();
-        this.ownRequestQueue = new LinkedList<DataBlockInfo>();
         this.address = address;
         this.port = port;
         this.torrent = torrent;
         this.bitfield = new byte[this.torrent.pieceManager.bitfield.length];
-        Arrays.fill(this.bitfield, (byte) 0);
         LOG.setHeader(this.toString());
 
-        this.connection = new PeerConnection (address, port, this);
+        this.connection = new PeerConnection(address, port, this);
+    }
+
+
+    /**
+     * Create a new peer
+     *
+     * @param socket    the socket where the peer is connected
+     */
+    public Peer (Socket socket) {
+        this.address = socket.getInetAddress();
+        this.port = socket.getPort();
+        this.torrent = null;
+        this.bitfield = null;
+        LOG.setHeader(this.toString());
+
+        this.connection = new PeerConnection(socket, this);
     }
 
 
@@ -93,7 +107,10 @@ public class Peer implements Runnable, PeerConnectionListener  {
      */
     public void run() {
         try {
-            this.connection.connect();
+
+            if (!this.connection.isConnected()) {
+                this.connection.connect();
+            }
             
             byte reserved[] = { 0, 0, 0, 0, 0, 0, 0, 0};
             //reserved[7] = 1; //DHT support
@@ -101,10 +118,15 @@ public class Peer implements Runnable, PeerConnectionListener  {
                 reserved[7] |= (1 << 4);
             }
 
+            byte[] infoHash = null;
+            if (this.torrent != null) {
+                infoHash = this.torrent.infoHash;
+            }
+
             boolean handshake = this.connection.handshake (
-                    this.torrent.infoHash,
+                    infoHash,
                     reserved,
-                    this.torrent.peerManager.peerId); 
+                    PeerManager.peerId()); 
             if (!handshake) {
                 invalidate();
                 return;
@@ -438,6 +460,11 @@ public class Peer implements Runnable, PeerConnectionListener  {
      */
     @Override
     public void onHaveMessage (HaveMessage msg) {
+        if (this.bitfield == null) {
+            LOG.debug("Bitfield is null, assuming empty bitfield");
+            this.bitfield = new byte[this.torrent.pieceManager.bitfield.length];
+        }
+
         int byteIndex = msg.index / 8;
         this.bitfield[byteIndex] |= 1 << 7 - (msg.index % 8);
     }
@@ -518,6 +545,8 @@ public class Peer implements Runnable, PeerConnectionListener  {
     @Override
     public void onUnknownMessage (UnknownMessage msg) {
         LOG.warning("Ignoring unknown message");
+        try{
+        this.connection.close();}catch (Exception e){}
     }
 
     /**
@@ -530,9 +559,40 @@ public class Peer implements Runnable, PeerConnectionListener  {
      * {@inheritDoc}
      */
     @Override
-    public void onHandshake(byte[] peerId, byte[] reserved) {
+    public boolean onHandshake(byte[] peerId, byte[] reserved, byte[] infoHash){
         this.id = peerId;
         this.reserved = reserved;
+
+        if (Arrays.equals(this.id, PeerManager.peerId())) {
+            LOG.debug("Connecting to ourself, aborting");
+            return false;
+        }
+
+        if (this.torrent == null) {
+            this.torrent = TorrentManager.instance().getTorrent(infoHash);
+            if (this.torrent == null) return false;
+
+            this.bitfield = new byte[this.torrent.pieceManager.bitfield.length];
+            this.torrent.peerManager.addPeer(this);
+        }
+
+        else {
+            if (!Arrays.equals(torrent.infoHash, infoHash)) {
+                LOG.warning("Wrong info_hash");
+                return false;
+            }
+        }
+
+
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public byte[] ownInfoHash() {
+        return this.torrent.infoHash;
     }
 
 }

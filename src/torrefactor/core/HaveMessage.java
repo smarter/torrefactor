@@ -43,7 +43,7 @@ public class HaveMessage extends Message {
      * {@link torrefactor.core.Message#isValid(byte[])}
      */
     public static boolean isValid (byte[] msg) {
-        return msg.length == 5;
+        return msg.length == 4;
     }
 
     /**

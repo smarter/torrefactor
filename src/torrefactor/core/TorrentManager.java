@@ -56,6 +56,21 @@ public class TorrentManager {
     }
 
     /**
+     * Get torrent by infoHash.
+     *
+     * @param infoHash  the infoHash of the torrent to return
+     * @return the torrent or null if no torrent have the given info hash
+     */
+    public synchronized Torrent getTorrent(byte[] infoHash) {
+        for (Torrent t: this.torrentList) {
+           if (Arrays.equals(infoHash, t.infoHash)) {
+               return t;
+           }
+        }
+        return null;
+    }
+
+    /**
      * Stop all currently running torrents.
      * Write config to the config file specified
      * in the constructor.

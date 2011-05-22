@@ -66,7 +66,8 @@ public class PieceMessage extends Message {
     public byte[] toByteArray () {
         byte[] t = super.toByteArray();
         byte[] i = ByteArrays.fromInts(new int[] {index, offset});
-        
-        return ByteArrays.concat(new byte[][] {t, i});
+        byte[] a = ByteArrays.concat(new byte[][] {t, i, block});
+
+        return a;
     }
 }

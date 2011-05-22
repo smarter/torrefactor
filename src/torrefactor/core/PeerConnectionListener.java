@@ -86,7 +86,15 @@ public interface PeerConnectionListener {
 
     /**
      * Executed when the Handshak is done.
+     *
+     * @return false if we must abort the handshake.
      */
-    public void onHandshake(byte[] inPeerId, byte[] inReserved);
+    public boolean onHandshake(byte[] inPeerId, byte[] inReserved,
+            byte[] inInfoHash);
+
+    /**
+     * Return our own info hash.
+     */
+    public byte[] ownInfoHash();
     
 }

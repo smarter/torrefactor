@@ -27,7 +27,6 @@ public class Torrent implements Serializable {
     private AtomicLong downloaded = new AtomicLong(0);
     private SpeedMeter uploadedSpeed = new SpeedMeter(0);
     private SpeedMeter downloadedSpeed = new SpeedMeter(0);
-    private AtomicLong left;
 
     public byte[] infoHash;
     transient PeerManager peerManager;
@@ -89,8 +88,6 @@ public class Torrent implements Serializable {
         this.pieceLength = infoMap.get("piece length").toInt();
         this.pieceHash = infoMap.get("pieces").toByteArray();
         int pieces = (int)((this.length - 1)/((long) this.pieceLength + 1));
-
-        this.left = new AtomicLong (this.length);
 
         this.pieceManager = new PieceManager(this.files, this.pieceLength,
                                              this.pieceHash);
@@ -196,20 +193,21 @@ public class Torrent implements Serializable {
         }
     }
 
-    public float progress() {
-        if (this.length == 0) return 0;
-        // use length-left instead of downloaded since downloaded may be
-        // greater than length if we downloaded some invalid pieces.
-        long left = this.left.longValue();
-        return (float) (this.length - left) / (float) this.length;
+    public double progress() {
+        return ByteArrays.percentage(this.pieceManager.bitfield);
+    }
+
+    /**
+     * Returns how much byte have been downloaded and verified.
+     */
+    public long done() {
+        long done = ByteArrays.done(this.pieceManager.bitfield) * pieceLength;
+        if (done > this.length) done = this.length;
+        return done;
     }
 
     public long left() {
-        return this.left.longValue();
-    }
-
-    public long setLeft(long value) {
-        return this.left.getAndSet(value);
+        return this.length - done();
     }
 
     public long downloaded() {
@@ -279,9 +277,10 @@ public class Torrent implements Serializable {
 
     public BoundedRangeModel getBoundedRangeModel () {
         if (this.length <= Integer.MAX_VALUE) {
+            LOG.debug("Value: " + this.done() + " Max: " + this.length);
             return new DefaultBoundedRangeModel(
-                    (int)(this.length - this.left.longValue()),
-                    0, 0, (int)getSize());
+                    (int)(this.done()),
+                    0, 0, (int)this.length);
         } else {
             return null;
        }

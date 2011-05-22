@@ -45,6 +45,23 @@ public class ByteArrays {
         return true;
     }
 
+    /**
+     * Returns the percentage of bits set to 1.
+     */
+    public static double percentage(byte[] bitfield) {
+        long max = bitfield.length * 8;
+        long count = done(bitfield);
+
+        return ((double) count) / ((double) max);
+    }
+
+    /**
+     * Returns how much bits are set to 1.
+     */
+    public static long done(byte[] bitfield) {
+        return new BigInteger(1, bitfield).bitCount();
+    }
+
     public static byte[] concat(byte[][] arrays) {
         int size = 0;
         for (int i=0; i<arrays.length; i++) {

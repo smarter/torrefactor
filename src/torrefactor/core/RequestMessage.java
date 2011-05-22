@@ -51,7 +51,7 @@ public class RequestMessage extends Message {
      * {@link torrefactor.core.Message#isValid(byte[])}
      */
     public static boolean isValid (byte[] msg) {
-        return msg.length == 13;
+        return msg.length == 12;
     }
 
     /**
