@@ -480,14 +480,11 @@ public class Peer implements Runnable, PeerConnectionListener  {
      */
     @Override
     public void onHaveMessage (HaveMessage msg) {
-        if (this.bitfield == null) {
-            LOG.debug("Bitfield is null, assuming empty bitfield");
-            this.bitfield = new byte[this.torrent.pieceManager.bitfield.length];
-        }
 
         ByteArrays.setBit(this.bitfield, msg.index, 1);
         if (!this.isInteresting &&
-            !ByteArrays.isBitSet(this.torrent.pieceManager.bitfield, msg.index)) {
+            !ByteArrays.isBitSet(
+                this.torrent.pieceManager.bitfield, msg.index)) {
             setInteresting(true);
         }
     }
