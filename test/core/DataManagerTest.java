@@ -9,6 +9,7 @@ import java.util.*;
 
 import torrefactor.core.DataManager;
 import torrefactor.core.DataBlock;
+import torrefactor.util.Pair;
 
 
 public class DataManagerTest {
@@ -30,8 +31,10 @@ public class DataManagerTest {
     throws Exception {
         System.out.print('\n');
         int size = 77;
-        File[] files = {new File("data/test/DataManager/test0123")};
-        long[] fileSizes = {77};
+        List<Pair<File, Long>> files = new ArrayList<Pair<File, Long>>();
+        files.add(new Pair<File, Long>(
+                    new File("data/test/DataManager/test0123"),
+                    new Long(77)));
         int pieceSize = 16;
         byte[] blockData;
         byte[] blockDataExpected = {
@@ -40,8 +43,7 @@ public class DataManagerTest {
             0x32 & 0xFF, 0x32 & 0xFF, 0x32 & 0xFF, 0x32 & 0xFF,
             0x33 & 0xFF, 0x33 & 0xFF, 0x33 & 0xFF, 0x33 & 0xFF};
 
-        DataManager dataManager = new DataManager (
-                                             files, fileSizes, pieceSize);
+        DataManager dataManager = new DataManager (files, pieceSize);
 
 
         blockData = dataManager.getBlock(0, 0, pieceSize);
@@ -57,15 +59,16 @@ public class DataManagerTest {
     throws Exception {
         System.out.print('\n');
         int size = 77;
-        File[] files = {new File("data/test/DataManager/test0123")};
-        long[] fileSizes = {77};
+        List<Pair<File, Long>> files = new ArrayList<Pair<File, Long>>();
+        files.add(new Pair<File, Long>(
+                    new File("data/test/DataManager/test0123"),
+                    new Long(77)));
         int pieceSize = 4;
         byte[] blockData;
         byte[] blockDataExpected = {
             0x33 & 0xFF, 0x33 & 0xFF, 0x0A & 0xFF, 0x0A & 0xFF };
 
-        DataManager dataManager = new DataManager (
-                                             files, fileSizes, pieceSize);
+        DataManager dataManager = new DataManager (files, pieceSize);
 
 
         blockData = dataManager.getBlock(3, 2, pieceSize);
@@ -81,14 +84,15 @@ public class DataManagerTest {
     throws Exception {
         System.out.print('\n');
         int size = 77;
-        File[] files = {new File("data/test/DataManager/test0123")};
-        long[] fileSizes = {77};
+        List<Pair<File, Long>> files = new ArrayList<Pair<File, Long>>();
+        files.add(new Pair<File, Long>(
+                    new File("data/test/DataManager/test0123"),
+                    new Long(77)));
         int pieceSize = 4;
         byte[] data;
         byte[] dataExpected;
 
-        DataManager dataManager = new DataManager (
-                                             files, fileSizes, pieceSize);
+        DataManager dataManager = new DataManager (files, pieceSize);
 
         data = dataManager.getPiece(0);
 
@@ -123,17 +127,19 @@ public class DataManagerTest {
     throws Exception {
         System.out.print('\n');
         int size = 77;
-        File[] files = {
-            new File("data/test/DataManager/test1"),
-            new File("data/test/DataManager/test2") };
-        long[] fileSizes = {15, 7};
+        List<Pair<File, Long>> files = new ArrayList<Pair<File, Long>>();
+        files.add(new Pair<File, Long>(
+                    new File("data/test/DataManager/test1"),
+                    new Long(15)));
+        files.add(new Pair<File, Long>(
+                    new File("data/test/DataManager/test2"),
+                    new Long(7)));
         int pieceSize = 4;
         byte[] blockData;
         byte[] blockDataExpected = {
             0x0A & 0xFF, 0x37 & 0xFF, 0x37 & 0xFF, 0x38 & 0xFF };
 
-        DataManager dataManager = new DataManager (
-                                             files, fileSizes, pieceSize);
+        DataManager dataManager = new DataManager (files, pieceSize);
 
 
         blockData = dataManager.getBlock(3, 2, pieceSize);

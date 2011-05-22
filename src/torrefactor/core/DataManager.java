@@ -35,12 +35,6 @@ public class DataManager implements Serializable {
         init(_pieceLength);
     }
 
-    public DataManager (File[] _files, long[] _sizes, int _pieceLength)
-    throws java.io.FileNotFoundException, java.io.IOException {
-        setFilesAndSizes(_files, _sizes);
-        init(_pieceLength);
-    }
-
     private void init (int pieceLength)
     throws java.io.FileNotFoundException, java.io.IOException {
         this.pieceLength = pieceLength;
