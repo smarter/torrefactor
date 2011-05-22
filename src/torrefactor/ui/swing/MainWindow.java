@@ -56,7 +56,11 @@ public class MainWindow implements ActionListener {
         // Selection event onTorrentSelected
         ListSelectionListener listener = new ListSelectionListener () {
             public void valueChanged(ListSelectionEvent event) {
-                int index = event.getFirstIndex();
+                int index = torrentTable.getSelectedRow();
+                if (index == -1) {
+                    //TODO: if this can happen, then we should clear the info tabs
+                    return;
+                }
                 Torrent torrent = torrentModel.getTorrentAt(index);
                 onTorrentSelected(torrent);
             }
