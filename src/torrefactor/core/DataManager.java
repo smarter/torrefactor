@@ -46,6 +46,8 @@ public class DataManager implements Serializable {
         this.totalSize = 0;
         for (int i=0; i<this.fileSizes.length; i++) {
             this.totalSize += this.fileSizes[i];
+            File parent = this.files[i].getParentFile();
+            parent.mkdirs();
             this.raFiles[i] = new RandomAccessFile(this.files[i], "rw");
             if (this.raFiles[i].length() != this.fileSizes[i]) {
                 this.raFiles[i].setLength(this.fileSizes[i]);
