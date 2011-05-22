@@ -62,6 +62,11 @@ public class ByteArrays {
         return new BigInteger(1, bitfield).bitCount();
     }
 
+    /**
+     * Returns an array of byte that is the concatenation
+     * of all the arrays in arrays.
+     * @p arrays Array of arrays of bytes to concatenate
+     */
     public static byte[] concat(byte[][] arrays) {
         int size = 0;
         for (int i=0; i<arrays.length; i++) {
@@ -76,6 +81,27 @@ public class ByteArrays {
         return b;
     }
 
+    /**
+     * Returns whether or not the byte with index "index" in the array
+     * b is set.
+     */
+    public static boolean isBitSet(byte[] b, int index) {
+        int bit = 7 - (index % 8);
+        return ((b[index/8] >>> bit) & 1) == 1;
+    }
+
+    /**
+     * Set the byte at position index in array b to 0 if value is 0
+     * or to 1 if value is anything else.
+     */
+    public static void setBit(byte[] b, int index, int value) {
+        int bit = 7 - (index % 8);
+        if (value == 0) {
+            b[index/8] &= ~(1 << bit);
+        } else {
+            b[index/8] |= (1 << bit);
+        }
+    }
 
     /**
      * Return the length in bits of the common prefix of

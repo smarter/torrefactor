@@ -57,9 +57,7 @@ public class PieceManager implements Serializable {
         if (numBlocks == 0) return infoList;
 
         for (int i = 0; i < 8*peerBitfield.length && infoList.size() < numBlocks; i++) {
-            if (peerBitfield[i/8] == 0) continue;
-            int byteOffset = 7 - (i % 8);
-            if ((peerBitfield[i/8] >>> byteOffset) == 0) continue;
+            if (!ByteArrays.isBitSet(peerBitfield, i)) continue;
             long pieceBegin = i * this.dataManager.pieceLength();
             long pieceEnd = pieceBegin + this.dataManager.pieceLength() - 1;
             // Last block is smaller than the other
@@ -160,8 +158,7 @@ public class PieceManager implements Serializable {
             LOG.debug(this, "~~ Invalid piece " + piece + " got: " + new String(digest) + " expected " + new String(expectedDigest));
             return false;
         }
-        int byteIndex = piece / 8;
-        this.bitfield[byteIndex] |= 1 << (7 - (piece % 8));
+        ByteArrays.setBit(bitfield, piece, 1);
         LOG.debug(this, "~~ Valid piece " + piece);
 
         synchronized (this.pieceToAnnounceLock) {

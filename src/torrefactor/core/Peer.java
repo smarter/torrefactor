@@ -141,9 +141,8 @@ public class Peer implements Runnable, PeerConnectionListener  {
             e.printStackTrace();
         }
 
-            //TODO: remove, when peerManager has an algorithm to handle this
-            setChoked(false);
-            setInteresting(true);
+        //TODO: remove, when peerManager has an algorithm to handle this
+        setChoked(false);
 
         try {
             long time = System.currentTimeMillis();
@@ -245,9 +244,12 @@ public class Peer implements Runnable, PeerConnectionListener  {
      * @param b true to choke the peer, false to unchoke it
      */
     public void setChoked(boolean b) {
-        if (this.isChoked != b) {
-            this.isChoked = b;
+        if (b == this.isChoked) {
+            LOG.debug("\"choke\" status is already " + b
+                      + "  no message will be sent.");
+            return;
         }
+        this.isChoked = b;
         Message msg;
         if (b) {
             msg = new ChokeMessage();
@@ -263,6 +265,11 @@ public class Peer implements Runnable, PeerConnectionListener  {
      * @param b true if this peer is interesting
      */
     public void setInteresting(boolean b) {
+        if (b == this.isInteresting) {
+            LOG.debug("\"interested\" status is already " + b
+                      + "  no message will be sent.");
+            return;
+        }
         this.isInteresting = b;
         Message msg;
         if (b) {
@@ -336,6 +343,20 @@ public class Peer implements Runnable, PeerConnectionListener  {
         return this.isValid && this.connection.isConnected();
     }
 
+    /**
+     * Update the isInteresting flag (and send message if needed)
+     */
+    public void updateInteresting() {
+        for (int i = 0; i < this.bitfield.length; i++) {
+            //mask with every bit(piece) we haven't
+            if ((this.bitfield[i] & ~this.torrent.pieceManager.bitfield[i]) != 0) {
+                setInteresting(true);
+                return;
+            }
+        }
+        setInteresting(false);
+    }
+
     @Deprecated
     public int firstPiece() {
         if (this.bitfield == null) return -1;
@@ -358,9 +379,7 @@ public class Peer implements Runnable, PeerConnectionListener  {
      * @return true if this piece has the piece at the given index
      */
     public boolean hasPiece(int index) {
-        int byteIndex = index / 8;
-        int offset = 7 - index % 8;
-        return (((this.bitfield[byteIndex] >>> offset) & 1) == 1);
+        return ByteArrays.isBitSet(this.bitfield, index);
     }
 
     /**
@@ -382,6 +401,7 @@ public class Peer implements Runnable, PeerConnectionListener  {
     public void sendHave(int piece) {
         Message msg = new HaveMessage(piece);
         this.msgOutQueue.offer(msg);
+        updateInteresting();
     }
     
     /**
@@ -465,8 +485,11 @@ public class Peer implements Runnable, PeerConnectionListener  {
             this.bitfield = new byte[this.torrent.pieceManager.bitfield.length];
         }
 
-        int byteIndex = msg.index / 8;
-        this.bitfield[byteIndex] |= 1 << 7 - (msg.index % 8);
+        ByteArrays.setBit(this.bitfield, msg.index, 1);
+        if (!this.isInteresting &&
+            !ByteArrays.isBitSet(this.torrent.pieceManager.bitfield, msg.index)) {
+            setInteresting(true);
+        }
     }
 
     /**
@@ -480,6 +503,7 @@ public class Peer implements Runnable, PeerConnectionListener  {
             invalidate();
         }
         this.bitfield = msg.bitfield;
+        updateInteresting();
         LOG.debug("Bitfield: " + ByteArrays.toHexString(msg.bitfield));
     }
 
