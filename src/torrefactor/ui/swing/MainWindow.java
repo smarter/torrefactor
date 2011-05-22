@@ -81,7 +81,7 @@ public class MainWindow implements ActionListener {
         mainFrame.pack();
 
         this.tableTimer = new Timer (1000, this);
-        this.tableTimer.setActionCommand ("UpdateTorrentTable");
+        this.tableTimer.setActionCommand ("UpdateInfos");
         this.tableTimer.start();
     }
 
@@ -150,10 +150,11 @@ public class MainWindow implements ActionListener {
             if (this.torrentTable.getSelectedRow() == -1) return;
             this.torrentModel.getTorrentAt(
                                 this.torrentTable.getSelectedRow()).stop();
-        } else if (action.equals("UpdateTorrentTable")) {
+        } else if (action.equals("UpdateInfos")) {
             this.torrentModel.fireTableRowsUpdated(
                                 0, this.torrentModel.getRowCount() - 1);
             this.torrentTable.repaint();
+            this.torrentDetails.repaint();
         } else if (action.equals("Options…")) {
             ConfigDialog d = new ConfigDialog(this.mainFrame);
             d.setVisible(true);

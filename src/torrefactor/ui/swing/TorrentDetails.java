@@ -28,6 +28,8 @@ class TorrentDetails extends Box {
     private JLabel pieces = new JLabel();
     private JLabel pieceSizeLabel = new JLabel("<html><b>Piece size:");
     private JLabel pieceSize = new JLabel();
+    private JLabel pieceBarLabel = new JLabel("<html><b>State:");
+    private PieceBar pieceBar = new PieceBar();
 
     public TorrentDetails () {
         super(BoxLayout.X_AXIS);
@@ -37,6 +39,9 @@ class TorrentDetails extends Box {
 
         //FIXME: we should choose the longer of all the label dynamically
         Dimension min = this.creationDateLabel.getPreferredSize();
+
+        this.columnB.setMinimumSize(new Dimension(100, 100));
+        //this.columnB.setMaximumSize(new Dimension(100, 100));
 
         this.nameLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         this.nameLabel.setMinimumSize(min);
@@ -86,6 +91,15 @@ class TorrentDetails extends Box {
         this.columnA.add(this.pieceSizeLabel);
 
         this.columnB.add(this.pieceSize);
+
+        Dimension pieceBarDim = new Dimension((int) min.getWidth(), (int) this.pieceBar.getMinimumSize().getHeight());
+        this.pieceBarLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        this.pieceBarLabel.setMinimumSize(pieceBarDim);
+        this.pieceBarLabel.setMaximumSize(pieceBarDim);
+        this.columnA.add(this.pieceBarLabel);
+
+        this.pieceBar.setVisible(false);
+        this.columnB.add(this.pieceBar);
     }
 
     /**
@@ -109,6 +123,9 @@ class TorrentDetails extends Box {
         this.path.setText(torrent.getBasePath());
         this.pieces.setText(Integer.toString(torrent.getNumPiece()));
         this.pieceSize.setText(Integer.toString(torrent.getPieceSize()));
+        this.pieceBar.setPieceManager(torrent.pieceManager);
+        this.pieceBar.setVisible(true);
+        repaint();
     }
 
     /**

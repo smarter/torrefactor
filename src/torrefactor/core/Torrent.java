@@ -31,7 +31,7 @@ public class Torrent implements Serializable {
 
     public byte[] infoHash;
     transient PeerManager peerManager;
-    PieceManager pieceManager;
+    public PieceManager pieceManager;
     long length = 0;
     List<List<String>> announceList;
     long creationDate = 0;

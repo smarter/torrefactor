@@ -21,7 +21,7 @@ public class PieceManager implements Serializable {
     //map of the requested but not yet downloaded blocks
     private transient SawToothIntervalMap requestedMap;
 
-    DataManager dataManager;
+    private DataManager dataManager;
     public byte[] bitfield;
     byte[] digestArray;
 
@@ -176,6 +176,21 @@ public class PieceManager implements Serializable {
      */
     public boolean isComplete() {
         return ByteArrays.isComplete(this.bitfield);
+    }
+
+    /**
+     * Returns the number of pieces of the torrent
+     */
+    public int pieceNumber() {
+        return this.dataManager.pieceNumber();
+    }
+
+    /**
+     * Returns the size of each piece of the torrent (except for the last one
+     * which may be smaller).
+     */
+    public int pieceLength() {
+        return this.dataManager.pieceLength();
     }
 
     public ArrayList<Integer> popToAnnounce () {
