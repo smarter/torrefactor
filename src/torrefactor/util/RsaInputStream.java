@@ -85,4 +85,14 @@ public class RsaInputStream extends InputStream {
     public int getChunkLength () {
         return this.chunkLength;
     }
+
+    /**
+     * Returns something different than 0 if some data are waiting on the
+     * socket.
+     *
+     * @see java.io.InputStream#available()
+     */
+    public int available () throws IOException {
+        return this.realStream.available();
+    }
 }

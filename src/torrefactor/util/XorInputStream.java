@@ -39,7 +39,7 @@ public class XorInputStream extends InputStream {
      */
     public int read () throws IOException {
         int b = this.realStream.read();
-        b ^= this.key[this.keyOffset];
+        b ^= ((int) this.key[this.keyOffset] & 0xFF);
         
         this.keyOffset += 1;
         if (this.keyOffset >= this.keyLength) {
@@ -55,5 +55,15 @@ public class XorInputStream extends InputStream {
      */
     public InputStream getWrappedStream () {
         return this.realStream;
+    }
+
+    /**
+     * Returns something different than 0 if some data are waiting on the
+     * socket.
+     *
+     * @see java.io.InputStream#available()
+     */
+    public int available () throws IOException {
+        return this.realStream.available();
     }
 }
