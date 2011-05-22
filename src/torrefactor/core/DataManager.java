@@ -77,6 +77,10 @@ public class DataManager implements Serializable {
         this.fileSizes = sizes;
     }
 
+    /**
+     * This is used during the deserialization to recreate
+     * the transient member variables.
+     */
     private void readObject(ObjectInputStream in)
     throws IOException, ClassNotFoundException {
         in.defaultReadObject();

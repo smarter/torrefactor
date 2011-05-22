@@ -110,11 +110,16 @@ public class PieceManager implements Serializable {
         return this.dataManager.getBlock(piece, offset, length);
     }
 
+    /**
+     * Write the array blockArray to piece "piece" with offset "offset" and add
+     * it to the intervalMap if we haven't wrote it previously.
+     * checkPiece() will be called and thus the bitfield might be updated.
+     */
     public synchronized void putBlock(int piece, int offset, byte[] blockArray)
     throws IOException {
         long begin = piece * this.dataManager.pieceLength() + offset;
         if (this.intervalMap.containsInterval(begin, blockArray.length)) {
-            LOG.debug(this, "!!! Already got " + begin);
+            LOG.warning(this, "Already got block at " + begin + " with length " + blockArray.length);
             return;
         }
         this.intervalMap.addInterval(begin, blockArray.length);
@@ -155,11 +160,11 @@ public class PieceManager implements Serializable {
         byte[] digest = MessageDigest.getInstance("SHA1").digest(pieceArray);
         if (!Arrays.equals(digest, expectedDigest)) {
             this.intervalMap.removeIntervals(pieceBegin, pieceLength);
-            LOG.debug(this, "~~ Invalid piece " + piece + " got: " + new String(digest) + " expected " + new String(expectedDigest));
+            LOG.error(this, "Invalid piece " + piece + " got: " + new String(digest) + " expected " + new String(expectedDigest));
             return false;
         }
         ByteArrays.setBit(bitfield, piece, 1);
-        LOG.debug(this, "~~ Valid piece " + piece);
+        LOG.info(this, "Valid piece " + piece);
 
         synchronized (this.pieceToAnnounceLock) {
             this.pieceToAnnounce.add(piece);
@@ -190,6 +195,10 @@ public class PieceManager implements Serializable {
         return this.dataManager.pieceLength();
     }
 
+    /**
+     * Returns and clear the list of newly downloaded pieces that haven't been
+     * announced to peers via "have" message already.
+     */
     public ArrayList<Integer> popToAnnounce () {
         ArrayList<Integer> list;
         synchronized (this.pieceToAnnounceLock) {
@@ -199,6 +208,10 @@ public class PieceManager implements Serializable {
         return list;
     }
 
+    /**
+     * This is used during the deserialization to recreate
+     * the transient member variables.
+     */
     private void readObject(ObjectInputStream in)
     throws IOException, ClassNotFoundException {
         in.defaultReadObject();

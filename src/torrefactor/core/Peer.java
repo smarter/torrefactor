@@ -210,8 +210,8 @@ public class Peer implements Runnable, PeerConnectionListener  {
     throws IOException {
         byte[] block = null;
         try {
-            block = this.torrent.pieceManager.getBlock(
-                    info.pieceIndex, info.offset, info.length);
+            block = this.torrent.pieceManager
+                .getBlock(info.pieceIndex(), info.offset(), info.length());
         } catch (Exception e) {
             LOG.error("Exception while getting block:");
             e.printStackTrace();
@@ -221,7 +221,7 @@ public class Peer implements Runnable, PeerConnectionListener  {
             LOG.debug("Block is null " +  info);
         }
         Message msg = new PieceMessage(
-                info.pieceIndex, info.offset, block);
+                      info.pieceIndex(), info.offset(), block);
         this.connection.send(msg);
 
         this.uploaded.addAndGet(block.length);
@@ -530,8 +530,8 @@ public class Peer implements Runnable, PeerConnectionListener  {
             this.peerRequestQueue.listIterator(0);
         while (iter.hasNext()) {
             DataBlockInfo info = iter.next();
-            if (msg.index == info.pieceIndex && msg.offset == info.offset &&
-                    msg.length == info.length) {
+            if (msg.index == info.pieceIndex() && msg.offset == info.offset() &&
+                msg.length == info.length()) {
                 iter.remove();
             }
         }

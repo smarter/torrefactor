@@ -15,6 +15,13 @@ public class DataBlock {
     private int pieceIndex;
     private int offset;
 
+    /**
+     * Constructs a DataBlock object corresponding to a block in a piece of the torrent.
+     * @p _buffers List of MappedByteBuffer mapped in order to each file in the torrent
+     * @p _length Length of the block
+     * @p _pieceIndex Index of the piece this block is in
+     * @p _offset Offset of this block within the piece.
+     */
     public DataBlock (MappedByteBuffer[] _buffers, int _length, int _pieceIndex, int _offset) {
         this.buffers = _buffers;
         this.length = _length;
@@ -22,34 +29,39 @@ public class DataBlock {
         this.offset = _offset;
     }
 
+    /**
+     * Returns the length of this block
+     */
     public int length() {
         return this.length;
     }
 
+    /**
+     * Returns the index of the piece this block is in
+     */
     public int pieceIndex() {
         return this.pieceIndex;
     }
 
-    // Return the offset within the piece
+    /**
+     * Return the offset of this block within the piece
+     */
     public int offset() {
         return this.offset;
     }
 
-    public byte get (int offset) {
-        for (int i=0; i < this.buffers.length; i++) {
-            if (offset < this.buffers[i].limit()){
-                return this.buffers[i].get(offset);
-            }
-            offset -= this.buffers[i].limit();
-        }
-        throw new IllegalArgumentException(
-                "Offset " + offset + " is past block's end.");
-    }
-
+    /**
+     * Return an array of length length() containing the whole
+     * block.
+     */
     public byte[] get () {
         return get(0, this.length);
     }
 
+    /**
+     * Return an array of length "length" containing a part of this
+     * block, starting at offset "offset" in bytes.
+     */
     public byte[] get (int offset, int length) {
         byte[] block = new byte[length];
         int arrayOffset = 0;
@@ -78,14 +90,26 @@ public class DataBlock {
         return block;
     }
 
+    /**
+     * Write an array starting at the beginning of this block.
+     */
     public void put(byte[] block) {
         put(0, block.length, block);
     }
 
+    /**
+     * Write an array starting at a particular offset within this
+     * block.
+     */
     public void put(int offset, byte[] block) {
         put(offset, block.length, block);
     }
 
+
+    /**
+     * Write the length first bytes from array "block" starting at at
+     * a particular offset to this block.
+     */
     public void put(int offset, int length, byte[] block) {
         int arrayOffset = 0;
         int localOffset = offset;
