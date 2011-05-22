@@ -201,7 +201,7 @@ public class MainWindow implements ActionListener {
 
     public void openTorrent (String path) {
         try {
-            String basePath = CONF.getProperty("Ui.SWing.BasePath");
+            String basePath = CONF.getProperty("Ui.Swing.BasePath");
             Torrent torrent = this.torrentModel.addTorrent(
                     path, basePath);
             LOG.debug("Add torrent: " + path + " basePath: " + basePath);
