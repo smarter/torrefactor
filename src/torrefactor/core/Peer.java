@@ -357,21 +357,6 @@ public class Peer implements Runnable, PeerConnectionListener  {
         setInteresting(false);
     }
 
-    @Deprecated
-    public int firstPiece() {
-        if (this.bitfield == null) return -1;
-        for (int i = 0; i < this.bitfield.length; i++) {
-            if (this.bitfield[i] == 0) continue;
-            int offset = 7;
-            while (this.bitfield[i] >>> offset == 0) {
-                offset--;
-            }
-            return 8*i + 7 - offset;
-        }
-        LOG.debug("No piece: " + arrayToString(this.id));
-        return -1;
-    }
-
     /**
      * Check whether this peer has a particular piece or not.
      *
