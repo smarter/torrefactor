@@ -28,6 +28,7 @@ public class PeerConnection {
     static final int RSA_KEY_BITLENGTH =
         CONF.getPropertyInt("Peer.RsaKeyBitlength");
     static final int XOR_KEY_LENGTH = CONF.getPropertyInt("Peer.XorLength");
+    static final int MAX_MESSAGE_LENGTH = 1 << 21;
 
     private PeerConnectionListener listener;
     private Socket socket;
@@ -219,6 +220,10 @@ public class PeerConnection {
             msg = new KeepAliveMessage();
             this.listener.onKeepAliveMessage();
             return msg;
+        } else if (len > MAX_MESSAGE_LENGTH) {
+            LOG.error("Got message with length=" + len
+                      + " (len>MAX_MESSAGE_LENGTH) dropping connection.");
+            close();
         }
 
         byte id = this.inputStream.readByte();
