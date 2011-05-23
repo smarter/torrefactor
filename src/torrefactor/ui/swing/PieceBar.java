@@ -5,7 +5,7 @@ import java.awt.*;
 import javax.swing.*;
 
 import torrefactor.core.*;
-
+import torrefactor.util.*;
 
 /**
  * A JComponent for representing pieces which have finished downloading and which
@@ -69,11 +69,9 @@ public class PieceBar extends JComponent {
             g2.fillRect(firstPiece, 0, lastPiece - firstPiece, height);
         }
         g2.setColor(FINISHED_COLOR);
-        for (int i = 0; i < bitfield.length; i++) {
-            for (int j = 0; j < 8; j++) {
-                if ((bitfield[i] >>> j & 1) == 1) {
-                    g2.fillRect(8*i+j, 0, 1, height);
-                }
+        for (int i = 0; i < 8*bitfield.length; i++) {
+            if (ByteArrays.isBitSet(bitfield, i)) {
+                g2.fillRect(i, 0, 1, height);
             }
         }
     }
