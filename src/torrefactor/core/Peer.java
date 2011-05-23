@@ -542,7 +542,15 @@ public class Peer implements Runnable, PeerConnectionListener  {
      */
     @Override
     public void onPortMessage (PortMessage msg) {
-        NodeManager.instance().addPeer(this.address, msg.port, this.torrent.infoHash);
+        if (!CONF.getPropertyBoolean("DHT")) return;
+
+        NodeManager nodeManager = NodeManager.instance();
+        if (nodeManager == null) {
+            NodeManager.setInstance(
+                    this.address, msg.port);
+        } else {
+            nodeManager.addNode(this.address, msg.port);
+        }
     }
 
     /**

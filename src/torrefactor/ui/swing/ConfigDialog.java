@@ -19,6 +19,7 @@ public class ConfigDialog implements ItemListener {
     private Container contentPaneBottom;
     private JCheckBox useStupidEncryption;
     private JCheckBox forceStupidEncryption;
+    private JCheckBox dht;
     private JLabel basePathLabel;
     private JTextField basePathField;
     private JButton basePathButton;
@@ -64,6 +65,12 @@ public class ConfigDialog implements ItemListener {
         this.forceStupidEncryption.setBackground(Color.RED);
         this.forceStupidEncryption.addItemListener(this);
         this.contentPane.add(this.forceStupidEncryption);
+
+        this.dht = new JCheckBox(
+                "Enable DHT",
+                CONF.getPropertyBoolean("DHT"));
+        this.dht.addItemListener(this);
+        this.contentPane.add(this.dht);
 
         this.basePathContainer = new JPanel ();
         this.basePathContainer.setBackground(Color.CYAN);
@@ -144,6 +151,8 @@ public class ConfigDialog implements ItemListener {
             }
         } else if (source == this.forceStupidEncryption) {
             CONF.setPropertyBoolean("Peer.ForceStupidEncryption", selected);
+        } else if (source == this.dht) {
+            CONF.setPropertyBoolean("DHT", selected);
         }
     }
 

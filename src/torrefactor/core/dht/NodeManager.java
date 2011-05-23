@@ -8,6 +8,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 public class NodeManager {
+    private final static Logger LOG = new Logger();
     private static NodeManager instance = null;
     private NodeConnector nodeConnector;
 
@@ -122,6 +123,7 @@ public class NodeManager {
     }
 
     public boolean addNode(InetAddress ip, int port) {
+        LOG.debug("addNode: ip: " + ip + " port: " + port);
         KRPCMessage resp = null;
         try {
             resp = ping(ip, port).get(RESPONSE_TIMEOUT,

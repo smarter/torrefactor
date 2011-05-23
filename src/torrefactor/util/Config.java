@@ -32,6 +32,7 @@ public class Config extends Properties {
         p.setProperty("Peer.XorLength", "128");
 
         p.setProperty("ListenPort", "7979");
+        p.setProperty("DHT", "true");
 
         p.setProperty("Ui.Swing.BasePath", System.getProperty("user.home"));
     }
@@ -51,6 +52,7 @@ public class Config extends Properties {
         if (! validateInt("Peer.XorLength", defaults)) r = false;
 
         if (! validateInt("ListenPort", defaults)) r = false;
+        if (! validateBoolean("DHT", defaults)) r = false;
 
         if (! validateDirectory("Ui.Swing.BasePath", defaults)) r = false;
 
