@@ -11,12 +11,14 @@ import java.util.*;
 import java.util.List;
 
 import torrefactor.core.*;
+import torrefactor.util.Logger;
 
 /**
  * This class implements a table model to display the peers for a particular
  * torrent.
  */
 public class TorrentPeersTableModel extends AbstractTableModel {
+    private final Logger LOG = new Logger();
     private Torrent torrent;
     private Map<InetAddress, Peer> peerMap;
     public String[] columnNames = {"Address", "Port", "Id", "Connected",
@@ -38,12 +40,18 @@ public class TorrentPeersTableModel extends AbstractTableModel {
             return;
         }
         this.torrent = torrent;
-        this.peerMap = torrent.getPeerMap();
         updatePeers ();
     }
 
-    private void updatePeers () {
-        fireTableDataChanged ();
+
+    /**
+     * Update the data and make the table redraw.
+     */
+    public void updatePeers () {
+        if (torrent != null) {
+            this.peerMap = torrent.getPeerMap();
+            fireTableDataChanged ();
+        }
     }
 
     /**
@@ -86,6 +94,7 @@ public class TorrentPeersTableModel extends AbstractTableModel {
             if (i == row) {
                 return entry.getValue();
             }
+            i++;
         }
         return null;
     }

@@ -1,6 +1,7 @@
 package torrefactor.ui.swing;
 
 import torrefactor.core.Torrent;
+import torrefactor.util.Logger;
 
 import javax.swing.*;
 import java.awt.*;
@@ -11,6 +12,7 @@ import java.text.*;
  * This container shows the peers for a given torrent in a JTable.
  */
 class TorrentPeers extends Box {
+    private final Logger LOG = new Logger();
     private Torrent torrent;
     private JLabel torrentName = new JLabel();
     private JTable table;
@@ -40,6 +42,13 @@ class TorrentPeers extends Box {
         this.torrent = torrent;
         this.torrentName.setText(torrent.FILE_NAME);
         this.model.setTorrent(torrent);
+    }
+
+    /**
+     * Update the data and make the table redraw.
+     */
+    public void update () {
+        this.model.updatePeers();
     }
 
     /**

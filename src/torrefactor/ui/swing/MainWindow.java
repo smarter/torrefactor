@@ -67,7 +67,8 @@ public class MainWindow implements ActionListener {
             public void valueChanged(ListSelectionEvent event) {
                 int index = torrentTable.getSelectedRow();
                 if (index == -1) {
-                    //TODO: if this can happen, then we should clear the info tabs
+                    //TODO: we should clear the info tabs when there is no
+                    //      selection
                     return;
                 }
                 Torrent torrent = torrentModel.getTorrentAt(index);
@@ -179,6 +180,7 @@ public class MainWindow implements ActionListener {
                                 0, this.torrentModel.getRowCount() - 1);
             this.torrentTable.repaint();
             this.torrentDetails.repaint();
+            this.torrentPeers.update();
         } else if (action.equals("Options…")) {
             ConfigDialog d = new ConfigDialog(this.mainFrame);
             d.setVisible(true);
