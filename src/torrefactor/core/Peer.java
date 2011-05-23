@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Represents a Bittorrent peer.
  */
 public class Peer implements Runnable, PeerConnectionListener  {
-    private static Logger LOG = new Logger();
+    private final Logger LOG = new Logger();
     private static Config CONF = Config.getConfig();
 
     static final int PEER_TIMEOUT =  2*60*1000; // in ms

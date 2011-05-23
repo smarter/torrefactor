@@ -277,7 +277,6 @@ public class Torrent implements Serializable {
 
     public BoundedRangeModel getBoundedRangeModel () {
         if (this.length <= Integer.MAX_VALUE) {
-            LOG.debug("Value: " + this.done() + " Max: " + this.length);
             return new DefaultBoundedRangeModel(
                     (int)(this.done()),
                     0, 0, (int)this.length);

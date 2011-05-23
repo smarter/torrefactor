@@ -94,6 +94,8 @@ public class PieceManager implements Serializable {
         do {
             reqOffset = this.requestedMap.nextFreePoint(offset);
             offset = this.intervalMap.nextFreePoint(reqOffset);
+            LOG.debug("next free byte: offset: " + offset + "req: " + reqOffset
+                      + " off: " + offset);
         } while (reqOffset != offset);
         return offset;
     }

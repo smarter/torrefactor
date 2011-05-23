@@ -20,7 +20,7 @@ public class PeerManager implements Runnable {
     private volatile boolean stopped;
 
     private Torrent torrent;
-    private Map<InetAddress, Peer> peerMap;
+    private volatile Map<InetAddress, Peer> peerMap;
     private Map<InetAddress, Peer> activeMap;
     private TrackerManager trackerManager;
     private LinkedBlockingQueue<Peer> newPeers =
@@ -132,6 +132,8 @@ public class PeerManager implements Runnable {
                         if (ByteArrays.isComplete(peer.bitfield)) {
                             // the peer and us got all the pieces, close the
                             // connection
+                            LOG.debug("We both have all pieces: "
+                                      + peer.toString());
                             peer.invalidate();
                             it.remove();
                             this.peerMap.remove(peerAddress);
@@ -210,12 +212,13 @@ public class PeerManager implements Runnable {
             return;
         }
         LOG.debug("Got " + peersList.size() + " new peers");
-        Map<InetAddress, Peer> oldMap = new HashMap<InetAddress, Peer>(peerMap);
+        Map<InetAddress, Peer> newMap = new HashMap<InetAddress, Peer>(peerMap);
         for (Pair<byte[], Integer> p: peersList) {
             InetAddress addr = InetAddress.getByAddress(p.first());
             int port = (p.second());
-            updateMap(addr, port, oldMap);
+            updateMap(addr, port, newMap);
         }
+        this.peerMap = newMap;
     }
 
     /**
@@ -228,7 +231,7 @@ public class PeerManager implements Runnable {
             return;
         }
         LOG.debug("Got " + peersList.size() + " new peers from DHT");
-        Map<InetAddress, Peer> oldMap = new HashMap<InetAddress, Peer>(peerMap);
+        Map<InetAddress, Peer> newMap = new HashMap<InetAddress, Peer>(peerMap);
         byte[] ip = new byte[4];
         byte[] portArray = new byte[2];
         for (byte[] peer: peersList) {
@@ -236,16 +239,16 @@ public class PeerManager implements Runnable {
             System.arraycopy(peer, 4, portArray, 0, 2);
             InetAddress addr = InetAddress.getByAddress(ip);
             int port = ByteArrays.toShortInt(portArray);
-            updateMap(addr, port, oldMap);
+            updateMap(addr, port, newMap);
         }
+        this.peerMap = newMap;
     }
 
-    private void updateMap(InetAddress ip, int port, Map<InetAddress, Peer> oldMap)
+    private void updateMap(InetAddress ip, int port, Map<InetAddress, Peer> map)
     throws IOException, UnknownHostException {
-        if (oldMap.containsKey(ip)) {
-            this.peerMap.put(ip, oldMap.get(ip));
-        } else {
-            this.peerMap.put(ip, new Peer(ip, port, this.torrent));
+        if (!map.containsKey(ip)) {
+            map.put(ip, new Peer(ip, port, this.torrent));
+            LOG.debug("" + ip + ":" + port);
         }
     }
 

@@ -13,7 +13,7 @@ import java.security.SecureRandom;
  * It handles the IO streams and provides methods to send and receive messages.
  */
 public class PeerConnection {
-    private static final Logger LOG = new Logger();
+    private final Logger LOG = new Logger();
     private static final Config CONF = Config.getConfig();
 
     static final byte BITTORRENT_HEADER[] = "BitTorrent protocol".getBytes();
