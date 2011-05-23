@@ -61,11 +61,11 @@ public class PieceManager implements Serializable {
             long pieceBegin = i * this.dataManager.pieceLength();
             long pieceEnd = pieceBegin + this.dataManager.pieceLength() - 1;
             // Last block is smaller than the other
-            pieceEnd = Math.min(pieceEnd, this.dataManager.totalSize());
+            pieceEnd = Math.min(pieceEnd, this.dataManager.totalSize() - 1);
 
             long offset = nextFreeByte(pieceBegin);
             while (infoList.size() < numBlocks) {
-                if (offset > this.dataManager.totalSize()) return infoList;
+                if (offset >= this.dataManager.totalSize()) return infoList;
                 if (offset > pieceEnd) {
                     // "- 1" because of the i++ in the for loop
                     i = (int) (offset / this.dataManager.pieceLength()) - 1;
