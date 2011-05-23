@@ -123,6 +123,10 @@ public class ByteArrays {
         return 8*i + (7 - offset);
     }
 
+    /**
+     * Returns the int represented in the first two
+     * elements of the array in Big Endian.
+     */
     public static int toShortInt(byte[] array) {
         int i = 0;
         i += ((int) array[0] & 0xFF) << 8;
@@ -130,6 +134,10 @@ public class ByteArrays {
         return i;
     }
 
+    /**
+     * Returns the int represented in the first four
+     * elements of the array in Big Endian.
+     */
     public static int toInt(byte[] array) {
         int i = 0;
         i += ((int) array[0] & 0xFF) << 24;
@@ -139,6 +147,10 @@ public class ByteArrays {
         return i;
     }
 
+    /**
+     * Returns the int represented in the four elements
+     * of the array at offset in Big Endian.
+     */
     public static int toInt(byte[] array, int offset) {
         // FIXME: It may be better to do as in toInt(byte[]) but with offsets.
         //        But since I absolutly don't know what the compiler and the
@@ -149,6 +161,10 @@ public class ByteArrays {
         return toInt(i);
     }
 
+    /**
+     * Returns the long represented in the first eight
+     * elements of the array in Big Endian.
+     */
     public static long toLong(byte[] array) {
         long l = 0;
         l += ((int) array[0] & 0xFF) << 56;
@@ -162,11 +178,20 @@ public class ByteArrays {
         return l;
     }
 
+
+    /**
+     * Returns the Big Endian representation of the 16 low bits
+     * of i as an array of 2 bytes.
+     */
     public static byte[] fromShortInt(int i) {
         return new byte[] { (byte)(i >>> 8),
                             (byte) i };
     }
 
+    /**
+     * Returns the Big Endian representation of the integer i as
+     * an array of 4 bytes.
+     */
     public static byte[] fromInt(int i) {
         return new byte[] { (byte)(i >>> 24),
                             (byte)(i >>> 16),
@@ -174,6 +199,10 @@ public class ByteArrays {
                             (byte) i };
     }
 
+    /**
+     * Returns the concatenation of the Big Endian representations
+     * of the integers in an array of length 4*array.length
+     */
     public static byte[] fromInts(int[] array) {
         byte[] b = new byte[array.length * 4];
         int offset = 0;
@@ -184,6 +213,10 @@ public class ByteArrays {
         return b;
     }
 
+    /**
+     * Returns the Big Endian representation of the long l as
+     * an array of 8 bytes.
+     */
     public static byte[] fromLong(long l) {
         return new byte[] { (byte)(l >>> 56),
                             (byte)(l >>> 48),

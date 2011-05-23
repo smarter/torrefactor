@@ -34,7 +34,10 @@ public class FutureSetter<V> implements Future<V> {
         this.isDone = true;
         notifyAll();
     }
-
+    
+    /**
+     * {@inheritDoc}
+     */
     synchronized public V get()
     throws InterruptedException, ExecutionException {
         try {
@@ -45,6 +48,9 @@ public class FutureSetter<V> implements Future<V> {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     synchronized public V get(long timeout, TimeUnit unit)
     throws InterruptedException, ExecutionException, TimeoutException {
         long startTime = System.currentTimeMillis();
@@ -67,10 +73,16 @@ public class FutureSetter<V> implements Future<V> {
         return value;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     synchronized public boolean isDone() {
         return this.isDone;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     synchronized public boolean isCancelled() {
         return this.isCancelled;
     }

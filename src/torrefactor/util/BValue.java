@@ -2,6 +2,16 @@ package torrefactor.util;
 
 import java.util.*;
 
+/**
+ * This class wraps a bencoded object. It is used to provide type-safety
+ * when decoding Bencoded data. 
+ * toString(), toInt(), toLong(), toByteArray(), toList(), toMap() do NOT check
+ * the type of the wrapped value and shouldn't be used without knowing the type
+ * of the underlying value (which can be obtained using toObject().getClass()).
+ *
+ * In Haskell, this whole class could be replaced by:
+ * data BValue = BInteger Integer | BByteString ByteString | BString String | BDict (Map String BValue) | BList [BValue]
+ */
 public class BValue {
     private final Object value;
 
