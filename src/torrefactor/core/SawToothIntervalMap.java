@@ -52,16 +52,26 @@ class SawToothIntervalMap {
     private int halvingThresold;
     private int cur;
 
+
+    /**
+     * Create a new SawToothIntervalMap with the specified halving thresold.
+     */
     SawToothIntervalMap(int _halvingThresold) {
         this.maps = new IntervalMap[] { new IntervalMap(), new IntervalMap() };
         this.cur = 0;
         this.halvingThresold = _halvingThresold;
     }
 
+    /**
+     * Returns the halving thresold of this map.
+     */
     public int halvingThresold() {
         return this.halvingThresold;
     }
 
+    /**
+     * See IntervalMap.addInterval()
+     */
     public boolean addInterval(long begin, int length) {
         this.maps[cur].addInterval(begin, length);
         if (this.maps[cur].size() >= halvingThresold/2) {
@@ -73,12 +83,20 @@ class SawToothIntervalMap {
         return this.maps[cur].addInterval(begin, length);
     }
 
+    /**
+     * See IntervalMap.removeIntervals()
+     */
     public boolean removeIntervals(long begin, int length) {
         boolean fst = this.maps[0].removeIntervals(begin, length);
         boolean snd = this.maps[1].removeIntervals(begin, length);
         return (fst || snd);
     }
 
+    /**
+     * See IntervalMap.nextFreePoint()
+     * The time complexities are the same except for
+     * the worst case which is O(n^2*log(n)) but really unlikely
+     */
     public long nextFreePoint(long offset) {
         long sndOffset;
         do {
@@ -89,9 +107,26 @@ class SawToothIntervalMap {
         return offset;
     }
 
+    /**
+     * See IntervalMap.containsInterval()
+     */
     public boolean containsInterval(long begin, int length) {
         return (this.maps[0].containsInterval(begin, length)
                || this.maps[1].containsInterval(begin, length));
+    }
+
+    /**
+     * Remove the first halvingThresold()/2 entries of the map
+     * or less if the map doesn't have that many entries yet
+     */
+    public void clearFirstHalf() {
+        // The oldest entries are always in the other map(1 - cur)
+        // except if we haven't used it yet.
+        if (this.maps[1-cur].size() != 0) {
+            this.maps[1-cur] = new IntervalMap();
+        } else {
+            this.maps[cur] = new IntervalMap();
+        }
     }
 
     public String toString() {

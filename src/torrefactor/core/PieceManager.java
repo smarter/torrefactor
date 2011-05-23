@@ -33,12 +33,14 @@ public class PieceManager implements Serializable {
     //Recommended by http://wiki.theory.org/BitTorrentSpecification#request:_.3Clen.3D0013.3E.3Cid.3D6.3E.3Cindex.3E.3Cbegin.3E.3Clength.3E
     static final int BLOCK_SIZE = (1 << 14); // in bytes
 
+    static final int MAX_REQUESTS = 50;
+
     public PieceManager(List<Pair<File, Long>> files,
                         int pieceLength, byte[] _digestArray)
     throws FileNotFoundException, IOException {
         this.dataManager = new DataManager(files, pieceLength);
         this.intervalMap = new IntervalMap();
-        this.requestedMap = new SawToothIntervalMap(50);
+        this.requestedMap = new SawToothIntervalMap(MAX_REQUESTS);
         int fieldLength = (this.dataManager.pieceNumber() - 1)/8 + 1;
         this.bitfield = new byte[fieldLength];
         Arrays.fill(this.bitfield, (byte) 0);
@@ -65,7 +67,15 @@ public class PieceManager implements Serializable {
 
             long offset = nextFreeByte(pieceBegin);
             while (infoList.size() < numBlocks) {
-                if (offset >= this.dataManager.totalSize()) return infoList;
+                if (offset >= this.dataManager.totalSize()) {
+                    if (pieceBegin == 0) {
+                        LOG.info("Everything has been requested at least once, forgetting about old requests");
+                        this.requestedMap.clearFirstHalf();
+                        LOG.debug(this.requestedMap.toString());
+                        LOG.debug(this.intervalMap.toString());
+                    }
+                    return infoList;
+                }
                 if (offset > pieceEnd) {
                     // "- 1" because of the i++ in the for loop
                     i = (int) (offset / this.dataManager.pieceLength()) - 1;
