@@ -282,7 +282,9 @@ public class Torrent implements Serializable {
                     (int)(this.done()),
                     0, 0, (int)this.length);
         } else {
-            return null;
-       }
+            int value = (int) (progress() * Integer.MAX_VALUE);
+            return new DefaultBoundedRangeModel(
+                    value, 0, 0, Integer.MAX_VALUE);
+        }
     }
 }
