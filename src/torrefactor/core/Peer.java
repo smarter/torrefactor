@@ -19,6 +19,7 @@ public class Peer implements Runnable, PeerConnectionListener  {
 
     static final int PEER_TIMEOUT =  2*60*1000; // in ms
     static final int SLEEP_DELAY = 10; // in ms
+    static final int MAX_REQUEST_LENGTH = 128*1024; //128KB as per spec
 
     /** The bitfield of this peer*/
     byte[] bitfield;
@@ -497,6 +498,11 @@ public class Peer implements Runnable, PeerConnectionListener  {
         LOG.debug("Request, index: " + msg.index
                         + " offset: " + msg.offset
                         + " blockLength : " + msg.length);
+
+        if (msg.length > MAX_REQUEST_LENGTH) {
+            LOG.debug("Ignoring request with block length=" + msg.length
+                      + " > MAX_REQUEST_LENGTH=" + MAX_REQUEST_LENGTH);
+        }
 
         DataBlockInfo info = new DataBlockInfo(
                 msg.index, msg.offset, msg.length);
