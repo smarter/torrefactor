@@ -4,22 +4,39 @@ import torrefactor.util.*;
 import java.util.*;
 import java.util.concurrent.*;
 
+/**
+ * A DHT Bucket. Used to store a fixed amount of nodes and decide
+ * whether or not an old node should be removed when a new one is added
+ */
 public class Bucket {
     private List<Node> nodes;
     static final int CAPACITY = 8;
 
+    /**
+     * Create a new bucket using nodes as an initial list of nodes
+     */
     public Bucket(List<Node> nodes) {
         this.nodes = nodes;
     }
 
+    /**
+     * Create a new empty bucket.
+     */
     public Bucket() {
         this(new ArrayList<Node>(CAPACITY + 1));
     }
 
+    /**
+     * Returns whether or not this bucket has its maximum amount of nodes
+     */
     public boolean isFull() {
         return nodes.size() >= this.CAPACITY;
     }
 
+    /**
+     * Try to add a node to the bucket.
+     * @return true if the node was successfully added, false otherwise
+     */
     public boolean add(Node newNode) {
         if (isFull()) {
             ListIterator<Node> iter = nodes.listIterator();

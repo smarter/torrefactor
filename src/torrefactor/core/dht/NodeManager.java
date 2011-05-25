@@ -7,6 +7,9 @@ import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
 
+/**
+ * A singleton to store and query DHT nodes
+ */
 public class NodeManager {
     private final static Logger LOG = new Logger();
     private static NodeManager instance = null;
@@ -42,6 +45,11 @@ public class NodeManager {
             }
     };
 
+    /**
+     * A runnable means to be run in a Thread to periodically update the list
+     * of peers for every torrent we're downloading and announcing that we're
+     * downloading them.
+     */
     private Runnable announcer = new Runnable() {
             public void run() {
                 while (true) {
@@ -89,11 +97,23 @@ public class NodeManager {
         announceThread.run();
     }
 
-    public static NodeManager instance() {
+    /**
+     * Returns the instance of the NodeManager singleton if it exists
+     * or null otherwise.
+     */
+    public static synchronized NodeManager instance() {
         return NodeManager.instance;
     }
 
+    /**
+     * Create the NodeManager singleton if it doesn't exist. This is needed
+     * because we need at least one node to bootstrap and become part of the
+     * DHT network.
+     */
     public static synchronized void setInstance(InetAddress ip, int port) {
+        if (NodeManager.instance == null) {
+            return;
+        }
         NodeManager.instance = new NodeManager(ip, port);
     }
 
@@ -104,10 +124,18 @@ public class NodeManager {
         return this.token;
     }
 
+    /**
+     * Our node DHT port
+     */
     public int port() {
         return this.nodeConnector.port();
     }
 
+    /**
+     * Try to add the specified node according to the rules described
+     * in BEP 5.
+     * @return true if the node was added, false otherwise
+     */
     public boolean addNode(Node node) {
         int prefix = ByteArrays.commonPrefix(this.id, id);
         int index = Math.min(prefix, buckets.size() - 1);
@@ -122,6 +150,12 @@ public class NodeManager {
         return bucket.add(node);
     }
 
+    /**
+     * Send a ping KRPC message to this ip/port and try to
+     * add the node according to the rules described in BEP 5 if we get a
+     * response.
+     * @return true if the node was added, false otherwise
+     */
     public boolean addNode(InetAddress ip, int port) {
         LOG.debug("addNode: ip: " + ip + " port: " + port);
         KRPCMessage resp = null;
@@ -136,11 +170,19 @@ public class NodeManager {
         return addNode(node);
     }
 
+    /**
+     * Send a ping KRPC message to this ip/port
+     * @return a Future which will contain the response
+     */
     public Future<KRPCMessage> ping(InetAddress ip, int port) {
         KRPCMessage msg = KRPCMessage.ping();
         return nodeConnector.sendQuery(ip, port, msg);
     }
 
+    /**
+     * Send a ping KRPC message to this node
+     * @return a Future which will contain the response
+     */
     public Future<KRPCMessage> ping(Node node) {
         return ping(node.ip(), node.port());
     }
