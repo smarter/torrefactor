@@ -372,11 +372,12 @@ public class KRPCMessage {
     public static KRPCMessage findNodeResponse(List<Node> nodes) {
         KRPCMessage resp = new KRPCMessage(Type.response);
 
-        StringBuilder infoSb = new StringBuilder(nodes.size() * 26 + 1);
-        for (Node node : nodes) {
-            infoSb.append(ByteArrays.compact(node.id(), node.ip(), node.port()));
+        byte[][] nodesList = new byte[nodes.size()][26];
+        for (int i = 0; i < nodes.size(); i++) {
+            Node node = nodes.get(i);
+            nodesList[i] = ByteArrays.compact(node.id(), node.ip(), node.port());
         }
-        resp.setArgument("nodes", new BValue(infoSb.toString()));
+        resp.setArgument("nodes", new BValue(ByteArrays.concat(nodesList)));
         return resp;
     }
 

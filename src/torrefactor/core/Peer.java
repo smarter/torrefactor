@@ -46,9 +46,7 @@ public class Peer implements Runnable, PeerConnectionListener  {
         new LinkedList<DataBlockInfo>();
 
     private volatile boolean isValid = true;
-    private volatile boolean isStopped = false;
 
-    private byte[] reservedBytes;
     private InetAddress address;
     private int port;
     private Torrent torrent;
@@ -112,9 +110,11 @@ public class Peer implements Runnable, PeerConnectionListener  {
             if (!this.connection.isConnected()) {
                 this.connection.connect();
             }
-            
+
             byte reserved[] = { 0, 0, 0, 0, 0, 0, 0, 0};
-            //reserved[7] = 1; //DHT support
+            if (CONF.getPropertyBoolean("DHT")) {
+                reserved[7] = 1;
+            }
             if (CONF.getPropertyBoolean("Peer.UseStupidEncryption")) {
                 reserved[7] |= (1 << 4);
             }

@@ -293,7 +293,6 @@ public class PeerManager implements Runnable {
         if (peerId == null) {
             // Azureus style, see
             // http://wiki.theory.org/BitTorrentSpecification#peer_id
-            Random rand = new Random();
             String idRand = UUID.randomUUID().toString().substring(
                     0, 20 - idInfo.length());
             LOG.debug(idRand);

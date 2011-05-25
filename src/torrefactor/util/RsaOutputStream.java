@@ -67,7 +67,6 @@ public class RsaOutputStream extends OutputStream {
 
         BigInteger bi = BigInteger.valueOf(b);
         bi = this.rsa.encrypt(bi);
-        byte[] array = bi.toByteArray();
 
         byte[] realArray = ByteArrays.fromBigInteger(bi, this.chunkLength);
 

@@ -26,6 +26,7 @@ public class TorrentMaker {
         fileMap.put("info", new BValue(infoMap));
         FileOutputStream fos = new FileOutputStream(torrentFile);
         fos.write(BEncode.encode(new BValue(fileMap)));
+        fos.close();
     }
 
     /**
@@ -62,6 +63,7 @@ public class TorrentMaker {
             dis.readFully(piece);
             System.arraycopy(md.digest(piece), 0, shaArray[160*i], 0, 160);
         }
+        dis.close();
         Map<String, BValue> infoMap = new HashMap<String, BValue>();
         infoMap.put("name", new BValue(file.getName()));
         infoMap.put("length", new BValue(file.length()));

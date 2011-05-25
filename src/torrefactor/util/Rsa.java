@@ -11,7 +11,6 @@ public class Rsa {
     private BigInteger encryptKey = null;
     private BigInteger encryptModulo = null;
     private BigInteger modulo;
-    private BigInteger messageMaxLength;
     private int bitLength;
 
     public Rsa (BigInteger _privateKey, BigInteger _publicKey,

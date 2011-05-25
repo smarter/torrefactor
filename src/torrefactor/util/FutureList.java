@@ -94,7 +94,6 @@ public class FutureList<E> {
         if (this.list.isEmpty()) {
             return null;
         }
-        long time = System.currentTimeMillis();
         return this.list.remove(0).get(timeout, TimeUnit.MILLISECONDS);
     }
 }

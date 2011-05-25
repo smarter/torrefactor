@@ -14,8 +14,6 @@ import java.util.*;
 public class UdpTracker extends Tracker {
     private static Logger LOG = new Logger();
     private static Config CONF = Config.getConfig();
-    private long connection_id;
-    private byte[] info_hash;
     private byte[] peer_id;
     private int numWant = 100;
     private long extensions = 0;
@@ -208,11 +206,11 @@ public class UdpTracker extends Tracker {
         }
         byte[] b = new byte[4];
         System.arraycopy(buffer, 8, b, 0, 4);
-        int interval = ByteArrays.toInt(b);
+        interval = ByteArrays.toInt(b);
         System.arraycopy(buffer, 12, b, 0, 4);
-        int leechers = ByteArrays.toInt(b);
+        leechers = ByteArrays.toInt(b);
         System.arraycopy(buffer, 16, b, 0, 4);
-        int seeders = ByteArrays.toInt(b);
+        seeders = ByteArrays.toInt(b);
 
         // Parse peer-port segments
         ArrayList<Pair<byte[], Integer>> peerList =

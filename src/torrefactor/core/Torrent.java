@@ -87,7 +87,6 @@ public class Torrent implements Serializable {
 
         this.pieceLength = infoMap.get("piece length").toInt();
         this.pieceHash = infoMap.get("pieces").toByteArray();
-        int pieces = (int)((this.length - 1)/((long) this.pieceLength + 1));
 
         this.pieceManager = new PieceManager(this.files, this.pieceLength,
                                              this.pieceHash);
@@ -129,16 +128,6 @@ public class Torrent implements Serializable {
         }
     }
 
-    private static File[] bencodeListToFiles(BValue b) {
-        List<BValue> list = b.toList();
-        File[] files = new File[list.size()];
-        for (int i=0; i<list.size(); i++) {
-            File file = bencodeToFile(list.get(i));
-            files[i] = file;
-        }
-        return files;
-    }
-
     private static File bencodeToFile(BValue b) {
         List l = b.toList();
         File parent = new File(l.get(0).toString());
@@ -150,18 +139,6 @@ public class Torrent implements Serializable {
         }
         assert (current != null);
         return current;
-    }
-
-    private static void mkparentdirs(File[] files) {
-        for (int i=0; i<files.length; i++) {
-            String parentPath = files[i].getParent();
-            if (parentPath == null) {
-                //No parent
-                continue;
-            }
-            File parent = new File(parentPath);
-            parent.mkdirs();
-        }
     }
 
     public ArrayList<Pair<File, Long>> getFiles() {

@@ -14,7 +14,6 @@ import java.util.concurrent.*;
 public class NodeConnector implements Runnable {
     private final static Logger LOG = new Logger();
 
-    private int port;
     private int curTransactionId;
 
     /**
@@ -23,7 +22,6 @@ public class NodeConnector implements Runnable {
      */
     private Map<Integer, FutureSetter<KRPCMessage>> transactionMap;
 
-    private volatile boolean stopped;
     private DatagramSocket socket;
 
     static final int PACKET_LENGTH = 1024; //in bytes
@@ -35,7 +33,7 @@ public class NodeConnector implements Runnable {
     public NodeConnector() {
         this.socket = DatagramSockets.getDatagramSocket();
         this.curTransactionId = -1;
-        this.stopped = false;
+        this.transactionMap = new HashMap<Integer, FutureSetter<KRPCMessage>>();
     }
 
     /**
@@ -44,7 +42,7 @@ public class NodeConnector implements Runnable {
      */
     public void run() {
         long time = 0;
-        while (!this.stopped) {
+        while (true) {
             try {
                 byte[] buf = new byte[PACKET_LENGTH];
                 DatagramPacket packet = new DatagramPacket(buf, buf.length);

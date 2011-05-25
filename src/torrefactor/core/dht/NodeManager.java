@@ -247,7 +247,6 @@ public class NodeManager {
      * @param type  Type of the query. Must be find_node or get_peers
      */
     private List<Node> iterativeFindNode(byte[] id) {
-        KRPCMessage query = KRPCMessage.findNode(id);
         int req = Bucket.CAPACITY; // Number of find requests sent in parallel
         List<Node> shortList = findNode(id);
         Node closestNode = null;

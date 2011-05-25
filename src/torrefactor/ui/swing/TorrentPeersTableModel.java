@@ -112,15 +112,15 @@ public class TorrentPeersTableModel extends AbstractTableModel {
         if (column == Column.HOST) {
             data = peer.getAddress ().toString ();
         } else if (column == Column.PORT) {
-            data = new Integer (peer.getPort ());
+            data = Integer.valueOf(peer.getPort ());
         } else if (column == Column.ID) {
             data = peer.getIdAsString ();
         } else if (column == Column.CONNECTED) {
             data = peer.isConnected() ? "Connected" : "Disconnected";
         } else if (column == Column.UPLOADED) {
-            data = new Long (peer.downloaded ());
+            data = Long.valueOf(peer.downloaded ());
         } else if (column == Column.DOWNLOADED) {
-            data = new Long (peer.uploaded ());
+            data = Long.valueOf(peer.uploaded ());
         } else {
             data = "No such column.";
         }

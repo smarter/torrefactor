@@ -29,7 +29,7 @@ public class SwingClient {
         // config file.
         new Config();
 
-        SwingClient swingClient = new SwingClient ();
+        new SwingClient();
     }
 
     public SwingClient () {
