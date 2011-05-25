@@ -102,7 +102,12 @@ public class UdpTracker extends Tracker {
         this.socket.setSoTimeout(UDP_SOCKET_TIMEOUT);
 
         for (int i=0; i<3; i++) {
+            try {
                 this.socket.send(packet);
+            } catch (NullPointerException e) { // happens for some reason inside the API
+                this.socket.close();
+                throw new IOException();
+            }
 
             // Connect reply
             byte[] buffer = new byte[recvlen];
@@ -140,7 +145,7 @@ public class UdpTracker extends Tracker {
         Random random = new Random();
 
         // Get socket
-        this.socket = DatagramSockets.getDatagramSocket(this.port);
+        this.socket = DatagramSockets.getDatagramSocket();
         if (this.socket == null) return null;
         int lport = CONF.getPropertyInt("ListenPort");
 
@@ -228,6 +233,7 @@ public class UdpTracker extends Tracker {
             i += 6;
         }
 
+        this.socket.close();
         return peerList;
     }
 
