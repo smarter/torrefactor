@@ -4,9 +4,6 @@ make
 * Run the Swing GUI:
 . ./env
 java torrefactor.ui.swing.SwingClient
-**FIXME: The "Start Downloading" and "Stop Downloading" menu items only work
-  when a torrent is selected, otherwise they do nothing. They should be
-  disabled when not usabled.**
 
 * Run tests:
 make runtest
@@ -15,14 +12,25 @@ make runtest
 . ./env
 java test.Client <input.torrent> <output directory>
 
-
-* Generate the doc(not much tested, not really working for now)
+* Generate the doc:
 make doc
 
-* Build the experimental and not usable Qt GUI:
-- Install QtJambi and get the jar into your CLASSPATH
+* Build and run the experimental and not usable Qt GUI:
+- Install QtJambi and get the jar into your $CLASSPATH
 make src.torrefactor.ui.qt
-
-* Run the Qt GUI:
 . ./env
 java torrefactor.ui.qt.Main
+
+
+* Run the BitTorrent decrypter.
+- This is a small program that will decrypt the encrypted XOR key sent
+by both peers when encryption is enabled and use it to decode the
+first message of each peer. This relies on a critical flaw of the
+encryption scheme: The XOR key is encrypted with RSA byte per byte.
+This means that there's only 256 different keys. 
+- You need libssl and libnids as dependencies, on Debian/Ubuntu:
+sudo apt-get install libssl-dev libnids-dev
+make btsniff
+sudo ./btsniff <network interface>
+- For exemple, to test in local:
+sudo ./btsniff lo

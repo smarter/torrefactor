@@ -268,6 +268,7 @@ install::
 endif
 clean::
 	$(RM) $(JAR_FILE)
+	$(RM) btsniff
 else
 jar:
 	@echo "No jar file defined"
@@ -440,3 +441,6 @@ runtest: all
 	java test.util.RsaInputOutputTest
 	java test.util.RSAStreamEncodeDecodeTest
 	java test.util.SymmetricStreamEncodeDecodeTest
+
+btsniff:
+	gcc -lnids -lssl -o btsniff btsniff.c
