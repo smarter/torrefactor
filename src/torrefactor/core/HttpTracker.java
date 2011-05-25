@@ -144,8 +144,8 @@ public class HttpTracker extends Tracker {
 
         // Parse peers
         ArrayList<Pair<byte[], Integer>> peersList = new ArrayList<Pair<byte[], Integer>>();
-        // FIXME: explain why we do this if-else
-        if (answerMap.get("peers").toObject() instanceof List) {
+
+        if (answerMap.get("peers").toObject() instanceof List) { // Classic response
             List<BValue> peers = answerMap.get("peers").toList();
             for (int i = 0; i < peers.size(); i++) {
                 Map<String, BValue> peerMap = peers.get(i).toMap();
@@ -154,7 +154,7 @@ public class HttpTracker extends Tracker {
                 Pair<byte[], Integer> peer = new Pair<byte[], Integer>(ip, port);
                 peersList.add(peer);
             }
-        } else if (answerMap.get("peers").toObject() instanceof byte[]) {
+        } else if (answerMap.get("peers").toObject() instanceof byte[]) { // Compact response
             byte[] peersArray = answerMap.get("peers").toByteArray();
             int i = 0;
             while (i < peersArray.length) {

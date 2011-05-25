@@ -125,11 +125,11 @@ public class DataManager implements Serializable {
         for (int i=0; i < this.fileChannels.length; i++) {
             if (localOffset < this.fileSizes[i]) {
                 numBuffers +=1;
-                LOG.debug(this, "File: " + files[i] + " with size: "
-                                         + this.fileChannels[i].size());
-                LOG.debug(this, "localOffest: " + localOffset);
+                //LOG.debug(this, "File: " + files[i] + " with size: "
+                //                         + this.fileChannels[i].size());
+                //LOG.debug(this, "localOffest: " + localOffset);
                 remainingLength -= this.fileSizes[i] - localOffset;
-                LOG.debug(this, "Remaining length: " + remainingLength);
+                //LOG.debug(this, "Remaining length: " + remainingLength);
                 if (remainingLength <= 0) {
                     break;
                 }
