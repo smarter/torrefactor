@@ -6,7 +6,7 @@ import java.security.*;
 import java.util.*;
 
 public class TorrentMaker {
-    public static final int SHA1_LENGTH = 160; //In bytes
+    public static final int SHA1_LENGTH = 20; //In bytes
     private static final String CREATED_BY = "Torrefactor/0.1";
 
     /**
@@ -59,10 +59,15 @@ public class TorrentMaker {
         MessageDigest md = MessageDigest.getInstance("SHA1");
         DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
         byte[] piece = new byte[pieceLength];
-        for (int i = 0; i < pieces; i++) {
+        System.out.println("Size: " + shaArray.length);
+        for (int i = 0; i < pieces-1; i++) {
             dis.readFully(piece);
-            System.arraycopy(md.digest(piece), 0, shaArray[160*i], 0, 160);
+            System.arraycopy(md.digest(piece), 0, shaArray, SHA1_LENGTH*i, SHA1_LENGTH);
         }
+        int lastSize = ((int)(file.length() % pieceLength));
+        piece = new byte[lastSize];
+        dis.readFully(piece);
+        System.arraycopy(md.digest(piece), 0, shaArray, (pieces-1)*SHA1_LENGTH, SHA1_LENGTH);
         dis.close();
         Map<String, BValue> infoMap = new HashMap<String, BValue>();
         infoMap.put("name", new BValue(file.getName()));
