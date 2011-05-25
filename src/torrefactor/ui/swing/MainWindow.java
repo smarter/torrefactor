@@ -82,7 +82,6 @@ public class MainWindow implements ActionListener {
         // Mouse event for context menu on torrent table
         MouseListener ml = new MouseListener () {
             public void mouseClicked (MouseEvent event) {
-                LOG.debug("MOUSE EVENT");
                 if (event.getButton() == MouseEvent.BUTTON3) {
                     Point p = torrentTable.getMousePosition();
                     int row = torrentTable.rowAtPoint(p);
