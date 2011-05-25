@@ -7,6 +7,7 @@ import java.util.*;
 
 public class TorrentMaker {
     public static final int SHA1_LENGTH = 160; //In bytes
+    private static final String CREATED_BY = "Torrefactor/0.1";
 
     /**
      * Write a Torrent file.
@@ -16,13 +17,11 @@ public class TorrentMaker {
      * @param announce     The URL(including port) to a tracker containing
      *                     peers for the torrent.
      * @param comment      A comment(optional, can be null)
-     * @param createdBy    The name of the author of the torrent (optional,
-     *                     can be null)
      */
     public static void write(File torrentFile, File inputFile, int pieceLength,
-        String announce, String comment, String createdBy)
+        String announce, String comment)
         throws FileNotFoundException, IOException, NoSuchAlgorithmException {
-        Map<String, BValue> fileMap = makeFileMap(announce, comment, createdBy);
+        Map<String, BValue> fileMap = makeFileMap(announce, comment);
         Map<String, BValue> infoMap = makeInfoMap(inputFile, pieceLength);
         fileMap.put("info", new BValue(infoMap));
         FileOutputStream fos = new FileOutputStream(torrentFile);
@@ -34,18 +33,15 @@ public class TorrentMaker {
      * the "info" entry.
      */
     private static Map<String, BValue>
-        makeFileMap(String announce, String comment, String createdBy)
+        makeFileMap(String announce, String comment)
         throws FileNotFoundException, IOException {
         Map<String, BValue> fileMap = new HashMap<String, BValue>();
         fileMap.put("announce", new BValue(announce));
         if (comment != null) {
             fileMap.put("comment", new BValue(comment));
         }
-        //FIXME: wrong format
-        fileMap.put("creation date", new BValue(System.currentTimeMillis()));
-        if (createdBy != null) {
-            fileMap.put("created by", new BValue(createdBy));
-        }
+        fileMap.put("creation date", new BValue(System.currentTimeMillis()/1000));
+        fileMap.put("created by", new BValue(CREATED_BY));
         fileMap.put("encoding", new BValue("UTF-8"));
         return fileMap;
     }
