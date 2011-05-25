@@ -41,7 +41,7 @@ public class PieceManager implements Serializable {
         this.dataManager = new DataManager(files, pieceLength);
         this.intervalMap = new IntervalMap();
         this.requestedMap = new SawToothIntervalMap(MAX_REQUESTS);
-        int fieldLength = (this.dataManager.pieceNumber() - 1)/8 + 1;
+        int fieldLength = (piecesNumber() - 1)/8 + 1;
         this.bitfield = new byte[fieldLength];
         Arrays.fill(this.bitfield, (byte) 0);
         this.digestArray = _digestArray;
@@ -153,7 +153,7 @@ public class PieceManager implements Serializable {
         int pieceLength = this.dataManager.pieceLength();
 
         // Last piece has different size
-        if (piece == this.dataManager.pieceNumber() - 1) {
+        if (piece == piecesNumber() - 1) {
             pieceLength = (int) (this.dataManager.totalSize() - pieceBegin);
         }
 
@@ -184,14 +184,14 @@ public class PieceManager implements Serializable {
      * Returns true if we got all the pieces
      */
     public boolean isComplete() {
-        return ByteArrays.isComplete(this.bitfield);
+        return ByteArrays.isComplete(this.bitfield, piecesNumber());
     }
 
     /**
      * Returns the number of pieces of the torrent
      */
     public int piecesNumber() {
-        return this.dataManager.pieceNumber();
+        return this.dataManager.piecesNumber();
     }
 
     /**

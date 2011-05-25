@@ -329,6 +329,10 @@ public class Peer implements Runnable, PeerConnectionListener  {
         return this.isValid;
     }
 
+    public boolean isComplete() {
+        return ByteArrays.isComplete(this.bitfield, this.torrent.pieceManager.piecesNumber());
+    }
+
     public void invalidate() {
         LOG.warning("Invalidate");
         this.isValid = false;

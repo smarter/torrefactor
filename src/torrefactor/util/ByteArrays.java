@@ -37,15 +37,20 @@ public class ByteArrays {
     }
 
     /**
-     * Returns true if all bits of bitfield are set to 1.
+     * Returns true if the first length bits are set to 1, false otherwise
      */
-    public static boolean isComplete(byte[] bitfield) {
-        for (int i=0; i<bitfield.length; i++) {
+    public static boolean isComplete(byte[] bitfield, int length) {
+        int i;
+        for (i = 0; i<length/8; i++) {
             if (bitfield[i] != (byte) 0xFF) {
                 return false;
             }
         }
-        return true;
+        if (length % 8 == 0) {
+            return true;
+        }
+        byte lastByte = (byte) (0xFF << 7 - (length % 8));
+        return bitfield[i] == lastByte;
     }
 
     /**

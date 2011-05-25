@@ -44,13 +44,13 @@ public class PeerManager implements Runnable {
     // Time to sleep before retrying annouce when no tracker responded
     static final long TRACKER_RETRY_SLEEP = 5000;
 
-    public PeerManager(Torrent _torrent) {
+    public PeerManager(Torrent torrent) {
         // Make sure we have a peerId
         PeerManager.peerId();
 
         this.stopped = true;
         this.peersReceived = 0;
-        this.torrent = _torrent;
+        this.torrent = torrent;
         this.peerMap = new HashMap<InetAddress, Peer>();
         this.activeMap = new HashMap<InetAddress, Peer>();
         this.trackerManager = new TrackerManager(this.torrent);
@@ -85,7 +85,6 @@ public class PeerManager implements Runnable {
         this.state = State.Started;
         stopped = false;
         while (!stopped) {
-
             // Add peer which have been added via addPeer(Peer)
             while (this.newPeers.size() > 0) {
                 Peer peer = this.newPeers.poll();
@@ -96,7 +95,6 @@ public class PeerManager implements Runnable {
             }
 
             if (this.trackerManager.canAnnounce()) {
-                    //(peerMap.size() <= this.peersReceived / 2)
                 this.state = State.Announcing;
                 try {
                     
@@ -150,19 +148,19 @@ public class PeerManager implements Runnable {
                     peer.sendHave(piece);
 
                     if (this.torrent.isComplete()) {
-                        LOG.debug("Torrent is complete");
-                        if (ByteArrays.isComplete(peer.bitfield)) {
+                        LOG.info("Torrent is complete");
+                        if (peer.isComplete()) {
                             // the peer and us got all the pieces, close the
                             // connection
-                            LOG.debug("We both have all pieces: "
-                                      + peer.toString());
+                            LOG.debug("Peer " + peer.toString() + " and us have"
+                                      + " all pieces, disconnecting from him.");
                             peer.invalidate();
                             it.remove();
                             this.peerMap.remove(peerAddress);
 
                             // This break has been well tested and won't end up
-                            // like xkcd commic: http://xkcd.com/292/
-                            // Yeah, I promise you no dinosaur will comme from
+                            // like xkcd comic: http://xkcd.com/292/
+                            // Yeah, I promise you no dinosaur will come from
                             // your left ;)
                             break activeMapIteration;
                         }

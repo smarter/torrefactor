@@ -26,7 +26,7 @@ public class DataManager implements Serializable {
     private transient RandomAccessFile[] raFiles;
     private transient FileChannel[] fileChannels;
     private long totalSize;
-    private int pieceNumber;
+    private int piecesNumber;
     private int pieceLength;
 
     public DataManager (List<Pair<File, Long>> _files ,int _pieceLength)
@@ -55,7 +55,7 @@ public class DataManager implements Serializable {
             this.fileChannels[i] = this.raFiles[i].getChannel();
             LOG.debug(this, "Got channel for " + this.files[i]);
         }
-        this.pieceNumber = (int) ( (this.totalSize - 1) / this.pieceLength) + 1;
+        this.piecesNumber = (int) ( (this.totalSize - 1) / this.pieceLength) + 1;
     }
 
     private void setFilesAndSizes (List<Pair<File, Long>> fpairs) {
@@ -83,8 +83,8 @@ public class DataManager implements Serializable {
         init(this.pieceLength);
     }
 
-    public int pieceNumber() {
-        return this.pieceNumber;
+    public int piecesNumber() {
+        return this.piecesNumber;
     }
 
     public int pieceLength() {
