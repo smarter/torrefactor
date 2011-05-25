@@ -19,6 +19,9 @@ public class PeerManager implements Runnable {
 
     private volatile boolean stopped;
 
+    public enum State {Stopped, Announcing, Started, Seeding};
+    private volatile State state;
+
     private Torrent torrent;
     private volatile Map<InetAddress, Peer> peerMap;
     private Map<InetAddress, Peer> activeMap;
@@ -39,7 +42,7 @@ public class PeerManager implements Runnable {
     // Number of blocks requested at the same time per peer
     static final int MAX_QUEUED_REQUESTS = 10;
     // Time to sleep before retrying annouce when no tracker responded
-    static final int TRACKER_RETRY_SLEEP = 5000;
+    static final long TRACKER_RETRY_SLEEP = 5000;
 
     public PeerManager(Torrent _torrent) {
         // Make sure we have a peerId
@@ -59,9 +62,17 @@ public class PeerManager implements Runnable {
             peersList = null;
 
             // Announce until a tracker respond
+            this.state = State.Announcing;
+            peersList = this.trackerManager.announce(Tracker.Event.started);
+            int count = 1;
             while (peersList == null) {
                 peersList = this.trackerManager.announce(Tracker.Event.started);
-                Thread.sleep(TRACKER_RETRY_SLEEP);
+
+                long wait = TRACKER_RETRY_SLEEP * count;
+                LOG.info("No tracker responded, retrying in "
+                         + wait/1000 + " seconds");
+                Thread.sleep(wait);
+                count ++;
             }
 
             this.peersReceived = peersList.size();
@@ -70,6 +81,8 @@ public class PeerManager implements Runnable {
             e.printStackTrace();
             return;
         }
+
+        this.state = State.Started;
         stopped = false;
         while (!stopped) {
 
@@ -82,12 +95,19 @@ public class PeerManager implements Runnable {
                 this.activeMap.put(peer.getAddress(), peer);
             }
 
-            if (this.trackerManager.canAnnounce() ||
-                    peerMap.size() <= this.peersReceived / 2) {
+            if (this.trackerManager.canAnnounce()) {
+                    //(peerMap.size() <= this.peersReceived / 2)
+                this.state = State.Announcing;
                 try {
+                    
+                    // Add peers from DHT
                     if (NodeManager.instance() != null) {
-                        updateMapCompact(NodeManager.instance().peersForTorrent(this.torrent.infoHash));
+                        updateMapCompact(
+                                NodeManager.instance().peersForTorrent(
+                                    this.torrent.infoHash));
                     }
+
+                    // Add peers from announce
                     List<Pair<byte[], Integer>> peersList;
                     peersList = this.trackerManager.announce(
                                                         Tracker.Event.none);
@@ -96,8 +116,10 @@ public class PeerManager implements Runnable {
                     e.printStackTrace();
                     return;
                 }
+                this.state = State.Started;
             }
 
+            // Start new peers if some died
             int i = MAX_PEERS - activeMap.size();
             for (Map.Entry<InetAddress, Peer> peerEntry : peerMap.entrySet()) {
                 if (activeMap.containsKey(peerEntry.getKey())) continue;
@@ -138,8 +160,8 @@ public class PeerManager implements Runnable {
                             it.remove();
                             this.peerMap.remove(peerAddress);
 
-                            // This has been well tested and won't end up like 
-                            // xkcd commic: http://xkcd.com/292/
+                            // This break has been well tested and won't end up
+                            // like xkcd commic: http://xkcd.com/292/
                             // Yeah, I promise you no dinosaur will comme from
                             // your left ;)
                             break activeMapIteration;
@@ -147,32 +169,33 @@ public class PeerManager implements Runnable {
                     }
                 }
 
-                if (!peer.canRequest()) {
+                if (peer.canRequest()) {
                     //LOG.debug("Cannot request to: " + peer);
-                    continue;
-                }
 
-                try {
-                    List<DataBlockInfo> infoList =
-                        this.torrent.pieceManager.getFreeBlocks(
-                                peer.bitfield,
-                                MAX_QUEUED_REQUESTS);
+                    try {
+                        List<DataBlockInfo> infoList =
+                            this.torrent.pieceManager.getFreeBlocks(
+                                    peer.bitfield,
+                                    MAX_QUEUED_REQUESTS);
 
-                    Iterator<DataBlockInfo> iter = infoList.iterator();
-                    while (iter.hasNext()) {
-                        peer.sendRequest(iter.next());
+                        Iterator<DataBlockInfo> iter = infoList.iterator();
+                        while (iter.hasNext()) {
+                            peer.sendRequest(iter.next());
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        peer.invalidate();
+                        //removeBlock
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    peer.invalidate();
-                    //removeBlock
                 }
             }
 
             // Announce complete if we got the last piece
             if (newPieces.size() > 0) {
                 if (this.torrent.isComplete()) {
+                    this.state = State.Announcing;
                     this.trackerManager.announce(Tracker.Event.completed);
+                    this.state = State.Seeding;
                 }
             }
 
@@ -191,9 +214,11 @@ public class PeerManager implements Runnable {
             entry.getValue().invalidate();
        }
 
+       this.state = State.Announcing;
        LOG.debug("Announcing \"stopped\" to trackers (this may take a while "
                  + "if they don't respond promptly)");
        this.trackerManager.announce(Tracker.Event.stopped);
+       this.state = State.Stopped;
 
     }
 
@@ -275,5 +300,12 @@ public class PeerManager implements Runnable {
             peerId = (idInfo + idRand).getBytes();
         }
         return peerId;
+    }
+
+    /**
+     * Return the current state.
+     */
+    public State state () {
+        return this.state;
     }
 }

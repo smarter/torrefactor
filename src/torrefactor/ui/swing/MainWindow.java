@@ -143,7 +143,7 @@ public class MainWindow implements ActionListener {
         this.torrentTable.setRowSelectionAllowed(true);
         this.torrentPane = new JScrollPane(torrentTable);
 
-        this.torrentTable.getColumnModel().getColumn(1)
+        this.torrentTable.getColumnModel().getColumn(2)
             .setCellRenderer(new ProgressBarTableCellRenderer());
     }
 

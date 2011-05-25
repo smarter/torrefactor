@@ -286,4 +286,14 @@ public class Torrent implements Serializable {
                     value, 0, 0, Integer.MAX_VALUE);
         }
     }
+
+    public String getState () {
+        if (this.peerManager != null) {
+            PeerManager.State state = this.peerManager.state();
+            if (state != null) {
+                return state.toString();
+            }
+        }
+        return "Stopped";
+    }
 }

@@ -94,6 +94,7 @@ public class TrackerManager {
                 peersList = tracker.announce(this.torrent, event);
             } catch (Exception e) {
                 LOG.error(this ,e);
+                e.printStackTrace();
                 continue;
             }
             if (peersList == null) {
@@ -139,9 +140,9 @@ public class TrackerManager {
                     "Don't know how to handle uri \"" + uri + "\"");
             }
         } catch (Exception e) {
-            e.printStackTrace();
             LOG.debug(this,
                     "Cannot construct tracker object for uri: \"" + uri + "\"");
+            e.printStackTrace();
         }
         return tracker;
     }

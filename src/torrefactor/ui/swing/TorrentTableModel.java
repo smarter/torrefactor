@@ -20,13 +20,13 @@ import java.io.IOException;
  * TorrentManager.
  */
 public class TorrentTableModel extends AbstractTableModel {
-    public String[] columnNames = {"Torrent", "Progress", "Uploaded",
+    public String[] columnNames = {"Torrent", "State", "Progress", "Uploaded",
                                    "Downloaded"};
-    public enum Column { NAME, PERCENT, UPLOADED, DOWNLOADED };
+    public enum Column { NAME, STATE, PERCENT, UPLOADED, DOWNLOADED };
     public Column[] columns;
 
     public TorrentTableModel () {
-        this.columns = new Column[] {Column.NAME, Column.PERCENT,
+        this.columns = new Column[] {Column.NAME, Column.STATE, Column.PERCENT,
                                      Column.UPLOADED, Column.DOWNLOADED};
         fireTableDataChanged();
     }
@@ -94,6 +94,8 @@ public class TorrentTableModel extends AbstractTableModel {
         Object data;
         if (column == Column.NAME) {
             data = torrent.FILE_NAME;
+        } else if (column == Column.STATE) {
+            data = torrent.getState();
         } else if (column == Column.PERCENT) {
             data = torrent.getBoundedRangeModel();
         } else if (column == Column.UPLOADED) {
