@@ -77,7 +77,7 @@ Semaine 8 (11/04), 9 (18/04) et 10 (vacances 25/04)
 - Ajout de documentation dans diverses classes.
 - Début de l'implémentation de PEX. (http://en.wikipedia.org/wiki/Peer_exchange)
 
-Semaine 11 (2/05) et 12 (9/05)
+Semaines 11 (2/05) et 12 (9/05)
 - Correction de problèmes avec la dernière pièce des torrents.
 - Correction de l'implémentation de l'encryption. Ne fonctionne toujours pas
   avec client.jar (il plante avec une IndexArrayOutOfBound).
@@ -85,7 +85,20 @@ Semaine 11 (2/05) et 12 (9/05)
 - Ajout de javadoc dans quelques classes.
 - Ajout d'une classe pour gérer la configuration sous forme key=value.
 - Ajout d'un dialogue de configuration dans l'interface swing.
-- Implémentation de DHT bientôt terminée.
+- Implémentation de DHT bientôt terminée.
 - Utilisation de YourKit Java Profiler pour découvrir les méthodes à optimiser
   http://www.yourkit.com/java/profiler/index.jsp
 - Correction d'une méthode très lente dans DataBlock.
+
+Semaines 13 (16/05) et 14 (23/05)
+- Écriture du fichier CONCEPTION ;)
+- Modularisation de Peer: chaque Message a sa propre classe, nouvelle classe
+  PeerConnection.
+- Amélioration de la GUI: barre de progression, barre affichant les pièces
+  téléchargées et en cours de téléchargement, anti-aliasing, utilise le thème
+  du système, etc.
+- Encryption marche correctement
+- Support DHT intégré
+- Documentation de quasi toutes les classes
+- Ajout d'une nouvelle fenêtre dans la GUI pour créer de nouveaux fichiers
+  .torrent.

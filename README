@@ -1,9 +1,27 @@
+## Torrefactor 0.1 - A BitTorrent client written in Java ##
+This application is a client for the BitTorrent P2P protocol which allows file
+sharing. It can be used to create new ".torrent" files to share and to download
+existing ".torrent" files. You can find ".torrent" files on torrents search
+engine such as http://thepiratebay.org and http://torrentz.eu.
+
 * Build core and tests:
 make
 
 * Run the Swing GUI:
 . ./env
 java torrefactor.ui.swing.SwingClient
+Use "File -> Open" to choose a .torrent file
+Use the right-click menu to start or stop downloading the selected torrent.
+Use "File -> Options..." to configure Torrefactor:
+- "Use encryption" adds support for the (completely unsafe(see CONCEPTION)!)
+  encryption protocol used for the project.
+- "Force encryption" forces Torrefactor to only communicates with peers who
+  support the same encryption protocol as we.
+- "Enable DHT" adds support for DHT(Distributed Hash Table) which is a
+  BitTorrent extension which allows you to get more peers (see
+  http://www.bittorrent.org/beps/bep_0005.html for more informations)
+- "Download directory:" lets you choose the directory in which the downloaded
+  files should be stored.
 
 * Run tests:
 make runtest
