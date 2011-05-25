@@ -8,6 +8,9 @@ import java.util.concurrent.Future;
  * the computation is set using the set() function.
  *
  * This class is thread-safe.
+ *
+ * JAVADOC BUG: javadoc 1.6.0_18 crashes on this class because of
+ * "implements Future&lt;V&gt;" removing the generic make it work again.
  */
 public class FutureSetter<V> implements Future<V> {
     private V value;

@@ -8,14 +8,23 @@ import java.util.*;
 import java.security.*;
 
 /**
- * A map where keys are beginning of non-overlapping intervals and values are end
- * To prevent overlapping, put() is not available, instead use addInterval.
- * Implemented with a TreeMap to get O(log(n)) lookup, insert, remove, previous and successor
+ * A map where keys are beginning of non-overlapping intervals and values are
+ * end.
  *
- * Note that this class is NOT thread-safe, thread-safe functions are marked as such.
- * To achieve thread-safeness, you will need to put calls to not thread-safe functions
- * in a synchronized block where the synchronization object is the instance of this class you're
- * using.
+ * To prevent overlapping, put() is not available, instead use addInterval.
+ *
+ * Implemented with a TreeMap to get O(log(n)) lookup, insert, remove, previous
+ * and successor
+ *
+ * Note that this class is NOT thread-safe, thread-safe functions are marked as
+ * such.
+ *
+ * To achieve thread-safeness, you will need to put calls to not
+ * thread-safe functions in a synchronized block where the synchronization
+ * object is the instance of this class you're using.
+ *
+ * JAVADOC BUG: javadoc 1.6.0_18 crashes on this class because of
+ * "extends TreeMap&lt;Long, Long&gt;" removing the generic make it work again.
  */
 public class IntervalMap extends TreeMap<Long, Long> {
 
@@ -30,7 +39,8 @@ public class IntervalMap extends TreeMap<Long, Long> {
         long end =  begin + length - 1;
         Map.Entry<Long, Long> interval = floorEntry(end + 1);
         if (interval == null) {
-            // No interval beginning before our superior born, so no overlap possible
+            // No interval beginning before our superior born, so no overlap
+            // possible
             super.put(begin, end);
             return true;
         }
@@ -39,20 +49,24 @@ public class IntervalMap extends TreeMap<Long, Long> {
             return false;
         }
         if (interval.getValue() + 1 >= begin) {
-            // If our right side overlaps with an interval B, extend our superior born to B's
+            // If our right side overlaps with an interval B, extend our
+            // superior born to B's
             end = Math.max(end, interval.getValue());
             // Discard all intervals contained in our interval
             while (interval != null && interval.getKey() > begin) {
                 remove(interval.getKey());
                 interval = lowerEntry(interval.getKey());
             }
-            // If our left side overlaps with or is adjacent to an interval B, extend B's superior born to ours
-            if (interval != null && interval.getValue() + 1 >= begin && interval.getValue() <= end) {
+            // If our left side overlaps with or is adjacent to an interval B,
+            // extend B's superior born to ours
+            if (interval != null && interval.getValue() + 1 >= begin &&
+                    interval.getValue() <= end) {
                 super.put(interval.getKey(), end);
                 return true;
             }
         }
-        // The interval before our left side doesn't overlap with us or is adjacent to us
+        // The interval before our left side doesn't overlap with us or is
+        // adjacent to us
         super.put(begin, end);
         return true;
     }
