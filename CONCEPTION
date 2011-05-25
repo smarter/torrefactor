@@ -1,5 +1,44 @@
-* Organisation globale:
-...
+* Organisation globale (seul les classes principales sont indiquées)
+
+MainWindow (Fenêtre principale de l'interface)
+  - TorrentTableModel (Permet d'afficher les torrents)
+  - TorrentDetails (Affiche les détails du torrent sélectionné)
+     - PieceBar (Affiche les pièces téléchargées, en court de téléchargement
+                 et pas encore téléchargées)
+  - TorrentPeers (Affiche les peers du torrent sélectionné)
+  - ConfigDialog (Affiche et modifie la configuration)
+  - TorrentMakerFrame (Permet de créer un fichier torrent)
+
+TorrentManager    (Classes qui permet d'accèder à l'ensemble des torrents)
+   - Torrent    (Représente un torrent)
+      - PieceManager    (Gère les pièce et l'accès aux données du torrent:
+                         vérification des pièces, bitfield, quelles parties du
+                         torrent sont téléchargées ou pas, permet de rechercher
+                         quels blocks doivent encore être téléchargés,…)
+
+          - DataManager    (Gère l'accès aux données sur le disque)
+              - DataBlock    (Représente un bloc de donnée du torrent en mémoire
+                             virtuelle)
+              - DataBlockInfo    (Contient les informations qui permettent
+                                  d'accèder à un DataBlock)
+
+      - PeerManager    (Gère les connexions avec les peers ainsi que d'effectuer
+                        des requêtes à ceux-ci)
+          - Peer    (Permet d'accèder au peer, envoi de messages, état de la
+                     connexion, implémente l'interface PeerConnectionListener
+                     pour la gestion des évènements provoqués par les messages
+                     entrants)
+              - PeerConnection    (Gère la connexion au peer: lecture et
+                                   écriture des messages sur le socket, appelle
+                                   les méthodes du PeerConnectionListener)
+              - *Message (Classes étendant Message représentant les messages
+                          du protocol)
+
+          - TrackerManager (Gère l'accès au trackers pour effectuer les
+                            announces via les classes étendant Tracker:
+                            HttpTracker et UdpTracker)
+          - DHT
+
 
 * IO synchrone vs asynchrone:
   Choix de java.io et du modèle "une connexion par thread" plutôt que de
@@ -19,12 +58,12 @@
   partiellement téléchargés.
   La seule contrainte est la taille maximale de mémoire virtuelle allouée en
   même temps par process qui est limité à:
-	- 3Go (linux x86-32 with default configuration)
-	- 2Go (NT 32-bit and 64-bit executable linked without LARGEADDRESSAWARE:YES
-	  on NT 64-bit)
-	- 4Go(32-bit executable linked with LARGEADDRESSAWARE:YES on NT 64-bit)
-	- At least 8To (64-bit executable on linux x86-64, 64-bit executable linked
-	  with LARGEADDRESSAWARE:YES on NT 64-bit)
+    - 3Go (linux x86-32 with default configuration)
+    - 2Go (NT 32-bit and 64-bit executable linked without LARGEADDRESSAWARE:YES
+      on NT 64-bit)
+    - 4Go(32-bit executable linked with LARGEADDRESSAWARE:YES on NT 64-bit)
+    - At least 8To (64-bit executable on linux x86-64, 64-bit executable linked
+      with LARGEADDRESSAWARE:YES on NT 64-bit)
 
   Mais comme java map la mémoire avec des integers et que ceux-ci sont
   obligatoirement signés, on est en fait limité à 2Go de mémoire virtuelle par
@@ -64,14 +103,14 @@
   spécifiée dans la BEP 5[6] et est basée sur Kademlia[7][8].
   Dans notre client, elle est implémentée de la manière suivante:
    - Node représente un "node" DHT, c'est à dire un peer auquel on peut envoyer
-	 des requêtes DHT sur un port spécifique.
+     des requêtes DHT sur un port spécifique.
    - Bucket contient 8 nodes DHT et supprime les anciens lorsque de nouveaux
-	 sont ajoutés si les anciens sont inaccessibles.
+     sont ajoutés si les anciens sont inaccessibles.
    - NodeConnector gère la réception et l'envoi de messages DHT.
    - NodeManager est un singleton qui gère la Map <info_hash, info du peer> de
-	 notre node DHT, contient les Buckets de node(le bucket dans lequel un node
-	 va dépend de son préfixe comment avec notre id) et implémente les
-	 algorithmes de recherche de noeuds décrit dans [8].
+     notre node DHT, contient les Buckets de node(le bucket dans lequel un node
+     va dépend de son préfixe comment avec notre id) et implémente les
+     algorithmes de recherche de noeuds décrit dans [8].
    - KRPCMessage représente un message du protocole DHT.
 
 [0]: http://tutorials.jenkov.com/java-nio/index.html
