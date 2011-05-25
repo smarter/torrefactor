@@ -6,7 +6,13 @@ import java.io.*;
 import java.security.*;
 import java.util.*;
 
+/**
+ * Decode a bencoded message from an InputStream.
+ */
 public class BDecode {
+    /**
+     * Returns the decoded message in InputStream.
+     */
     private static BValue decode(InputStream stream)
     throws java.io.IOException, InvalidBDecodeException {
         PushbackInputStream pbstream = new PushbackInputStream(stream);
@@ -33,6 +39,9 @@ public class BDecode {
         }
     }
 
+    /**
+     * Decodes and returns a long from stream.
+     */
     static public long decodeLong(InputStream stream)
     throws java.io.IOException, InvalidBDecodeException {
         StringBuilder sb = new StringBuilder();
@@ -57,6 +66,9 @@ public class BDecode {
 
     }
 
+    /**
+     * Decodes and returns an array of byte from stream.
+     */
     static public byte[] decodeByteArray(InputStream stream)
     throws java.io.IOException, InvalidBDecodeException {
         StringBuilder sb = new StringBuilder();
@@ -88,7 +100,9 @@ public class BDecode {
         return byteArray;
     }
 
-
+    /**
+     * Decodes and returns a list from stream.
+     */
     static public ArrayList<BValue> decodeList(InputStream stream)
     throws java.io.IOException, InvalidBDecodeException {
         ArrayList<BValue> list = new ArrayList<BValue>();
@@ -104,6 +118,9 @@ public class BDecode {
         return list;
     }
 
+    /**
+     * Decodes and returns a map("dictionary") from stream.
+     */
     static public Map<String, BValue> decodeDict(InputStream stream)
     throws java.io.IOException, InvalidBDecodeException {
         try {
@@ -114,6 +131,14 @@ public class BDecode {
         }
     }
 
+    /**
+     * Decodes and returns a map("dictionary") from stream, and store
+     * the SHA1 hash corresponding to the value of the key hashTag in the
+     * message to the byte array hashArray.
+     * @param stream Stream which contains the message
+     * @param hashTag Message key whose value should be hashed
+     * @param hashArray 160 bits array where the hash should be stored
+     */
     static public Map<String, BValue>
     decodeDict(InputStream stream, String hashTag, byte[] hashArray)
     throws java.io.IOException, java.security.NoSuchAlgorithmException,

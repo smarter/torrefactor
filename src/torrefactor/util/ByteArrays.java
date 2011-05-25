@@ -5,6 +5,9 @@ import torrefactor.util.*;
 import java.net.InetAddress;
 import java.math.BigInteger;
 
+/**
+ * This class contains static helper functions to handle arrays of bytes
+ */
 public class ByteArrays {
     private static Logger LOG = new Logger();
 

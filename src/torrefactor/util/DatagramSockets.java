@@ -3,6 +3,9 @@ package torrefactor.util;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 
+/**
+ * A class containing static helper methods to create DatagramSocket
+ */
 public class DatagramSockets {
     private static Logger LOG = new Logger();
     /**

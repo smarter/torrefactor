@@ -6,7 +6,13 @@ import torrefactor.util.BValue;
 import java.io.*;
 import java.util.*;
 
+/**
+ * A class to get the bencoded version of a BValue object.
+ */
 public class BEncode {
+    /**
+     * Write the bencoded long val to out.
+     */
     private static void encode(long val, ByteArrayOutputStream out) {
         try {
             out.write('i');
@@ -17,6 +23,9 @@ public class BEncode {
         }
     }
 
+    /**
+     * Write the bencoded byte array string to out.
+     */
     private static void encode(byte[] string, ByteArrayOutputStream out) {
         try {
             out.write(Integer.toString(string.length).getBytes());
@@ -27,6 +36,9 @@ public class BEncode {
         }
     }
 
+    /**
+     * Write the bencoded list to out.
+     */
     private static void encode(List<BValue> list, ByteArrayOutputStream out) {
         out.write('l');
         for (BValue elem : list) {
@@ -35,6 +47,9 @@ public class BEncode {
         out.write('e');
     }
 
+    /**
+     * Write the bencoded map to out.
+     */
     private static void encode(Map<String, BValue> map, ByteArrayOutputStream out)
     {
         out.write('d');
@@ -45,6 +60,9 @@ public class BEncode {
         out.write('e');
     }
 
+    /**
+     * Write the BValue elem to out.
+     */
     public static void encode(BValue elem, ByteArrayOutputStream out) {
         Object object = elem.toObject();
         if (object instanceof Long) {
@@ -58,6 +76,10 @@ public class BEncode {
         }
     }
 
+    /**
+     * Returns a byte array containing the bencoded representation
+     * of the BValue elem.
+     */
     public static byte[] encode(BValue elem) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         encode(elem, out);

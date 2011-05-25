@@ -74,12 +74,17 @@ public class Node {
     }
 
     /**
-     * Set this node token as 
+     * Set this node token, normally the value comes from
+     * the "token" key in a "get_peers" response.
      */
     public void setToken(int token) {
         this.token = token;
     }
 
+    /**
+     * Set a node status to be bad. From BEP5: "Nodes become bad when they fail
+     * to respond to multiple queries in a row.
+     */
     public void setBad(boolean bad) {
         this.isBad = bad;
     }
