@@ -169,7 +169,7 @@ public class PeerManager implements Runnable {
                     }
                 }
 
-                if (peer.canRequest()) {
+                if (peer.canRequest() && this.state != State.Seeding) {
                     //LOG.debug("Cannot request to: " + peer);
 
                     try {

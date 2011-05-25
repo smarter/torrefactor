@@ -177,22 +177,6 @@ public class Torrent implements Serializable {
         return this.pieceManager.isComplete();
     }
 
-    public String state() {
-        if (isComplete()) {
-           if (this.peerManager.isStopped()) {
-               return "Complete";
-           } else {
-               return "Seeding";
-           }
-        } else {
-            if (this.peerManager.isStopped()) {
-                return "Stopped";
-            } else {
-                return "Downloading";
-            }
-        }
-    }
-
     public double progress() {
         return ByteArrays.percentage(this.pieceManager.bitfield);
     }
