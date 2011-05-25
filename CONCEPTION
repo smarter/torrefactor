@@ -113,6 +113,13 @@ TorrentManager    (Classes qui permet d'accèder à l'ensemble des torrents)
      algorithmes de recherche de noeuds décrit dans [8].
    - KRPCMessage représente un message du protocole DHT.
 
+* Encryption inefficace:
+  btsniff (voir README) est un programme démontrant l'inefficacité de
+  l'encryption implémentée pour le projet en décryptant les deux clés XOR des
+  peers puis en décryptant le premier message crypté envoyé par chacun des peers.
+  Il repose sur une faille critique du système d'encryption: la clé XOR est
+  encryptée octet par octet, ce qui signifie qu'il n'y a que 256 clés possible.
+
 [0]: http://tutorials.jenkov.com/java-nio/index.html
 [1]: http://paultyma.blogspot.com/2008/03/writing-java-multithreaded-servers.html
 [2]: http://en.wikipedia.org/wiki/Red_black_tree

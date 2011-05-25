@@ -1,8 +1,17 @@
 ## Torrefactor 0.1 - A BitTorrent client written in Java ##
 This application is a client for the BitTorrent P2P protocol which allows file
-sharing. It can be used to create new ".torrent" files to share and to download
-existing ".torrent" files. You can find ".torrent" files on torrents search
+sharing. It can be used to create new .torrent files to share and to download
+existing .torrent files. You can find .torrent files on torrents search
 engine such as http://thepiratebay.org and http://torrentz.eu.
+
+* Features:
+- HTTP and UDP trackers support
+- Torrents with multiple files support
+- Creating new .torrent files
+- DHT support
+- Save the program state when it closes in .torrefactor/config.bin in the user's
+  home directory.
+- Save the configuration options in .torrefactor/config
 
 * Build core and tests:
 make
@@ -40,15 +49,14 @@ make src.torrefactor.ui.qt
 java torrefactor.ui.qt.Main
 
 
-* Run the BitTorrent decrypter.
-- This is a small program that will decrypt the encrypted XOR key sent
-by both peers when encryption is enabled and use it to decode the
-first message of each peer. This relies on a critical flaw of the
-encryption scheme: The XOR key is encrypted with RSA byte per byte.
-This means that there's only 256 different keys. 
+* Run the BitTorrent decrypter (see CONCEPTION).
 - You need libssl and libnids as dependencies, on Debian/Ubuntu:
 sudo apt-get install libssl-dev libnids-dev
 make btsniff
+# Root privileges are needed to capture network traffic
 sudo ./btsniff <network interface>
 - For exemple, to test in local:
 sudo ./btsniff lo
+
+* Create a .jar
+make jar
