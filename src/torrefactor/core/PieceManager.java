@@ -71,8 +71,6 @@ public class PieceManager implements Serializable {
                     if (pieceBegin == 0) {
                         LOG.info("Everything has been requested at least once, forgetting about old requests");
                         this.requestedMap.clearFirstHalf();
-                        LOG.debug(this.requestedMap.toString());
-                        LOG.debug(this.intervalMap.toString());
                     }
                     return infoList;
                 }
@@ -85,7 +83,7 @@ public class PieceManager implements Serializable {
                 int blockSize = Math.min(BLOCK_SIZE, (int) (pieceEnd - offset) + 1);
                 infoList.add(new DataBlockInfo(i, (int) (offset % this.dataManager.pieceLength()), blockSize));
                 this.requestedMap.addInterval(offset, blockSize);
-                LOG.debug(this, "** Requested block at piece: " + i + " offset: " + (offset % this.dataManager.pieceLength())
+                LOG.debug(this, "Requested block at piece: " + i + " offset: " + (offset % this.dataManager.pieceLength())
                                          + " length: " + blockSize);
 
                 offset += blockSize;
@@ -104,8 +102,6 @@ public class PieceManager implements Serializable {
         do {
             reqOffset = this.requestedMap.nextFreePoint(offset);
             offset = this.intervalMap.nextFreePoint(reqOffset);
-            LOG.debug("next free byte: offset: " + offset + "req: " + reqOffset
-                      + " off: " + offset);
         } while (reqOffset != offset);
         return offset;
     }
@@ -136,14 +132,13 @@ public class PieceManager implements Serializable {
         }
         this.intervalMap.addInterval(begin, blockArray.length);
         this.dataManager.putBlock(piece, offset, blockArray);
-        LOG.debug(this, this.intervalMap.toString());
         try {
             checkPiece(piece);
         } catch (NoSuchAlgorithmException e) {
             //Assume the piece is correct since we have no way of checking
-            LOG.debug(this, "Warning: piece + " + piece + " could not be checked and"
+            LOG.warning(this, "Piece + " + piece + " could not be checked and"
                                      + "may potentially be invalid");
-            LOG.debug(this, e.toString());
+            LOG.warning(this, e.toString());
         }
     }
 
