@@ -4,6 +4,9 @@ import java.util.Random;
 import java.security.SecureRandom;
 import java.math.BigInteger;
 
+/**
+ * This class generate a key pair, encrypt and decryt using RSA
+ */
 public class Rsa {
     private static Logger LOG = new Logger();
     private BigInteger privateKey = null;
@@ -13,6 +16,9 @@ public class Rsa {
     private BigInteger modulo;
     private int bitLength;
 
+    /**
+     * Create a Rsa object using the specified keys, modulo and bitlength.
+     */
     public Rsa (BigInteger _privateKey, BigInteger _publicKey,
                        BigInteger _modulo, int _bitLength)
     throws IllegalArgumentException {
@@ -23,6 +29,9 @@ public class Rsa {
         this.bitLength = _bitLength;
     }
 
+    /**
+     * Create a Rsa object using the specified keys, modulo and bitlength.
+     */
     public Rsa (byte[] _privateKey, byte[] _publicKey,
                        byte[] _modulo, int _bitLength)
     throws IllegalArgumentException {
@@ -32,6 +41,10 @@ public class Rsa {
         this.modulo = new BigInteger(_modulo);
     }
 
+    /**
+     * Create a Rsa object and a new key pair with the specified modulo
+     * bitlength.
+     */
     public Rsa (int _bitLength)
     throws IllegalArgumentException {
         checkBitLength(_bitLength);
@@ -40,11 +53,17 @@ public class Rsa {
         generateKeys();
     }
 
+    /**
+     * Create a Rsa object and a new key pair with a modulo of bitlength=1024
+     */
     public Rsa () {
         this.bitLength = 1024;
         generateKeys();
     }
 
+    /**
+     * Check if the given bitlength fits our restrictions.
+     */
     private void checkBitLength (int bitLength)
     throws IllegalArgumentException {
         if (bitLength % 8 != 0) {
@@ -53,6 +72,9 @@ public class Rsa {
         }
     }
 
+    /**
+     * Generate publicKey and privateKey.
+     */
     private void generateKeys () {
         BigInteger p, q, n, phin, pubkey, privkey, d;
         SecureRandom srandom = new SecureRandom();
@@ -84,6 +106,10 @@ public class Rsa {
         LOG.debug("Modulo length: " + this.modulo.toByteArray().length);
     }
 
+    /**
+     * Return true if the generated keys seems to work correctly false
+     * otherwise. This method is public because of the junit tests.
+     */
     public boolean testKeys() {
         //return true;
         BigInteger m, c;
@@ -102,10 +128,17 @@ public class Rsa {
         return true;
     }
 
+    /**
+     * Encrypt the specified message using the key set with setEncryptKey.
+     */
     public BigInteger encrypt(BigInteger msg) {
         return encrypt(msg, this.encryptKey, this.encryptModulo);
     }
 
+    /**
+     * Encrypt the specified message with the specified key and the specified
+     * modulo.
+     */
     public BigInteger encrypt(BigInteger msg, BigInteger key,
                               BigInteger modulo) {
         if (key == null || modulo == null) {
@@ -124,6 +157,9 @@ public class Rsa {
         return cypher;
     }
 
+    /**
+     * Decrypt the specified message with the key set with our private key.
+     */
     public BigInteger decrypt(BigInteger cypher) {
         if (this.publicKey == null) {
             // No decrypt key set
@@ -141,22 +177,37 @@ public class Rsa {
         return msg;
     }
 
+    /**
+     * Return the public key.
+     */
     public byte[] getPublicKey () {
         return this.publicKey.toByteArray();
     }
 
+    /**
+     * Return the key used by encrypt(byte[]).
+     */
     public byte[] getCryptKey () {
         return this.encryptKey.toByteArray();
     }
 
+    /**
+     * Return the modulo of the key pair.
+     */
     public byte[] getModulo() {
         return this.modulo.toByteArray();
     }
 
+    /**
+     * Return the modulo used by encrypt(byte[])
+     */
     public byte[] getEncryptModulo() {
         return this.modulo.toByteArray();
     }
 
+    /**
+     * Set the key and modulo used by encrypt(byte[]).
+     */
     public void setEncryptKey(byte[] key, byte[] modulo) {
         this.encryptKey = new BigInteger(key);
         this.encryptModulo = new BigInteger(modulo);
