@@ -28,6 +28,7 @@ public class MainWindow implements ActionListener {
 
     private JFrame mainFrame;
     private JMenuBar menuBar;
+    private JPopupMenu contextMenu;
     private JSplitPane splitPane;
     private JScrollPane torrentPane;
     private TorrentTableModel torrentModel;
@@ -78,6 +79,25 @@ public class MainWindow implements ActionListener {
         this.torrentTable.getSelectionModel()
             .addListSelectionListener(listener);
 
+        // Mouse event for context menu on torrent table
+        MouseListener ml = new MouseListener () {
+            public void mouseClicked (MouseEvent event) {
+                LOG.debug("MOUSE EVENT");
+                if (event.getButton() == MouseEvent.BUTTON3) {
+                    Point p = torrentTable.getMousePosition();
+                    int row = torrentTable.rowAtPoint(p);
+                    ListSelectionModel model = torrentTable.getSelectionModel();
+                    model.setSelectionInterval(row, row);
+                    contextMenu.show(torrentTable, p.x, p.y);
+                }
+            }
+            public void mouseExited (MouseEvent event) {}
+            public void mouseEntered (MouseEvent event) {}
+            public void mouseReleased (MouseEvent event) {}
+            public void mousePressed (MouseEvent event) {}
+        };
+        this.torrentTable.addMouseListener(ml);
+
         this.splitPane = new JSplitPane(
                 JSplitPane.VERTICAL_SPLIT,
                 this.torrentPane,
@@ -107,8 +127,10 @@ public class MainWindow implements ActionListener {
         JMenuItem itemOpen = new JMenuItem ("Open…");
         JMenuItem itemQuit = new JMenuItem ("Quit");
         JMenuItem itemStart = new JMenuItem("Start Downloading");
+        JMenuItem itemStart2 = new JMenuItem("Start");
         //itemStart.setEnabled(false);
         JMenuItem itemStop = new JMenuItem("Stop Downloading");
+        JMenuItem itemStop2 = new JMenuItem("Stop");
         //itemStop.setEnabled(false);
         JMenuItem itemOptions = new JMenuItem("Options…");
         menuFile.add (itemOpen);
@@ -122,13 +144,21 @@ public class MainWindow implements ActionListener {
         itemOpen.setActionCommand ("OpenTorrent");
         itemQuit.setActionCommand ("QuitClient");
         itemStart.setActionCommand ("StartDownload");
+        itemStart2.setActionCommand ("StartDownload");
         itemStop.setActionCommand ("StopDownload");
+        itemStop2.setActionCommand ("StopDownload");
         itemOptions.setActionCommand ("Options…");
         itemOpen.addActionListener (this);
         itemQuit.addActionListener (this);
         itemStart.addActionListener (this);
+        itemStart2.addActionListener (this);
         itemStop.addActionListener (this);
+        itemStop2.addActionListener (this);
         itemOptions.addActionListener (this);
+
+        contextMenu = new JPopupMenu();
+        contextMenu.add(itemStart2);
+        contextMenu.add(itemStop2);
 
         this.menuBar.add (menuFile);
     }
