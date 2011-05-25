@@ -162,7 +162,7 @@ public class Torrent implements Serializable {
      * Returns how much byte have been downloaded and verified.
      */
     public long done() {
-        long done = ByteArrays.done(this.pieceManager.bitfield) * pieceLength;
+        long done = this.pieceManager.piecesDownloaded() * pieceLength;
         if (done > this.length) done = this.length;
         return done;
     }

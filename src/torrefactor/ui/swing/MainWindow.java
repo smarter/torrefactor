@@ -208,6 +208,7 @@ public class MainWindow implements ActionListener {
             this.torrentModel.fireTableRowsUpdated(
                                 0, this.torrentModel.getRowCount() - 1);
             this.torrentTable.repaint();
+            this.torrentDetails.updateData();
             this.torrentDetails.repaint();
             this.torrentPeers.update();
         } else if (action.equals("Options…")) {

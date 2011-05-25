@@ -190,8 +190,15 @@ public class PieceManager implements Serializable {
     /**
      * Returns the number of pieces of the torrent
      */
-    public int pieceNumber() {
+    public int piecesNumber() {
         return this.dataManager.pieceNumber();
+    }
+
+    /**
+     * Returns the number of downloaded pieces of the torrent
+     */
+    public int piecesDownloaded() {
+        return ByteArrays.done(this.bitfield);
     }
 
     /**

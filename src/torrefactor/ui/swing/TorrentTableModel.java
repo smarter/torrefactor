@@ -99,45 +99,17 @@ public class TorrentTableModel extends AbstractTableModel {
         } else if (column == Column.PERCENT) {
             data = torrent.getBoundedRangeModel();
         } else if (column == Column.UPLOADED) {
-            data = humanReadable (torrent.uploaded()) + " ("
+            data = HumanReadable.fromLong (torrent.uploaded()) + " ("
                    + String.format("%.2f", torrent.uploadSpeed() / 1024)
-                   + "ko/s)";
+                   + "KB/s)";
         } else if (column == Column.DOWNLOADED) {
-            data = humanReadable (torrent.downloaded()) + " ("
+            data = HumanReadable.fromLong (torrent.downloaded()) + " ("
                    + String.format("%.2f", torrent.downloadSpeed() / 1024)
-                   + "ko/s)";
+                   + "KB/s)";
         } else {
-            data = "No such column.";
+            data = "No such column: " + col;
         }
         return data;
-    }
-
-    /**
-     * Return a human readable representation of a long.
-     * It's clearly not the best way to do it but we are not coding in C so we
-     * forget about optimization since we are going to waste CPU cycles and
-     * memory anyway.
-     */
-    private String humanReadable (long l) {
-        double t;
-
-        if (l < 1000) {
-            return (l + "B");
-        }
-
-        t = l / 1024.0d;
-        if (t < 1000) {
-            return (String.format("%.1f", t) + "KB");
-        }
-
-
-        t = t / 1024.0d;
-        if ( t < 1000 ) {
-            return (String.format("%.1f", t) + "MB");
-        }
-
-        t = t / 1024.0d;
-        return (String.format("%.1f", t) + "GB");
     }
 
     /**

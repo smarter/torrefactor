@@ -61,7 +61,7 @@ public class ByteArrays {
     /**
      * Returns how much bits are set to 1.
      */
-    public static long done(byte[] bitfield) {
+    public static int done(byte[] bitfield) {
         return new BigInteger(1, bitfield).bitCount();
     }
 

@@ -12,6 +12,7 @@ import java.util.List;
 
 import torrefactor.core.*;
 import torrefactor.util.Logger;
+import torrefactor.util.HumanReadable;
 
 /**
  * This class implements a table model to display the peers for a particular
@@ -118,9 +119,9 @@ public class TorrentPeersTableModel extends AbstractTableModel {
         } else if (column == Column.CONNECTED) {
             data = peer.isConnected() ? "Connected" : "Disconnected";
         } else if (column == Column.UPLOADED) {
-            data = Long.valueOf(peer.downloaded ());
+            data = HumanReadable.fromLong(peer.downloaded ());
         } else if (column == Column.DOWNLOADED) {
-            data = Long.valueOf(peer.uploaded ());
+            data = HumanReadable.fromLong(peer.uploaded ());
         } else {
             data = "No such column.";
         }

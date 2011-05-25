@@ -49,7 +49,7 @@ public class PieceBar extends JComponent {
         if (this.pieceManager == null) {
             return;
         }
-        int pieceNumber = this.pieceManager.pieceNumber();
+        int pieceNumber = this.pieceManager.piecesNumber();
         int pieceLength = this.pieceManager.pieceLength();
         byte[] bitfield = this.pieceManager.bitfield;
         IntervalMap blockMap = this.pieceManager.intervalMap;

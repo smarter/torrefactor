@@ -1,6 +1,7 @@
 package torrefactor.ui.swing;
 
 import torrefactor.core.Torrent;
+import torrefactor.util.HumanReadable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,7 +17,7 @@ class TorrentDetails extends Box {
     private Container columnB = Box.createVerticalBox();
     private JLabel nameLabel = new JLabel("<html><b>Name:");
     private JLabel name = new JLabel();
-    private JLabel authorLabel = new JLabel("<html><b>author:");
+    private JLabel authorLabel = new JLabel("<html><b>Author:");
     private JLabel author = new JLabel();
     private JLabel creationDateLabel = new JLabel("<html><b>Creation date:");
     private JLabel creationDate = new JLabel();
@@ -30,6 +31,9 @@ class TorrentDetails extends Box {
     private JLabel pieceSize = new JLabel();
     private JLabel pieceBarLabel = new JLabel("<html><b>State:");
     private PieceBar pieceBar = new PieceBar();
+    
+    //We use unbreakable spaces so empty labels have a non-zero height. 
+    static private final String NBSP = " ";
 
     public TorrentDetails () {
         super(BoxLayout.X_AXIS);
@@ -113,19 +117,43 @@ class TorrentDetails extends Box {
     /**
      * Updates all the components to show the information of this.torrent.
      */
-    private void updateData() {
+    public void updateData() {
+        if (this.torrent == null) {
+            emptyLabels();
+            return;
+        }
         this.name.setText(torrent.FILE_NAME);
-        this.author.setText(torrent.getAuthor());
-        this.creationDate.setText(
-                DateFormat.getInstance()
-                .format(new Date(torrent.getCreationDate() * 1000)));
-        this.size.setText(Long.toString(torrent.getSize()));
+        String author = torrent.getAuthor();
+        if (author.isEmpty()) {
+            this.author.setText(NBSP);
+        } else {
+            this.author.setText(author);
+        }
+        String date = DateFormat.getInstance().format(
+                new Date(torrent.getCreationDate() * 1000));
+        if (date.isEmpty()) {
+            this.creationDate.setText(NBSP);
+        } else {
+            this.creationDate.setText(date);
+        }
+        this.size.setText(HumanReadable.fromLong(torrent.getSize()));
         this.path.setText(torrent.getBasePath());
-        this.pieces.setText(Integer.toString(torrent.getNumPiece()));
-        this.pieceSize.setText(Integer.toString(torrent.getPieceSize()));
+        this.pieces.setText("" + torrent.pieceManager.piecesDownloaded()
+                            + '/' + torrent.pieceManager.piecesNumber());
+        this.pieceSize.setText(HumanReadable.fromLong(torrent.getPieceSize()));
         this.pieceBar.setPieceManager(torrent.pieceManager);
         this.pieceBar.setVisible(true);
         repaint();
+    }
+
+    private void emptyLabels () {
+        this.name.setText(NBSP);
+        this.author.setText(NBSP);
+        this.creationDate.setText(NBSP);
+        this.size.setText(NBSP);
+        this.path.setText(NBSP);
+        this.pieces.setText(NBSP);
+        this.pieceSize.setText(NBSP);
     }
 
     /**
