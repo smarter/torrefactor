@@ -7,6 +7,10 @@ import torrefactor.util.GenericArray;
 import java.util.*;
 import java.io.*;
 
+/**
+ * This class manage a ring containing the log message. It can displays them as
+ * they are added. It can also display the ring whenever you want.
+ */
 public class Log {
     private static Log instance;
     private PrintStream printStream = System.err;
