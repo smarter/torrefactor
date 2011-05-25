@@ -170,7 +170,8 @@ public class Log {
         printRing (~0, 0);
     }
 
-    /** Prints all message in the ring matching the specified flags.
+    /**
+     * Prints all message in the ring matching the specified flags.
      */
     public void printRing (int enableMask, int disableMask) {
         int current = this.ringPosition;

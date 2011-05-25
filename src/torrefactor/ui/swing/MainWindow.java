@@ -108,9 +108,6 @@ public class MainWindow implements ActionListener {
         contentPane.add (this.splitPane, BorderLayout.CENTER);
 
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-        // FIXME: swing is so stupid it couldn't pack the JTable  inside the
-        // JSscrollPane without wasting an enormous amount of space.
         mainFrame.pack();
 
         this.tableTimer = new Timer (1000, this);
@@ -124,6 +121,7 @@ public class MainWindow implements ActionListener {
     private void buildMenu () {
         JMenu menuFile = new JMenu ("File");
         JMenuItem itemOpen = new JMenuItem ("Open…");
+        JMenuItem itemCreate = new JMenuItem("Create a Torrent…");
         JMenuItem itemQuit = new JMenuItem ("Quit");
         JMenuItem itemStart = new JMenuItem("Start Downloading");
         JMenuItem itemStart2 = new JMenuItem("Start");
@@ -133,6 +131,7 @@ public class MainWindow implements ActionListener {
         //itemStop.setEnabled(false);
         JMenuItem itemOptions = new JMenuItem("Options…");
         menuFile.add (itemOpen);
+        menuFile.add(itemCreate);
         menuFile.addSeparator();
         menuFile.add (itemStart);
         menuFile.add (itemStop);
@@ -141,6 +140,7 @@ public class MainWindow implements ActionListener {
         menuFile.addSeparator();
         menuFile.add (itemQuit);
         itemOpen.setActionCommand ("OpenTorrent");
+        itemCreate.setActionCommand("CreateTorrent");
         itemQuit.setActionCommand ("QuitClient");
         itemStart.setActionCommand ("StartDownload");
         itemStart2.setActionCommand ("StartDownload");
@@ -148,6 +148,7 @@ public class MainWindow implements ActionListener {
         itemStop2.setActionCommand ("StopDownload");
         itemOptions.setActionCommand ("Options…");
         itemOpen.addActionListener (this);
+        itemCreate.addActionListener(this);
         itemQuit.addActionListener (this);
         itemStart.addActionListener (this);
         itemStart2.addActionListener (this);
@@ -190,6 +191,9 @@ public class MainWindow implements ActionListener {
         String action = event.getActionCommand ();
         if (action.equals("OpenTorrent")) {
             openTorrent ();
+        } else if (action.equals("CreateTorrent")) {
+            TorrentMakerFrame tmf = new TorrentMakerFrame();
+            tmf.setVisible(true);
         } else if (action.equals("QuitClient")) {
             quit ();
         } else if (action.equals("StartDownload")) {

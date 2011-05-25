@@ -33,7 +33,6 @@ public class ConfigDialog implements ItemListener {
         this.parent = parent;
         this.dialog = new JDialog(parent, "Configuration", true);
         this.contentPane = this.dialog.getContentPane();
-        this.contentPane.setBackground(Color.GREEN);
 
         layout = new BoxLayout(this.contentPane, BoxLayout.Y_AXIS);
         this.contentPane.setLayout(layout);
@@ -48,7 +47,6 @@ public class ConfigDialog implements ItemListener {
                 CONF.getPropertyBoolean("Peer.UseStupidEncryption"));
         this.useStupidEncryption.addItemListener(this);
         this.useStupidEncryption.setOpaque(true);
-        this.useStupidEncryption.setBackground(Color.YELLOW);
         Dimension dima = this.useStupidEncryption.getPreferredSize();
         dima = new Dimension(Integer.MAX_VALUE, dima.height);
         this.useStupidEncryption.setMaximumSize(dima);
@@ -62,7 +60,6 @@ public class ConfigDialog implements ItemListener {
             this.forceStupidEncryption.setSelected(false);
             this.forceStupidEncryption.setEnabled(false);
         }
-        this.forceStupidEncryption.setBackground(Color.RED);
         this.forceStupidEncryption.addItemListener(this);
         this.contentPane.add(this.forceStupidEncryption);
 
@@ -73,14 +70,10 @@ public class ConfigDialog implements ItemListener {
         this.contentPane.add(this.dht);
 
         this.basePathContainer = new JPanel ();
-        this.basePathContainer.setBackground(Color.CYAN);
         layout = new BoxLayout(this.basePathContainer, BoxLayout.X_AXIS);
         this.basePathContainer.setLayout(layout);
         this.basePathLabel = new JLabel("Download directory:");
         this.basePathLabel.setOpaque(true);
-        this.basePathLabel.setBackground(Color.YELLOW);
-        LOG.debug("Yellow label alignement: "
-                  + this.basePathLabel.getAlignmentX());
 
         Dimension dim = this.basePathLabel.getPreferredSize();
         dim = new Dimension(Integer.MAX_VALUE, dim.height);
@@ -106,7 +99,6 @@ public class ConfigDialog implements ItemListener {
 
         layout = new FlowLayout (FlowLayout.RIGHT);
         this.contentPaneBottom = new JPanel (layout);
-        this.contentPaneBottom.setBackground(Color.MAGENTA);
 
         JButton closeButton = new JButton ("Close");
         closeButton.addActionListener(new ActionListener () {
