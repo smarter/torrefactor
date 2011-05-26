@@ -35,7 +35,7 @@ JAR             = jar
 # Build flags
 JAVAC_FLAGS     = -Xlint -Xlint:-path -Xlint:-serial
 JAVADOC_FLAGS   = -version -author
-JAR_FLAGS       = cvf0
+JAR_FLAGS       = cvef0 torrefactor.ui.swing.SwingClient
 JIKES_DEP_FLAG	= +M
 
 # ------------------------------------------------------------------- #
@@ -217,8 +217,11 @@ endef
 	$(JAVAC) $(JAVAC_FLAGS) $<
 
 %.jar: $(JAVA_OBJS) $(RESOURCE_OBJS)
+	cd src ; \
 	$(FIND) $(TOPLEVEL) $(JAR_OBJS) -print | $(XARGS) \
-	$(JAR) $(JAR_FLAGS) $(JAR_FILE) 
+	$(JAR) $(JAR_FLAGS) $(JAR_FILE) ; \
+	mv $(JAR_FILE) ../ ; \
+	cd ..
 
 %.u: %.java
 	$(JAVAC) $(JIKES_DEP_FLAG) $<
