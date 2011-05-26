@@ -5,6 +5,7 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.table.AbstractTableModel;
 
+import java.io.*;
 import java.util.*;
 // javax.swing collides with java.util; explicitly import what we want
 import java.util.List;
@@ -93,7 +94,7 @@ public class TorrentTableModel extends AbstractTableModel {
 
         Object data;
         if (column == Column.NAME) {
-            data = torrent.FILE_NAME;
+            data = new File(torrent.FILE_NAME).getName();
         } else if (column == Column.STATE) {
             data = torrent.getState();
         } else if (column == Column.PERCENT) {
