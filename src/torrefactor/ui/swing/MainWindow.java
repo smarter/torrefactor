@@ -278,6 +278,8 @@ public class MainWindow implements ActionListener {
             String basePath = CONF.getProperty("Ui.Swing.BasePath");
             Torrent torrent = this.torrentModel.addTorrent(
                     path, basePath);
+            int lastRow = this.torrentTable.getRowCount() - 1;
+            this.torrentTable.getSelectionModel().setSelectionInterval(lastRow, lastRow);
             LOG.debug("Add torrent: " + path + " basePath: " + basePath);
             torrent.start ();
         } catch (IOException e) {
