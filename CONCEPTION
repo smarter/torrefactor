@@ -113,6 +113,14 @@ TorrentManager    (Classes qui permet d'accèder à l'ensemble des torrents)
      algorithmes de recherche de noeuds décrit dans [8].
    - KRPCMessage représente un message du protocole DHT.
 
+* Non-utilisation du "Visitor pattern":
+  Contrairement à ce qui était proposé, nous n'avons pas utilisé le Visitor
+  pattern. En effet, il n'est utile que lorsque l'on ne connaît pas le type
+  concret d'un objet mais uniquement le type de la classe dont il hérite où
+  de son interface, pour palier a une lacune du système de type de Java.
+  Cependant, les objets Message sont traités dès qu'ils sont créés, a un moment
+  où l'on connaît leur type(HaveMessage, BitfieldMessage, ...).
+
 * Encryption inefficace:
   btsniff (voir README) est un programme démontrant l'inefficacité de
   l'encryption implémentée pour le projet en décryptant les deux clés XOR des
