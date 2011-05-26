@@ -37,6 +37,7 @@ Use "File -> Options..." to configure Torrefactor:
   files should be stored.
 
 * Run the tests:
+. ./env
 make runtest
 
 * Run the test command line client:
