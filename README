@@ -17,8 +17,12 @@ engine such as http://thepiratebay.org and http://torrentz.eu.
 make
 
 * Run the Swing GUI:
+make jar
+java -jar torrefactor.jar
+- If you don't want to make a JAR, you could instead do:
 . ./env
 java torrefactor.ui.swing.SwingClient
+
 Use "File -> Open" to choose a .torrent file
 Use the right-click menu to start or stop downloading the selected torrent.
 Use "File -> Options..." to configure Torrefactor:
@@ -32,10 +36,10 @@ Use "File -> Options..." to configure Torrefactor:
 - "Download directory:" lets you choose the directory in which the downloaded
   files should be stored.
 
-* Run tests:
+* Run the tests:
 make runtest
 
-* Run the test client:
+* Run the test command line client:
 . ./env
 java test.Client <input.torrent> <output directory>
 
@@ -57,6 +61,3 @@ make btsniff
 sudo ./btsniff <network interface>
 - For exemple, to test in local:
 sudo ./btsniff lo
-
-* Create a .jar
-make jar
