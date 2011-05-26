@@ -110,6 +110,10 @@ public class MainWindow implements ActionListener {
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         mainFrame.pack();
 
+        Dimension d = mainFrame.getPreferredSize();
+        d.setSize(d.getWidth() + 120, d.getHeight());
+        mainFrame.setPreferredSize(d);
+
         this.tableTimer = new Timer (1000, this);
         this.tableTimer.setActionCommand ("UpdateInfos");
         this.tableTimer.start();
