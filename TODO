@@ -1,7 +1,11 @@
 Incomplete list of stuff to do:
 - Use trackerid in HTTPAnnouce
-- Algorithm to decide when to send choked messages to peers
+- Algorithm to decide when to send "choked" messages to peers
 - Algorithm to decide if and when peers request messages should be answered
+- PeerManager is a mess and needs a rewrite
+- PieceManager: The rarity of a piece should determine its download priority (currently we download them iteratively)
+- TrackerManager: Do announce in parallels
+- DHT support is completely untested
 - Make the Qt GUI usable
 - PEX Support (see https://trac.transmissionbt.com/browser/trunk/extras/extended-messaging.txt)
 - find . -name "*.java"|xargs grep -E '(TODO|FIXME|HACK|PROJECT)'

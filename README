@@ -13,30 +13,23 @@ engine such as http://thepiratebay.org and http://torrentz.eu.
   home directory.
 - Save the configuration options in .torrefactor/config
 
-* Build core and tests:
+* Build with:
 make
-
-* Run the Swing GUI:
 make jar
+
+* Launch it with:
 java -jar torrefactor.jar
-- If you don't want to make a JAR, you could instead do:
+
+
+* Troobleshooting:
+- If "make jar" doesn't work, you can launch Torrefactor manually with:
 . ./env
 java torrefactor.ui.swing.SwingClient
 
-Use "File -> Open" to choose a .torrent file
-Use the right-click menu to start or stop downloading the selected torrent.
-Use "File -> Options..." to configure Torrefactor:
-- "Use encryption" adds support for the (completely unsafe(see CONCEPTION)!)
-  encryption protocol used for the project.
-- "Force encryption" forces Torrefactor to only communicates with peers who
-  support the same encryption protocol as we.
-- "Enable DHT" adds support for DHT(Distributed Hash Table) which is a
-  BitTorrent extension which allows you to get more peers (see
-  http://www.bittorrent.org/beps/bep_0005.html for more informations)
-- "Download directory:" lets you choose the directory in which the downloaded
-  files should be stored.
 
-* Run the tests:
+** For developers:
+
+* Run the test suite:
 . ./env
 make runtest
 
@@ -44,7 +37,7 @@ make runtest
 . ./env
 java test.Client <input.torrent> <output directory>
 
-* Generate the doc:
+* Generate the documentation (which will be available in the "doc" directory):
 make doc
 
 * Build and run the experimental and not usable Qt GUI:
