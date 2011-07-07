@@ -26,11 +26,6 @@ public class Config extends Properties {
      * object.
      */
     private static void setDefaults (Properties p) {
-        p.setProperty("Peer.UseStupidEncryption", "true");
-        p.setProperty("Peer.ForceStupidEncryption", "false");
-        p.setProperty("Peer.RsaKeyBitlength", "128");
-        p.setProperty("Peer.XorLength", "128");
-
         p.setProperty("ListenPort", "7979");
         p.setProperty("DHT", "true");
 
@@ -45,11 +40,6 @@ public class Config extends Properties {
         boolean r = true;
         Properties defaults = new Properties();
         setDefaults(defaults);
-
-        if (! validateBoolean("Peer.UseStupidEncryption", defaults)) r = false;
-        if (! validateBoolean("Peer.ForceStupidEncryption", defaults)) r=false;
-        if (! validateInt("Peer.RsaKeyBitlength", defaults)) r = false;
-        if (! validateInt("Peer.XorLength", defaults)) r = false;
 
         if (! validateInt("ListenPort", defaults)) r = false;
         if (! validateBoolean("DHT", defaults)) r = false;

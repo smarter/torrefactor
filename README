@@ -52,13 +52,3 @@ make doc
 make src.torrefactor.ui.qt
 . ./env
 java torrefactor.ui.qt.Main
-
-
-* Run the BitTorrent decrypter (see CONCEPTION).
-- You need libssl and libnids as dependencies, on Debian/Ubuntu:
-sudo apt-get install libssl-dev libnids-dev
-make btsniff
-# Root privileges are needed to capture network traffic
-sudo ./btsniff <network interface>
-- For exemple, to test in local:
-sudo ./btsniff lo

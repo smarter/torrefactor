@@ -17,8 +17,6 @@ public class ConfigDialog implements ItemListener {
     private Frame parent;
     private Container contentPane;
     private Container contentPaneBottom;
-    private JCheckBox useStupidEncryption;
-    private JCheckBox forceStupidEncryption;
     private JCheckBox dht;
     private JLabel basePathLabel;
     private JTextField basePathField;
@@ -41,27 +39,6 @@ public class ConfigDialog implements ItemListener {
                 "Changes are applied imediately but used for new "
                 + "connections only.");
         this.contentPane.add(label);
-
-        this.useStupidEncryption = new JCheckBox(
-                "Use encryption",
-                CONF.getPropertyBoolean("Peer.UseStupidEncryption"));
-        this.useStupidEncryption.addItemListener(this);
-        this.useStupidEncryption.setOpaque(true);
-        Dimension dima = this.useStupidEncryption.getPreferredSize();
-        dima = new Dimension(Integer.MAX_VALUE, dima.height);
-        this.useStupidEncryption.setMaximumSize(dima);
-
-        this.contentPane.add(this.useStupidEncryption);
-
-        this.forceStupidEncryption = new JCheckBox(
-                "Force encryption",
-                CONF.getPropertyBoolean("Peer.ForceStupidEncryption"));
-        if (! CONF.getPropertyBoolean("Peer.UseStupidEncryption")) {
-            this.forceStupidEncryption.setSelected(false);
-            this.forceStupidEncryption.setEnabled(false);
-        }
-        this.forceStupidEncryption.addItemListener(this);
-        this.contentPane.add(this.forceStupidEncryption);
 
         this.dht = new JCheckBox(
                 "Enable DHT",
@@ -133,17 +110,7 @@ public class ConfigDialog implements ItemListener {
         Object source = e.getItemSelectable();
         boolean selected = (e.getStateChange() == ItemEvent.SELECTED);
 
-        if (source == this.useStupidEncryption) {
-            CONF.setPropertyBoolean("Peer.UseStupidEncryption", selected);
-            if (selected) {
-                this.forceStupidEncryption.setEnabled(true);
-            } else {
-                this.forceStupidEncryption.setEnabled(false);
-                this.forceStupidEncryption.setSelected(false);
-            }
-        } else if (source == this.forceStupidEncryption) {
-            CONF.setPropertyBoolean("Peer.ForceStupidEncryption", selected);
-        } else if (source == this.dht) {
+        if (source == this.dht) {
             CONF.setPropertyBoolean("DHT", selected);
         }
     }

@@ -115,9 +115,6 @@ public class Peer implements Runnable, PeerConnectionListener  {
             if (CONF.getPropertyBoolean("DHT")) {
                 reserved[7] = 1;
             }
-            if (CONF.getPropertyBoolean("Peer.UseStupidEncryption")) {
-                reserved[7] |= (1 << 4);
-            }
 
             byte[] infoHash = null;
             if (this.torrent != null) {
