@@ -25,32 +25,24 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package torrefactor.core;
+package torrefactor.core.messages;
 
-import torrefactor.core.DataBlockInfo;
+import torrefactor.util.ByteArrays;
 
 /**
- * Represents a cancel message.
+ * Represents a bitfield message.
+ *  id          1 byte
+ *  bitfield    x byte
  */
-public class CancelMessage extends RequestMessage {
-    final static byte id = 8;
+public class BitfieldMessage extends Message {
+    public final static byte id = 5;
+    public final byte[] bitfield;
 
     /**
-     * Creates a new CancelMessage.
-     *
-     * @param info the DataBlockInfo representing the block to cancel.
+     * Create a new BitFieldMessage for the given bitfield.
      */
-    public CancelMessage (DataBlockInfo info) {
-        super(info);
-    }
-
-    /**
-     * Creates a new CancelMessage from the given byte array representation.
-     *
-     * @param msg The byte array representation of the message.
-     */
-    public CancelMessage (byte[] msg) {
-        super(msg);
+    public BitfieldMessage (byte[] bitfield) {
+        this.bitfield = bitfield;
     }
 
     /**
@@ -58,6 +50,24 @@ public class CancelMessage extends RequestMessage {
      */
     @Override
     public byte id () {
-        return CancelMessage.id;
+        return BitfieldMessage.id;
+    }
+
+    // Java does not override static method thus we cannot use @inheritDoc
+    /**
+     * {@link torrefactor.core.messages.Message#isValid(byte[])}
+     */
+    public static boolean isValid (byte[] msg) {
+        return msg.length >= 2;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public byte[] toByteArray () {
+        byte[] t = super.toByteArray();
+
+        return ByteArrays.concat(new byte[][] {t, bitfield});
     }
 }

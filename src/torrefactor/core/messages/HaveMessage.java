@@ -25,45 +25,36 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package torrefactor.core;
+package torrefactor.core.messages;
 
-import torrefactor.util.Logger;
 import torrefactor.util.ByteArrays;
 
-
 /**
- * Represents an unknown message. This message does not have a fixed id. The id
- * is set when constructing the message so it could reflect what has been
- * received on the wire.
+ * Represents a have message.
+ *  id          1 byte
+ *  pieceIndex  4 byte
  */
-public class UnknownMessage extends Message {
-    private static final Logger LOG = new Logger();
-    private static  byte id = -2;
-    final byte[] data;
+public class HaveMessage extends Message {
+    public final static byte id = 4;
+    public final int index;
 
     /**
-     * Construct a new UnknownMessage with the given id and no data.
+     * Create a new HaveMessage for the given index.
      *
-     * @param    id        id of the message
+     * @param index the piece index
      */
-    public UnknownMessage (byte id) {
-        this.id = id;
-        this.data = null;
-        LOG.warning("Unknown message with id " + id);
+    public HaveMessage (int index) {
+        this.index = index;
     }
 
     /**
-     * Construct a new UnknownMessage with the given id and the given data.
+     * Create a new HaveMessage for the given byte array representation.
      *
-     * @param    id        id of the message
-     * @param    data    the data contained in this message
+     * @param msg the byte array representation from which to build the
+     * message.
      */
-    public UnknownMessage (byte id, byte[] data) {
-        this.id = id;
-        this.data = data;
-        LOG.warning("Unknown message with id " + id
-                    + " and lenght " + data.length + ": "
-                    + ByteArrays.toHexString(data));
+    public HaveMessage (byte[] msg) {
+        this.index = ByteArrays.toInt(msg);
     }
 
     /**
@@ -71,7 +62,15 @@ public class UnknownMessage extends Message {
      */
     @Override
     public byte id () {
-        return UnknownMessage.id;
+        return HaveMessage.id;
+    }
+
+    // Java does not override static method thus we cannot use @inheritDoc
+    /**
+     * {@link torrefactor.core.messages.Message#isValid(byte[])}
+     */
+    public static boolean isValid (byte[] msg) {
+        return msg.length == 4;
     }
 
     /**
@@ -79,6 +78,9 @@ public class UnknownMessage extends Message {
      */
     @Override
     public byte[] toByteArray () {
-        return ByteArrays.concat(new byte[][] {super.toByteArray(), this.data});
+        byte[] t = super.toByteArray();
+        byte[] i = ByteArrays.fromInt(index);
+
+        return ByteArrays.concat(new byte[][] {t, i});
     }
 }

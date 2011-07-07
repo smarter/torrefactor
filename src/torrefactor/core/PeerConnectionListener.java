@@ -27,6 +27,8 @@
 
 package torrefactor.core;
 
+import torrefactor.core.messages.*;
+
 public interface PeerConnectionListener {
 
     /**

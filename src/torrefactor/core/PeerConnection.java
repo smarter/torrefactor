@@ -27,6 +27,7 @@
 
 package torrefactor.core;
 
+import torrefactor.core.messages.*;
 import torrefactor.util.*;
 
 import java.net.*;

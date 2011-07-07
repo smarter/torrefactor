@@ -25,19 +25,19 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package torrefactor.core;
+package torrefactor.core.messages;
 
 /**
- * Represents a not interested messag.
+ * Represents an interested message.
  */
-public class NotInterestedMessage extends Message {
-    final static byte id = 3;
+public class InterestedMessage extends Message {
+    public final static byte id = 2;
 
     /**
      * {@inheritDoc}
      */
     @Override
     public byte id () {
-        return NotInterestedMessage.id;
+        return InterestedMessage.id;
     }
 }

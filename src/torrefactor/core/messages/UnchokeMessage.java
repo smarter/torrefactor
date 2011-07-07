@@ -25,13 +25,13 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package torrefactor.core;
+package torrefactor.core.messages;
 
 /**
  * Represents an unchoke message.
  */
 public class UnchokeMessage extends Message {
-    final static byte id = 1;
+    public final static byte id = 1;
 
     /**
      * {@inheritDoc}

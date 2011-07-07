@@ -25,35 +25,45 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package torrefactor.core;
+package torrefactor.core.messages;
 
+import torrefactor.util.Logger;
 import torrefactor.util.ByteArrays;
 
+
 /**
- * Represents a port message.
- *  id      1 byte
- *  port    2 byte
+ * Represents an unknown message. This message does not have a fixed id. The id
+ * is set when constructing the message so it could reflect what has been
+ * received on the wire.
  */
-public class PortMessage extends Message {
-    final static byte id = 9;
-    final int port;
+public class UnknownMessage extends Message {
+    private static final Logger LOG = new Logger();
+    private static  byte id = -2;
+    final byte[] data;
 
     /**
-     * Creates a new PortMessage from the given port.
+     * Construct a new UnknownMessage with the given id and no data.
      *
-     * @param port    the port to put in the PortMessage.
+     * @param    id        id of the message
      */
-    public PortMessage (int port) {
-        this.port = port;
+    public UnknownMessage (byte id) {
+        this.id = id;
+        this.data = null;
+        LOG.warning("Unknown message with id " + id);
     }
 
     /**
-     * Creates a new PortMessage from the given byte array representation.
+     * Construct a new UnknownMessage with the given id and the given data.
      *
-     * @param msg    the byte array representation
+     * @param    id        id of the message
+     * @param    data    the data contained in this message
      */
-    public PortMessage (byte[] msg) {
-        this.port = ByteArrays.toShortInt(msg);
+    public UnknownMessage (byte id, byte[] data) {
+        this.id = id;
+        this.data = data;
+        LOG.warning("Unknown message with id " + id
+                    + " and lenght " + data.length + ": "
+                    + ByteArrays.toHexString(data));
     }
 
     /**
@@ -61,15 +71,7 @@ public class PortMessage extends Message {
      */
     @Override
     public byte id () {
-        return PortMessage.id;
-    }
-
-    // Java does not override static method thus we cannot use @inheritDoc
-    /**
-     * {@link torrefactor.core.Message#isValid(byte[])}
-     */
-    public static boolean isValid (byte[] msg) {
-        return msg.length == 2;
+        return UnknownMessage.id;
     }
 
     /**
@@ -77,10 +79,6 @@ public class PortMessage extends Message {
      */
     @Override
     public byte[] toByteArray () {
-        byte[] t = super.toByteArray();
-        byte[] p = ByteArrays.fromShortInt(port);
-
-        return ByteArrays.concat(new byte[][] {t, p});
+        return ByteArrays.concat(new byte[][] {super.toByteArray(), this.data});
     }
-
 }

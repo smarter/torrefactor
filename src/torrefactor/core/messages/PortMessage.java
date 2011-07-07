@@ -25,36 +25,35 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package torrefactor.core;
+package torrefactor.core.messages;
 
 import torrefactor.util.ByteArrays;
 
 /**
- * Represents a have message.
- *  id          1 byte
- *  pieceIndex  4 byte
+ * Represents a port message.
+ *  id      1 byte
+ *  port    2 byte
  */
-public class HaveMessage extends Message {
-    final static byte id = 4;
-    final int index;
+public class PortMessage extends Message {
+    public final static byte id = 9;
+    public final int port;
 
     /**
-     * Create a new HaveMessage for the given index.
+     * Creates a new PortMessage from the given port.
      *
-     * @param index the piece index
+     * @param port    the port to put in the PortMessage.
      */
-    public HaveMessage (int index) {
-        this.index = index;
+    public PortMessage (int port) {
+        this.port = port;
     }
 
     /**
-     * Create a new HaveMessage for the given byte array representation.
+     * Creates a new PortMessage from the given byte array representation.
      *
-     * @param msg the byte array representation from which to build the
-     * message.
+     * @param msg    the byte array representation
      */
-    public HaveMessage (byte[] msg) {
-        this.index = ByteArrays.toInt(msg);
+    public PortMessage (byte[] msg) {
+        this.port = ByteArrays.toShortInt(msg);
     }
 
     /**
@@ -62,15 +61,15 @@ public class HaveMessage extends Message {
      */
     @Override
     public byte id () {
-        return HaveMessage.id;
+        return PortMessage.id;
     }
 
     // Java does not override static method thus we cannot use @inheritDoc
     /**
-     * {@link torrefactor.core.Message#isValid(byte[])}
+     * {@link torrefactor.core.messages.Message#isValid(byte[])}
      */
     public static boolean isValid (byte[] msg) {
-        return msg.length == 4;
+        return msg.length == 2;
     }
 
     /**
@@ -79,8 +78,9 @@ public class HaveMessage extends Message {
     @Override
     public byte[] toByteArray () {
         byte[] t = super.toByteArray();
-        byte[] i = ByteArrays.fromInt(index);
+        byte[] p = ByteArrays.fromShortInt(port);
 
-        return ByteArrays.concat(new byte[][] {t, i});
+        return ByteArrays.concat(new byte[][] {t, p});
     }
+
 }

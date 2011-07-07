@@ -29,6 +29,7 @@ package torrefactor.core;
 
 import torrefactor.core.*;
 import torrefactor.core.dht.*;
+import torrefactor.core.messages.*;
 import torrefactor.util.*;
 
 import java.io.*;

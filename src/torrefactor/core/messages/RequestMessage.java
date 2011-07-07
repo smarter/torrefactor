@@ -25,49 +25,44 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package torrefactor.core;
+package torrefactor.core.messages;
 
+import torrefactor.core.DataBlockInfo;
 import torrefactor.util.ByteArrays;
 
-
 /**
- * Represents a piece message.
- *  id      1 byte
+ * Represents a request message.
+ *  id  1 byte
  *  index   4 byte
- *  offset  4 byte
- *  block   x byte
+ *  begin   4 byte
+ *  length  4 byte
  */
-public class PieceMessage extends Message {
-    final static byte id = 7;
-    final int index;
-    final int offset;
-    final byte[] block;
+public class RequestMessage extends Message {
+    public final static byte id = 6;
+    public final int index;
+    public final int offset;
+    public final int length;
 
     /**
-     * Create a new PieceMessage.
+     * Create a new RequestMessage for a block.
      *
-     * @param index        the index of the piece
-     * @param offset    the offset within the piece
-     * @param block        the data block
+     * @param info the DataBlockInfo identifying the block
      */
-    public PieceMessage (int index, int offset, byte[] block) {
-        this.index = index;
-        this.offset = offset;
-        this.block = block;
+    public RequestMessage (DataBlockInfo info) {
+        index = info.pieceIndex();
+        offset = info.offset();
+        length = info.length();
     }
 
     /**
-     * Create a new PieceMessage from the given byte array representation.
+     * Create a new RequestMessage for the given byte array representation.
      *
-     * @param msg    the byte array representation from which to build this
-     *                message.
+     * @param msg    the byte array representation
      */
-    public PieceMessage (byte[] msg) {
-        this.index = ByteArrays.toInt(msg);
-        this.offset = ByteArrays.toInt(msg, 4);
-        int len = msg.length - 8;
-        this.block = new byte[len];
-        System.arraycopy(msg, 8, this.block, 0, len);
+    public RequestMessage (byte[] msg) {
+        index = ByteArrays.toInt(msg);
+        offset = ByteArrays.toInt(msg, 4);
+        length = ByteArrays.toInt(msg, 8);
     }
 
     /**
@@ -75,15 +70,15 @@ public class PieceMessage extends Message {
      */
     @Override
     public byte id () {
-        return PieceMessage.id;
+        return RequestMessage.id;
     }
 
     // Java does not override static method thus we cannot use @inheritDoc
     /**
-     * {@link torrefactor.core.Message#isValid(byte[])}
+     * {@link torrefactor.core.messages.Message#isValid(byte[])}
      */
     public static boolean isValid (byte[] msg) {
-        return msg.length >= 9;
+        return msg.length == 12;
     }
 
     /**
@@ -92,9 +87,11 @@ public class PieceMessage extends Message {
     @Override
     public byte[] toByteArray () {
         byte[] t = super.toByteArray();
-        byte[] i = ByteArrays.fromInts(new int[] {index, offset});
-        byte[] a = ByteArrays.concat(new byte[][] {t, i, block});
+        byte[] i = ByteArrays.fromInts(new int[] {index, offset, length});
 
-        return a;
+        byte[] b = ByteArrays.concat(new byte[][] {t, i});
+        System.err.println(ByteArrays.toHexString(b));
+
+        return b;
     }
 }

@@ -25,13 +25,13 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package torrefactor.core;
+package torrefactor.core.messages;
 
 /**
  * Represents a choke message.
  */
 public class ChokeMessage extends Message {
-    final static byte id = 0;
+    public final static byte id = 0;
 
     /**
      * {@inheritDoc}

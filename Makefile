@@ -113,6 +113,7 @@ PACKAGES = \
 	test.util \
 	src.torrefactor.core \
 	src.torrefactor.core.dht \
+	src.torrefactor.core.messages \
 	src.torrefactor.ui\
 	src.torrefactor.ui.swing\
 	#src.torrefactor.ui.qt
@@ -131,6 +132,7 @@ ALL_PACKAGES = \
 JAVADOC_PACKAGES = \
 	torrefactor.core \
 	torrefactor.core.dht \
+	torrefactor.core.messages \
 	torrefactor.util \
 	torrefactor.ui.swing\
 #	torrefactor.ui.qt

@@ -25,27 +25,45 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package torrefactor.core;
+package torrefactor.core.messages;
+
+import torrefactor.util.ByteArrays;
 
 /**
- * Represents a keep-alive message.
+ * This is the parent class of all messages. The variable id MUST be overriden
+ * by classes extending this class.
  */
-public class KeepAliveMessage extends Message {
-    final static byte id = 1;
+public abstract class Message {
+
+    // Should be abstract but java doesn't allow abstract variables. Thus we
+    // default to something stupid so we may have a better clue if it goes
+    // wrong.
+    //public final static byte id = -42;
 
     /**
-     * {@inheritDoc}
+     * Workaround to emulate overiding class variable: this methods must return
+     * the class variable id.
      */
-    @Override
-    public byte id () {
-        return KeepAliveMessage.id;
+    abstract byte id();
+    
+    /**
+     * Check if the given byte array can be interpreted as a valid Message.
+     *
+     * @param    msg        the byte array on which the check is made
+     * @return    true if msg can be interpreted as a valid message for this
+     *            class
+     */
+    public static boolean isValid (byte[] msg) {
+        return msg.length == 0;
     }
 
     /**
-     * {@inheritDoc}
+     * Returns the byte array representation of this message as it should be
+     * sent on the wire.
+     *
+     * @return the byte array representation of this message
      */
-    @Override
     public byte[] toByteArray () {
-        return new byte[] {};
+        return new byte[] {id()};
     }
 }
